@@ -1,4 +1,89 @@
 import { db } from "../db.js";
+import { getBytecode } from "../java-tools.js";
+import AdmZip from "adm-zip";
+
+function parseMixinTargetsFromJavap(output: string): string[] {
+    const targets: string[] = [];
+
+    // Locate the @Mixin annotation block in javap -verbose output
+    const annotationIdx = output.indexOf("org.spongepowered.asm.mixin.Mixin(");
+    if (annotationIdx === -1) return targets;
+
+    // Grab a reasonable chunk after the annotation name
+    const block = output.slice(annotationIdx, annotationIdx + 2000);
+
+    // value=[class net.minecraft.X, class net.minecraft.Y]  (dot-separated)
+    for (const m of block.matchAll(/class\s+([\w.$]+)/g)) {
+        const cls = m[1].replace(/\./g, "/");
+        if (!targets.includes(cls)) targets.push(cls);
+    }
+
+    // targets=["net/minecraft/X"] or targets={"net/minecraft/X"}  (slash-separated strings)
+    for (const m of block.matchAll(/"([\w/$]+)"/g)) {
+        const cls = m[1];
+        if (cls.includes("/") && !targets.includes(cls)) targets.push(cls);
+    }
+
+    return targets;
+}
+
+/** Read mixin class names fresh from the JAR's mixin config JSON files. */
+function readMixinClassesFromJar(jarPath: string, mixinConfigs: string[]): string[] {
+    const zip = new AdmZip(jarPath);
+    const classes: string[] = [];
+    for (const cfg of mixinConfigs) {
+        const entry = zip.getEntry(cfg);
+        if (!entry) continue;
+        try {
+            const json = JSON.parse(zip.readFile(entry)!.toString("utf8")) as {
+                package?: string;
+                mixins?: string[];
+                client?: string[];
+                server?: string[];
+            };
+            const pkg = json.package ? json.package + "." : "";
+            const all = [...(json.mixins ?? []), ...(json.client ?? []), ...(json.server ?? [])];
+            classes.push(...all.map((c) => pkg + c));
+        } catch { /* malformed — skip */ }
+    }
+    return classes;
+}
+
+export async function resolveMixinTargets(dbId: number): Promise<{
+    resolved: number; failed: number; skipped: number; targets: string[];
+}> {
+    const mod = await db().mod.findUnique({ where: { id: dbId } });
+    if (!mod) throw new Error(`Mod #${dbId} not found`);
+
+    // Always re-read mixin class names from the JAR — never from DB mixinTargets
+    // (DB value may already be resolved or stale)
+    const mixinClasses = readMixinClassesFromJar(mod.jarPath, mod.mixinConfigs as string[]);
+    if (!mixinClasses.length) return { resolved: 0, failed: 0, skipped: 0, targets: [] };
+
+    const allTargets = new Set<string>();
+    let resolved = 0, failed = 0, skipped = 0;
+
+    for (const mixinClass of mixinClasses) {
+        const className = mixinClass.replace(/\./g, "/");
+        try {
+            const bytecode = await getBytecode(mod.jarPath, className);
+            const targets = parseMixinTargetsFromJavap(bytecode);
+            if (targets.length === 0) { skipped++; continue; }
+            targets.forEach((t) => allTargets.add(t));
+            resolved++;
+        } catch {
+            failed++;
+        }
+    }
+
+    const targetArray = [...allTargets];
+    await db().mod.update({
+        where: { id: dbId },
+        data: { mixinTargets: targetArray },
+    });
+
+    return { resolved, failed, skipped, targets: targetArray };
+}
 
 export async function getMixinTargets(modId: string | number) {
     let mod;

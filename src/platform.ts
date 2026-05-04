@@ -46,7 +46,7 @@ export async function listNeoForgeVersions(mcVersion?: string, limit = 20): Prom
     if (!neoforgeCache) {
         const res = await fetch(NEOFORGE_META);
         if (!res.ok) throw new Error(`Failed to fetch NeoForge versions: ${res.status}`);
-        const data = await res.json() as { versions: string[] };
+        const data = await res.json() as { versions: string[]; };
         // NeoForge versions look like "21.1.0", "21.1.1", etc. — leading number = MC major
         neoforgeCache = data.versions
             .filter((v) => /^\d+\.\d+\.\d+/.test(v))
@@ -126,7 +126,7 @@ export async function downloadFabricApi(version: string): Promise<string> {
 
     const versions = await res.json() as Array<{
         version_number: string;
-        files: Array<{ url: string; primary: boolean; filename: string }>;
+        files: Array<{ url: string; primary: boolean; filename: string; }>;
     }>;
 
     const match = versions.find((v) => v.version_number === version);

@@ -9,7 +9,7 @@ import {
     searchModClass, getModClassMembers, getModClassBytecode,
     findModReferences, getModInheritance, diffModVersions,
 } from "./tools/bytecode.js";
-import { getMixinTargets, getMixinConflicts, getAtEntries, getAwEntries } from "./tools/mixins.js";
+import { getMixinTargets, getMixinConflicts, getAtEntries, getAwEntries, resolveMixinTargets } from "./tools/mixins.js";
 import { syncModrinth, syncCurseforge, checkUpdates, downloadSource } from "./tools/platform.js";
 import { listMcVersions, listNeoForgeVersions, listFabricApiVersions, downloadNeoForge, downloadFabricApi } from "./platform.js";
 import { disconnect } from "./db.js";
@@ -268,6 +268,16 @@ server.tool(
 );
 
 server.tool(
+    "resolve_mixin_targets",
+    "Read the @Mixin annotations from a mod's bytecode to discover the actual Minecraft target classes (e.g. 'net/minecraft/world/entity/LivingEntity'). Updates the database so get_mixin_conflicts works correctly. Run once per mod after ingest.",
+    { dbId: z.number().describe("Database ID of the mod") },
+    async ({ dbId }) => {
+        const result = await resolveMixinTargets(dbId);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    }
+);
+
+server.tool(
     "get_mixin_conflicts",
     "Find all mods in the database that inject into the same Minecraft target class — useful for detecting mixin conflicts.",
     { targetClass: z.string().describe("Internal class name, e.g. 'net/minecraft/world/entity/LivingEntity'") },
@@ -400,9 +410,9 @@ server.tool(
         const jarPath = await downloadNeoForge(version);
         const result = await ingestMod(jarPath, true);
         if (result.status === "already_ingested") {
-            return { content: [{ type: "text", text: `Already ingested. DB id: ${(result.mod as { id: number }).id}` }] };
+            return { content: [{ type: "text", text: `Already ingested. DB id: ${(result.mod as { id: number; }).id}` }] };
         }
-        const mod = result.mod as { id: number; modId: string };
+        const mod = result.mod as { id: number; modId: string; };
         if (!skipIndex) await reindexClasses(mod.id);
         return { content: [{ type: "text", text: JSON.stringify({ ...result, jarPath }, null, 2) }] };
     }
@@ -419,9 +429,9 @@ server.tool(
         const jarPath = await downloadFabricApi(version);
         const result = await ingestMod(jarPath, true);
         if (result.status === "already_ingested") {
-            return { content: [{ type: "text", text: `Already ingested. DB id: ${(result.mod as { id: number }).id}` }] };
+            return { content: [{ type: "text", text: `Already ingested. DB id: ${(result.mod as { id: number; }).id}` }] };
         }
-        const mod = result.mod as { id: number; modId: string };
+        const mod = result.mod as { id: number; modId: string; };
         if (!skipIndex) await reindexClasses(mod.id);
         return { content: [{ type: "text", text: JSON.stringify({ ...result, jarPath }, null, 2) }] };
     }

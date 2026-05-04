@@ -98,7 +98,7 @@ export async function ingestMod(jarPath: string, skipSource = false) {
     return { status: "ingested", mod: await db().mod.findUnique({ where: { id: mod.id } }) };
 }
 
-export async function reindexClasses(dbId?: number): Promise<{ indexed: number; failed: number; skipped: number }> {
+export async function reindexClasses(dbId?: number): Promise<{ indexed: number; failed: number; skipped: number; }> {
     const mods = dbId
         ? await db().mod.findMany({ where: { id: dbId } })
         : await db().mod.findMany();
