@@ -156,22 +156,25 @@ export async function findTagsForEntry(
     const listResult = await getMcTags(v, registry, undefined, namespace) as { tags?: string[] };
     const tagIds = listResult.tags ?? [];
 
-    const matchingTags: Array<{ tag: string; values: unknown[] }> = [];
-    for (const tagId of tagIds) {
-        try {
-            const data = await fetchMcmetaJson<{ values?: unknown[] }>(
-                versionRef(v, "data"),
-                `data/${namespace}/tags/${registry}/${tagId}.json`,
-            );
-            const values = (data.values ?? []) as unknown[];
-            const flat = values.map(val =>
-                typeof val === "string" ? val : (val as { id?: string }).id ?? "",
-            );
-            if (flat.some(e => e === normalizedEntry || e === entry)) {
-                matchingTags.push({ tag: `#${namespace}:${tagId}`, values });
-            }
-        } catch { /* skip broken tags */ }
-    }
+    const results = await Promise.all(
+        tagIds.map(async (tagId) => {
+            try {
+                const data = await fetchMcmetaJson<{ values?: unknown[] }>(
+                    versionRef(v, "data"),
+                    `data/${namespace}/tags/${registry}/${tagId}.json`,
+                );
+                const values = (data.values ?? []) as unknown[];
+                const flat = values.map(val =>
+                    typeof val === "string" ? val : (val as { id?: string }).id ?? "",
+                );
+                if (flat.some(e => e === normalizedEntry || e === entry)) {
+                    return { tag: `#${namespace}:${tagId}`, values };
+                }
+            } catch { /* skip broken tags */ }
+            return null;
+        }),
+    );
+    const matchingTags = results.filter((r): r is { tag: string; values: unknown[] } => r !== null);
 
     return { version: v, namespace, registry, entry: normalizedEntry, found: matchingTags.length, tags: matchingTags };
 }
@@ -198,24 +201,26 @@ export async function listRecipes(
             return { version: v, count: ids.length, recipes: ids };
         }
 
-        // Load each recipe to apply filters
+        // Load all recipes concurrently and apply filters
         type RecipeJson = { type?: string; result?: unknown; output?: unknown };
-        const results: Array<{ id: string; recipeType: string; result: unknown }> = [];
-        for (const id of ids) {
-            try {
-                const data = await fetchMcmetaJson<RecipeJson>(
-                    versionRef(v, "data"),
-                    `data/minecraft/recipe/${id}.json`,
-                );
-                const rType = (data.type ?? "").replace("minecraft:", "");
-                if (type && !rType.includes(type)) continue;
-                if (outputItem) {
-                    const resultStr = JSON.stringify(data.result ?? data.output ?? "");
-                    if (!resultStr.includes(outputItem.replace("minecraft:", ""))) continue;
-                }
-                results.push({ id, recipeType: rType, result: data.result ?? data.output });
-            } catch { /* skip */ }
-        }
+        const fetched = await Promise.all(
+            ids.map(async (id) => {
+                try {
+                    const data = await fetchMcmetaJson<RecipeJson>(
+                        versionRef(v, "data"),
+                        `data/minecraft/recipe/${id}.json`,
+                    );
+                    const rType = (data.type ?? "").replace("minecraft:", "");
+                    if (type && !rType.includes(type)) return null;
+                    if (outputItem) {
+                        const resultStr = JSON.stringify(data.result ?? data.output ?? "");
+                        if (!resultStr.includes(outputItem.replace("minecraft:", ""))) return null;
+                    }
+                    return { id, recipeType: rType, result: data.result ?? data.output };
+                } catch { return null; }
+            }),
+        );
+        const results = fetched.filter((r): r is { id: string; recipeType: string; result: unknown } => r !== null);
         return { version: v, count: results.length, recipes: results };
     } catch (err) {
         return { version: v, error: String(err) };
