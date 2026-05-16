@@ -171,9 +171,86 @@ function writeMcpConfig(filePath: string, serverEntry: Record<string, unknown>):
 const existingEnv = readEnv();
 const isReconfigure = existsSync(ENV_PATH);
 
+// ── Section selection ─────────────────────────────────────────────────────────
+type Section = "containers" | "semantic" | "schema" | "pgvector" | "seed" | "backfill" | "mcp";
+const ALL_SECTIONS: Section[] = ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"];
+
+// ── Profile types ─────────────────────────────────────────────────────────────
+type ProfileName = "full" | "zero-friction" | "lightweight" | "standard" | "existing" | "custom";
+
+interface Profile {
+    name: ProfileName;
+    label: string;
+    hint: string;
+    backend: "postgres" | "pglite" | "sqlite";
+    sections: Section[];
+    requiresDocker: boolean;
+}
+
+const PROFILES: Record<ProfileName, Profile> = {
+    "full": {
+        name: "full",
+        label: "Full power  — Docker Postgres + optional semantic search",
+        hint: "recommended",
+        backend: "postgres",
+        sections: ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"],
+        requiresDocker: true,
+    },
+    "zero-friction": {
+        name: "zero-friction",
+        label: "Zero-friction  — PGlite (embedded Postgres, no Docker required)",
+        hint: "great for solo use or CI",
+        backend: "pglite",
+        sections: ["schema", "pgvector", "seed", "backfill", "mcp"],
+        requiresDocker: false,
+    },
+    "lightweight": {
+        name: "lightweight",
+        label: "Lightweight  — SQLite (fully embedded, no Docker, no semantic search)",
+        hint: "smallest footprint",
+        backend: "sqlite",
+        sections: ["schema", "seed", "mcp"],
+        requiresDocker: false,
+    },
+    "standard": {
+        name: "standard",
+        label: "Standard  — Docker Postgres, no semantic search",
+        hint: "good default if Ollama is unavailable",
+        backend: "postgres",
+        sections: ["containers", "schema", "pgvector", "seed", "mcp"],
+        requiresDocker: true,
+    },
+    "existing": {
+        name: "existing",
+        label: "Existing Postgres server  — connect to a running Postgres instance",
+        hint: "bring your own database",
+        backend: "postgres",
+        sections: ["schema", "pgvector", "seed", "backfill", "mcp"],
+        requiresDocker: false,
+    },
+    "custom": {
+        name: "custom",
+        label: "Custom  — choose individual steps",
+        hint: "power users",
+        backend: "postgres",
+        sections: [],
+        requiresDocker: false,
+    },
+};
+
+function detectProfileFromUrl(url: string): ProfileName | null {
+    if (!url) return null;
+    if (url.startsWith("pglite://") || url.startsWith("pglite:")) return "zero-friction";
+    if (url.startsWith("file:") || url.endsWith(".db")) return "lightweight";
+    return null; // postgres — could be full/standard/existing/custom
+}
+
 if (isReconfigure) {
     p.intro(" modlens — reconfigure ");
     const lines: string[] = [];
+    const currentProfileName = (existingEnv.MODLENS_PROFILE as ProfileName | undefined) ?? null;
+    const profileLabel = currentProfileName ? (PROFILES[currentProfileName]?.label ?? currentProfileName) : null;
+    if (profileLabel)                   lines.push(`  Profile:            ${profileLabel}`);
     if (existingEnv.DATABASE_URL)       lines.push(`  DATABASE_URL:       ${existingEnv.DATABASE_URL}`);
     if (existingEnv.OLLAMA_URL)         lines.push(`  OLLAMA_URL:         ${existingEnv.OLLAMA_URL}`);
     if (existingEnv.OLLAMA_EMBED_MODEL) lines.push(`  OLLAMA_EMBED_MODEL: ${existingEnv.OLLAMA_EMBED_MODEL}`);
@@ -184,27 +261,182 @@ if (isReconfigure) {
     p.intro(" modlens setup wizard ");
 }
 
-// ── Section selection ─────────────────────────────────────────────────────────
-type Section = "containers" | "semantic" | "schema" | "pgvector" | "seed" | "backfill" | "mcp";
-const ALL_SECTIONS: Section[] = ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"];
-
 let sections: Set<Section>;
+let selectedProfile: ProfileName = (existingEnv.MODLENS_PROFILE as ProfileName | undefined) ?? "full";
 
 if (!isReconfigure) {
-    // Fresh install: run all steps
-    sections = new Set(ALL_SECTIONS);
+    // ── Fresh install: profile picker ─────────────────────────────────────────
+    const profileChoice = await p.select<ProfileName>({
+        message: "Choose a setup profile",
+        options: Object.values(PROFILES).map(pr => ({
+            value: pr.name,
+            label: pr.label,
+            hint: pr.hint,
+        })),
+    });
+    checkCancel(profileChoice);
+    selectedProfile = profileChoice as unknown as ProfileName;
+
+    if (selectedProfile === "custom") {
+        sections = new Set(ALL_SECTIONS);
+    } else if (selectedProfile === "existing") {
+        const url = await p.text({
+            message: "Enter your Postgres connection URL",
+            placeholder: "postgresql://user:password@host:5432/modlens",
+            validate: v => ((v ?? "").startsWith("postgresql://") || (v ?? "").startsWith("postgres://"))
+                ? undefined : "Must be a postgresql:// URL",
+        });
+        checkCancel(url);
+        writeEnv({ ...readEnv(), DATABASE_URL: url as string });
+        sections = new Set(PROFILES["existing"].sections);
+    } else if (selectedProfile === "zero-friction") {
+        const defaultDir = join(homedir(), ".modlens-data");
+        const dataDir = await p.text({
+            message: "PGlite data directory (created if it does not exist)",
+            initialValue: defaultDir,
+        });
+        checkCancel(dataDir);
+        writeEnv({ ...readEnv(), DATABASE_URL: `pglite://${dataDir as string}` });
+        sections = new Set(PROFILES["zero-friction"].sections);
+    } else if (selectedProfile === "lightweight") {
+        const defaultFile = join(homedir(), ".modlens-data", "modlens.db");
+        const dbFile = await p.text({
+            message: "SQLite database file path (created if it does not exist)",
+            initialValue: defaultFile,
+        });
+        checkCancel(dbFile);
+        writeEnv({ ...readEnv(), DATABASE_URL: `file:${dbFile as string}` });
+        sections = new Set(PROFILES["lightweight"].sections);
+    } else {
+        // full / standard — Postgres via Docker
+        sections = new Set(PROFILES[selectedProfile].sections);
+    }
+    writeEnv({ ...readEnv(), MODLENS_PROFILE: selectedProfile });
+
 } else {
     const wizardMode = await p.select({
         message: "What would you like to do?",
         options: [
-            { value: "full", label: "Full wizard  — re-run all steps", hint: "safe for upgrades, all ops are idempotent" },
-            { value: "pick", label: "Pick tasks  — choose which steps to run" },
+            { value: "full",   label: "Full wizard   — re-run all steps", hint: "safe for upgrades, all ops are idempotent" },
+            { value: "pick",   label: "Pick tasks    — choose which steps to run" },
+            { value: "switch", label: "Switch profile — change backend or feature set" },
         ],
     });
     checkCancel(wizardMode);
 
     if (wizardMode === "full") {
         sections = new Set(ALL_SECTIONS);
+    } else if (wizardMode === "switch") {
+        // ── Switch profile ────────────────────────────────────────────────────
+        const currentUrl = existingEnv.DATABASE_URL ?? "";
+        if (currentUrl) {
+            const s = p.spinner();
+            s.start("Creating backup before switching profile");
+            try {
+                const { backup } = await import("../scripts/backup.mjs" as string) as {
+                    backup: (url: string) => Promise<{ file?: string; dir?: string; restore: string }>
+                };
+                const result = await backup(currentUrl);
+                s.stop(`Backup created: ${result.file ?? result.dir}`);
+            } catch (e) {
+                s.message(`Backup failed: ${(e as Error).message}`);
+                const cont = await p.confirm({ message: "Continue switching profile without backup?" });
+                checkCancel(cont);
+                if (!cont) process.exit(1);
+            }
+        }
+
+        const newProfileChoice = await p.select<ProfileName>({
+            message: "Switch to which profile?",
+            options: Object.values(PROFILES).map(pr => ({
+                value: pr.name,
+                label: pr.label,
+                hint: pr.hint,
+            })),
+        });
+        checkCancel(newProfileChoice);
+        selectedProfile = newProfileChoice as unknown as ProfileName;
+
+        let newUrl = "";
+        if (selectedProfile === "existing") {
+            const url = await p.text({
+                message: "Enter your Postgres connection URL",
+                placeholder: "postgresql://user:password@host:5432/modlens",
+                validate: v => ((v ?? "").startsWith("postgresql://") || (v ?? "").startsWith("postgres://"))
+                    ? undefined : "Must be a postgresql:// URL",
+            });
+            checkCancel(url);
+            newUrl = url as string;
+        } else if (selectedProfile === "zero-friction") {
+            const defaultDir = join(homedir(), ".modlens-data");
+            const dataDir = await p.text({
+                message: "PGlite data directory",
+                initialValue: defaultDir,
+            });
+            checkCancel(dataDir);
+            newUrl = `pglite://${dataDir as string}`;
+        } else if (selectedProfile === "lightweight") {
+            const defaultFile = join(homedir(), ".modlens-data", "modlens.db");
+            const dbFile = await p.text({
+                message: "SQLite database file path",
+                initialValue: defaultFile,
+            });
+            checkCancel(dbFile);
+            newUrl = `file:${dbFile as string}`;
+        } else if (selectedProfile === "full" || selectedProfile === "standard") {
+            newUrl = "postgresql://modlens:modlens@localhost:5433/modlens";
+        } else {
+            newUrl = currentUrl;
+        }
+
+        if (currentUrl && newUrl && currentUrl !== newUrl) {
+            const wantMigrate = await p.confirm({
+                message: "Migrate existing data (mods, docs, primers) to new backend? (MC source not migrated — too large)",
+                initialValue: true,
+            });
+            checkCancel(wantMigrate);
+            if (wantMigrate) {
+                const s = p.spinner();
+                s.start("Migrating data");
+                try {
+                    const { migrate } = await import("../scripts/migrate-backend.mjs" as string) as {
+                        migrate: (src: string, tgt: string) => Promise<void>
+                    };
+                    await migrate(currentUrl, newUrl);
+                    s.stop("Migration complete");
+                } catch (e) {
+                    s.message(`Migration failed: ${(e as Error).message}`);
+                    p.log.warn("Re-run manually: SOURCE_DATABASE_URL=<old> DATABASE_URL=<new> node scripts/migrate-backend.mjs");
+                }
+            }
+        }
+
+        if (currentUrl && currentUrl !== newUrl) {
+            const wantCleanup = await p.confirm({
+                message: "Delete old backend data? (backup was saved — this frees disk space)",
+                initialValue: false,
+            });
+            checkCancel(wantCleanup);
+            if (wantCleanup) {
+                const { rmSync } = await import("fs");
+                const oldProfileKind = detectProfileFromUrl(currentUrl);
+                if (oldProfileKind === "zero-friction") {
+                    const dataDir = currentUrl.replace(/^pglite:\/\//, "");
+                    rmSync(dataDir, { recursive: true, force: true });
+                    p.log.success(`Removed PGlite data directory: ${dataDir}`);
+                } else if (oldProfileKind === "lightweight") {
+                    const dbPath = currentUrl.replace(/^file:\/\//, "").replace(/^file:/, "");
+                    rmSync(dbPath, { force: true });
+                    p.log.success(`Removed SQLite database: ${dbPath}`);
+                } else {
+                    p.log.warn("Cannot auto-clean Postgres data. To remove: docker compose down -v");
+                }
+            }
+        }
+
+        writeEnv({ ...readEnv(), DATABASE_URL: newUrl, MODLENS_PROFILE: selectedProfile });
+        sections = new Set(selectedProfile === "custom" ? ALL_SECTIONS : PROFILES[selectedProfile].sections);
+
     } else {
         const hasSemantic = !!existingEnv.OLLAMA_URL;
         const selected = await p.multiselect<Section>({
@@ -214,14 +446,13 @@ if (!isReconfigure) {
                 { value: "semantic",   label: "Semantic search config",
                   hint: hasSemantic ? `current: ${existingEnv.OLLAMA_URL}` : "not configured — add Ollama" },
                 { value: "schema",     label: "Re-apply Prisma schema" },
-                { value: "pgvector",   label: "pgvector extension + embedding columns",
+                { value: "pgvector",   label: "pgvector / sqlite-vec extension + embedding columns",
                   hint: hasSemantic ? "already enabled" : "required for semantic search" },
                 { value: "seed",       label: "Re-seed default docs and primers" },
                 { value: "backfill",   label: "Re-generate embeddings (docs + primers)",
                   hint: hasSemantic ? "" : "requires Ollama" },
                 { value: "mcp",        label: "Update MCP client config" },
             ],
-            // Pre-select semantic+pgvector+backfill when Ollama hasn't been configured yet
             initialValues: hasSemantic ? [] : (["semantic", "pgvector", "backfill"] as Section[]),
             required: false,
         });
@@ -236,8 +467,12 @@ if (!isReconfigure) {
     }
 }
 
-// ── Check Docker (always required) ───────────────────────────────────────────
-{
+// ── Check Docker (only required for container-using profiles) ────────────────
+const profileNeedsDocker = selectedProfile === "custom"
+    ? sections.has("containers")
+    : (PROFILES[selectedProfile]?.requiresDocker ?? false);
+
+if (profileNeedsDocker) {
     const s = p.spinner();
     s.start("Checking Docker");
     const docker = run("docker info", { silent: true });
@@ -409,7 +644,10 @@ if (sections.has("semantic") || sections.has("containers") || !isReconfigure) {
 if (sections.has("schema")) {
     const s = p.spinner();
     s.start("Applying database schema (prisma db push)");
-    const r = run("npx prisma db push --skip-generate", { silent: true });
+    const schemaArg = PROFILES[selectedProfile]?.backend === "sqlite"
+        ? "--schema prisma/backends/schema.sqlite.prisma"
+        : "";
+    const r = run(`npx prisma db push ${schemaArg} --skip-generate`, { silent: true });
     if (!r.ok) {
         s.error("prisma db push failed");
         p.log.error(r.out.slice(0, 500));
@@ -418,9 +656,21 @@ if (sections.has("schema")) {
     s.stop("Database schema applied");
 }
 
-// ── pgvector + embedding columns ──────────────────────────────────────────────
+// ── pgvector / sqlite-vec ─────────────────────────────────────────────────────
 if (sections.has("pgvector")) {
-    if (!wantSemantic) {
+    const backend = PROFILES[selectedProfile]?.backend;
+    if (backend === "sqlite") {
+        const s = p.spinner();
+        s.start("Setting up FTS5 tables and sqlite-vec");
+        const r = run("node scripts/enable-sqlite-vec.mjs");
+        if (!r.ok) {
+            s.error("sqlite-vec setup failed");
+            p.log.error(r.out.slice(0, 500));
+            p.log.warn("You can retry manually: npm run db:vector:sqlite");
+        } else {
+            s.stop("SQLite FTS5 and sqlite-vec ready");
+        }
+    } else if (!wantSemantic) {
         p.log.warn("pgvector skipped — semantic search is not enabled");
     } else {
         const s = p.spinner();
