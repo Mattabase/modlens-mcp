@@ -296,7 +296,6 @@ async function reportPackCompat(opts: { mcVersion?: string; loader?: string; dbI
     const issues = [
         versionData.duplicateModIds.count > 0 ? `${versionData.duplicateModIds.count} duplicate mod ID(s)` : null,
         versionData.unsatisfiedDeps.count > 0 ? `${versionData.unsatisfiedDeps.count} unsatisfied dep(s)` : null,
-        atawData.accessConflicts.length > 0 ? `${atawData.accessConflicts.length} AT/AW access conflict(s)` : null,
         mixinData.conflictingClasses > 0 ? `${mixinData.conflictingClasses} mixin-conflicted class(es)` : null,
         tagData.hardConflicts.count > 0 ? `${tagData.hardConflicts.count} hard tag conflict(s)` : null,
     ].filter(Boolean);
@@ -328,13 +327,13 @@ async function reportPackCompat(opts: { mcVersion?: string; loader?: string; dbI
         md += "\n";
     }
 
-    // ── AT/AW access conflicts
+    // ── AT/AW shared targets (informational — AT/AW only ever widens access, never narrows)
     if (atawData.accessConflicts.length > 0) {
-        md += h2("AT/AW Access Conflicts");
-        md += `> These members are targeted by multiple mods with **different** access levels. Last-loaded mod wins.\n`;
+        md += h2("AT/AW Shared Targets (informational)");
+        md += `> Multiple mods target the same member with different access keywords. AT/AW always resolves to the most permissive level — these are **not** runtime risks.\n`;
         md += tableHeader(["Target", "Mods (access)"]);
         for (const c of atawData.accessConflicts.slice(0, 20)) {
-            const mods = c.users.map(u => `${code(u.mod)} (${u.access})`).join(", ");
+            const mods = c.users.map((u: { mod: string; access: string }) => `${code(u.mod)} (${u.access})`).join(", ");
             md += "\n" + tableRow([code(c.target), mods]);
         }
         md += "\n";
