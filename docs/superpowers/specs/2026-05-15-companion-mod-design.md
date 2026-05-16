@@ -175,29 +175,42 @@ tracyDuration  number?  Tracy capture duration in seconds
 
 ## 7. Companion Mod Config
 
-`modlens.toml` / `modlens.json` in the game's config dir:
+`modlens-companion.toml` in the game's config dir:
 
 ```toml
 [server]
-port = 25580
-enabled = true
-network_log_buffer = 500   # max packets to keep in circular buffer
+port = 25580                  # HTTP server port
+enabled = true                # set false to disable HTTP entirely
+network_log_buffer = 500      # max packets kept in circular buffer
+log_buffer_size = 2000        # max log lines kept in structured log buffer
+
+[auth]
+# token is auto-generated; this key lets you pin a static token for CI use
+# leave empty to use auto-generated token written to .modlens/token.txt
+static_token = ""
 
 [tracy]
+enabled = true                # graceful no-op if Tracy agent not present
 output_dir = ".modlens/profiler"
 max_capture_seconds = 120
 
 [spark]
-enabled = true   # false to disable even if Spark is present
+enabled = true                # false to disable Spark bridge even if Spark is present
 
 [inject]
 allow_volatile_recipes = true
 allow_volatile_tags = true
 allow_volatile_loot = true
+persist_across_reload = false # when true, volatile overlays survive /reload
 
 [watch]
 max_event_buffer = 1000
 max_subscriptions = 10
+alert_ttl_seconds = 300       # auto-expire one-shot alerts after this time
+
+[dump]
+output_dir = ".modlens/dumps"
+max_dump_files = 20           # oldest files pruned when limit exceeded
 ```
 
 ---
@@ -223,8 +236,18 @@ modlens-mcp's `companion_install` uses `GET https://api.github.com/repos/Mattaba
 
 ---
 
-## 10. Open Questions / Risks
+## 10. Decisions Made
 
-- Tracy integration requires the game to be launched with `-agentlib:TracyAgent` or similar JVM arg — the companion mod can detect whether Tracy is available at startup and report gracefully if not. Need to verify Tracy's Java API surface for MC 26.1.2 and 1.21.1.
-- Fabric has no unified event system like NeoForge's event bus — the `event_listeners` endpoint will need loader-specific implementations. Common interface will return a normalized list.
-- Volatile injection overlay needs to hook into the recipe manager / tag loader reload cycle to correctly wipe on `/reload` — approach differs between loaders.
+**Tracy JVM agent:** modlens-mcp's `companion_install` tool will optionally patch run configurations (Gradle `runs {}` block for `runClient`/`runServer`, and custom instance JVM args for Prism/CurseForge/MultiMC) to add the Tracy agent JVM arg. The companion mod detects at startup whether the Tracy agent is present and sets a `tracy_available: true/false` flag on `/smart/tracy/status`. All Tracy endpoints return a graceful error if the agent is absent. Patching run args is opt-in (`patchTracyArgs: true` param on `companion_install`).
+
+**Volatile injection persistence:** `persist_across_reload` config key (default `false`) controls whether volatile overlays (injected recipes, tags, loot) survive a `/reload`. Default is cleared — matches developer expectation that `/reload` returns to ground truth. Can be toggled at runtime via `POST /config/set` without restart.
+
+**Fabric event listeners:** Fabric has no unified event bus. The `event_listeners` endpoint returns a normalized list using a loader-specific adapter. For Fabric, this enumerates registered callbacks on Fabric API event objects via reflection. Format is identical across loaders.
+
+**Dump file pruning:** Oldest files beyond `max_dump_files` are pruned automatically on each new dump write — no manual cleanup needed.
+
+## 11. Remaining Risks
+
+- Tracy Java API surface needs verification for both MC 26.1.2 and 1.21.1 — may differ. Companion should wrap in a version-abstracted internal interface.
+- Volatile injection hooking into the recipe/tag reload cycle differs significantly between NeoForge and Fabric — will need careful loader-specific implementation.
+- Network log packet capture requires a Netty pipeline injection; must be handled carefully to not interfere with normal packet flow or cause desyncs.
