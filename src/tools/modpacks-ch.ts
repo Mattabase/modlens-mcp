@@ -23,10 +23,16 @@ import { ensureDir, exists, CACHE_ROOT } from "../cache.js";
 import {
     searchPacks, getFeaturedPacks, getPack, getPackManifest,
     getCfPack, getCfPackManifest,
-    searchMods, getMod,
+    searchMods, getMod, getModsBatch, resolveModVersionUrl,
+    USER_AGENT,
     downloadManifestFile, resolveFileUrl,
-    type FtbManifest, type FtbManifestFile,
+    type FtbManifest, type FtbManifestFile, type FtbModVersion,
 } from "../modpacks-ch.js";
+import { fetchWithRetry, DOWNLOAD_OPTS } from "../fetch-utils.js";
+import { createWriteStream } from "fs";
+import { pipeline } from "stream/promises";
+
+const MOD_HEADERS = { "User-Agent": USER_AGENT };
 import { ingestMod } from "./ingest.js";
 import {
     upsertPackVersion, upsertPackFile,
@@ -156,19 +162,145 @@ export async function packManifestAction(packId: number, versionId: number, name
 
 export async function searchFtbModsAction(term: string, limit = 20) {
     const r = await searchMods(term, limit);
-    if (!r) return { mods: [], total: 0 };
-    return r;
+    if (!r) return { mods: [], total: 0, enriched: [] };
+    // Enrich the first up to 20 IDs into full mod objects so callers get
+    // names/synopses without having to call ftb_mod_info for each hit.
+    const take = r.mods.slice(0, Math.min(r.mods.length, 20));
+    const enriched = await getModsBatch(take);
+    return {
+        total: r.total,
+        mods:  r.mods,
+        enriched: enriched.map((m) => ({
+            id:       m.id,
+            name:     m.name,
+            synopsis: m.synopsis,
+            installs: m.installs,
+            links:    m.links.map((l) => ({ type: l.type, url: l.link })),
+        })),
+    };
 }
 
-export async function ftbModInfoAction(modId: number | string) {
+export async function ftbModInfoAction(modId: number | string, opts: {
+    mcVersion?: string; loader?: string;
+} = {}) {
     const m = await getMod(modId);
     if (!m) throw new Error(`FTB mod ${modId} not found`);
+
+    // Filter versions by mcVersion / loader if requested
+    let versions = m.versions as FtbModVersion[];
+    if (opts.mcVersion) {
+        versions = versions.filter((v) =>
+            v.targets.some((t) => t.type === "game" && t.version === opts.mcVersion)
+        );
+    }
+    if (opts.loader) {
+        const loaderLower = opts.loader.toLowerCase();
+        versions = versions.filter((v) =>
+            v.targets.some((t) => t.type === "modloader" && t.name.toLowerCase() === loaderLower)
+        );
+    }
+
     return {
-        id:      m.id,
-        name:    m.name,
+        id:       m.id,
+        name:     m.name,
         synopsis: m.synopsis,
         installs: m.installs,
-        links:   m.links,
+        links:    m.links.map((l) => ({ type: l.type, url: l.link })),
+        versions: versions.map((v) => ({
+            fileId:  v.id,
+            name:    v.name,
+            version: v.version,
+            type:    v.type,
+            size:    v.size,
+            sha1:    v.sha1 || null,
+            url:     resolveModVersionUrl(v),
+            mcVersions: v.targets.filter((t) => t.type === "game").map((t) => t.version),
+            loaders:    v.targets.filter((t) => t.type === "modloader").map((t) => t.name),
+            updated: new Date(v.updated * 1000).toISOString(),
+        })),
+    };
+}
+
+/**
+ * Download and ingest a single mod JAR from the modpacks.ch CDN.
+ * No CF API key required.
+ *
+ * @param modId    - CF project ID (integer) or Modrinth slug/ID (string)
+ * @param opts.mcVersion - Filter to versions for this MC version
+ * @param opts.loader    - Filter to versions for this loader (neoforge, fabric, etc.)
+ * @param opts.fileId    - Exact CF file ID to download (skip filtering)
+ * @param opts.force     - Re-download even if the file is already in cache
+ */
+export async function downloadModAction(modId: number | string, opts: {
+    mcVersion?: string; loader?: string; fileId?: number; force?: boolean;
+} = {}): Promise<{
+    status: string;
+    modId?: number;
+    name?: string;
+    version?: string;
+    jarPath?: string;
+    message?: string;
+}> {
+    const m = await getMod(modId);
+    if (!m) throw new Error(`Mod ${modId} not found on modpacks.ch`);
+
+    let candidates = m.versions as FtbModVersion[];
+
+    if (opts.fileId !== undefined) {
+        // Exact file requested
+        candidates = candidates.filter((v) => v.id === opts.fileId);
+    } else {
+        if (opts.mcVersion) {
+            candidates = candidates.filter((v) =>
+                v.targets.some((t) => t.type === "game" && t.version === opts.mcVersion)
+            );
+        }
+        if (opts.loader) {
+            const lo = opts.loader.toLowerCase();
+            candidates = candidates.filter((v) =>
+                v.targets.some((t) => t.type === "modloader" && t.name.toLowerCase() === lo)
+            );
+        }
+    }
+
+    if (candidates.length === 0) {
+        throw new Error(
+            `No version of mod ${m.name} (${modId}) matches the requested filters` +
+            (opts.mcVersion ? ` mcVersion=${opts.mcVersion}` : "") +
+            (opts.loader    ? ` loader=${opts.loader}`       : "")
+        );
+    }
+
+    // Take the first (most recent) matching version
+    const version = candidates[0];
+    const url = resolveModVersionUrl(version);
+    if (!url) throw new Error(`No download URL available for ${version.name}`);
+
+    // Build a stable cache path: use sha1 when available
+    const key      = version.sha1 || String(version.id);
+    const destPath = join(CACHE_ROOT, "mods", String(m.id), `${key}.jar`);
+    const tmpPath  = destPath + ".tmp";
+
+    await ensureDir(destPath);
+
+    if (opts.force || !(await exists(destPath))) {
+        const res = await fetchWithRetry(url, { headers: MOD_HEADERS }, DOWNLOAD_OPTS);
+        if (!res.ok) throw new Error(`Download failed for ${version.name}: HTTP ${res.status}`);
+        const stream = createWriteStream(tmpPath);
+        await pipeline(res.body as unknown as NodeJS.ReadableStream, stream);
+        await rename(tmpPath, destPath);
+    }
+
+    const result = await ingestMod(destPath, /* skipSource */ true);
+    return {
+        status:  result.status,
+        modId:   result.status === "ingested" || result.status === "replaced" || result.status === "already_ingested"
+                     ? (result.mod?.id ?? (result as { existingDbId?: number }).existingDbId)
+                     : undefined,
+        name:    version.name,
+        version: version.version,
+        jarPath: destPath,
+        message: "message" in result ? result.message : undefined,
     };
 }
 

@@ -55,3 +55,61 @@ export async function getLatestFile(modId: number, mcVersion?: string): Promise<
     );
     return files[0] ?? null;
 }
+
+export interface CFSearchHit {
+    id: number;
+    name: string;
+    slug: string;
+    summary: string;
+    downloadCount: number;
+    dateModified: string;
+    latestFiles: CFFile[];
+    links: { sourceUrl?: string; websiteUrl?: string };
+}
+
+/**
+ * Search CurseForge mods by name/keyword. Requires CURSEFORGE_API_KEY.
+ * Returns null if no API key is configured.
+ */
+export async function searchMods(
+    query: string,
+    opts: { loader?: string; mcVersion?: string; limit?: number } = {},
+): Promise<CFSearchHit[] | null> {
+    if (!CF_KEY) return null;
+    const params = new URLSearchParams({
+        gameId:   String(MINECRAFT_GAME_ID),
+        classId:  "6",       // 6 = Mods category on CurseForge
+        searchFilter: query,
+        pageSize: String(opts.limit ?? 20),
+    });
+    if (opts.mcVersion) params.set("gameVersion", opts.mcVersion);
+    if (opts.loader)    params.set("modLoaderType", modloaderToEnum(opts.loader));
+    const res = await fetchWithRetry(`${CF_BASE}/mods/search?${params}`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json() as { data: CFSearchHit[] };
+    return data.data;
+}
+
+/** Map a loader string to CurseForge's modLoaderType enum value. */
+function modloaderToEnum(loader: string): string {
+    const map: Record<string, string> = {
+        forge: "1", fabric: "4", quilt: "5", neoforge: "6",
+    };
+    return map[loader.toLowerCase()] ?? "0";
+}
+
+/**
+ * Get all files for a CF project, optionally filtered by MC version.
+ */
+export async function getProjectFiles(
+    modId: number,
+    opts: { mcVersion?: string; limit?: number } = {},
+): Promise<CFFile[]> {
+    if (!CF_KEY) return [];
+    const params = new URLSearchParams({ pageSize: String(opts.limit ?? 20) });
+    if (opts.mcVersion) params.set("gameVersion", opts.mcVersion);
+    const res = await fetchWithRetry(`${CF_BASE}/mods/${modId}/files?${params}`, { headers });
+    if (!res.ok) return [];
+    const data = await res.json() as { data: CFFile[] };
+    return data.data;
+}

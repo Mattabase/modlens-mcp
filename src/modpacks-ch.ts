@@ -50,11 +50,32 @@ export interface FtbAuthor {
 
 // ── Mod endpoint types ────────────────────────────────────────────────────────
 
-export interface FtbModVersionRef {
-    id:      number;
-    name:    string;
-    type:    string;  // "Release" | "Beta" | "Alpha"
-    updated: number;
+/**
+ * A single version/file entry inside GET /mod/{id}.
+ * Contains full file metadata and CDN download URL — no CF API key required.
+ */
+export interface FtbModVersion {
+    id:         number;   // CF file ID (used to construct CDN URL if url is empty)
+    name:       string;   // filename e.g. "jei-26.1.2-neoforge-29.5.0.28.jar"
+    version:    string;   // human-readable version string
+    type:       string;   // "Release" | "Beta" | "Alpha"
+    path:       string;   // destination path e.g. "mods/"
+    url:        string;   // direct CDN download URL (may be empty — construct from cfCdnUrl)
+    mirrors:    string[]; // mirror URLs
+    sha1:       string;
+    size:       number;
+    clientonly: boolean;
+    updated:    number;   // Unix timestamp
+    targets:    FtbTarget[];
+    dependencies: FtbModDependency[];
+}
+
+export interface FtbModDependency {
+    id:       number | string;
+    name:     string;
+    type:     string;  // "required" | "optional"
+    version?: string;
+    updated:  number;
 }
 
 /** Response from GET /mod/{id} */
@@ -64,7 +85,7 @@ export interface FtbMod {
     synopsis:  string;
     art:       FtbArt[];
     links:     FtbLink[];
-    versions:  FtbModVersionRef[];
+    versions:  FtbModVersion[];
     installs:  number;
     plays:     number;
     status:    string;  // "public"
@@ -188,6 +209,29 @@ export async function searchMods(term: string, limit = 20): Promise<FtbModSearch
 
 export async function getMod(id: number | string): Promise<FtbMod | null> {
     return get<FtbMod>(`mod/${id}`);
+}
+
+/**
+ * Batch-fetch multiple mods by their IDs. Useful after a search to enrich
+ * result IDs into full mod objects. Runs requests in parallel.
+ */
+export async function getModsBatch(ids: (number | string)[]): Promise<FtbMod[]> {
+    const results = await Promise.allSettled(ids.map((id) => getMod(id)));
+    return results
+        .filter((r): r is PromiseFulfilledResult<FtbMod> => r.status === "fulfilled" && r.value !== null)
+        .map((r) => r.value);
+}
+
+/**
+ * Resolve the download URL for a mod version.
+ * Some entries have url="" — in that case the CDN URL is constructed from
+ * the file ID using the same cfCdnUrl pattern as pack manifests.
+ */
+export function resolveModVersionUrl(version: FtbModVersion): string | null {
+    if (version.url) return version.url;
+    if (version.id)  return cfCdnUrl(version.id, version.name);
+    if (version.mirrors?.length) return version.mirrors[0];
+    return null;
 }
 
 // ── Modpack API (FTB namespace) ───────────────────────────────────────────────

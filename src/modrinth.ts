@@ -49,3 +49,63 @@ export async function getLatestVersion(projectId: string, mcVersion?: string): P
     const versions = await res.json() as ModrinthVersion[];
     return versions[0] ?? null;
 }
+
+export interface ModrinthSearchHit {
+    project_id: string;
+    slug: string;
+    title: string;
+    description: string;
+    categories: string[];
+    downloads: number;
+    follows: number;
+    latest_version: string;
+    versions: string[];   // game versions
+    loaders: string[];
+    date_modified: string;
+    license: string;
+    project_type: string; // "mod" | "modpack" | "resourcepack" | "shader"
+}
+
+export interface ModrinthSearchResult {
+    hits: ModrinthSearchHit[];
+    offset: number;
+    limit: number;
+    total_hits: number;
+}
+
+/**
+ * Search Modrinth by name/keyword, optionally filtered by loader and/or MC version.
+ */
+export async function searchProjects(
+    query: string,
+    opts: { loader?: string; mcVersion?: string; limit?: number; projectType?: string } = {},
+): Promise<ModrinthSearchResult | null> {
+    const facets: string[][] = [["project_type:mod"]];
+    if (opts.loader)    facets.push([`categories:${opts.loader}`]);
+    if (opts.mcVersion) facets.push([`versions:${opts.mcVersion}`]);
+    if (opts.projectType) facets[0] = [`project_type:${opts.projectType}`];
+
+    const params = new URLSearchParams({
+        query,
+        limit: String(opts.limit ?? 20),
+        facets: JSON.stringify(facets),
+    });
+    const res = await fetchWithRetry(`${MODRINTH_BASE}/search?${params}`, { headers });
+    if (!res.ok) return null;
+    return res.json() as Promise<ModrinthSearchResult>;
+}
+
+/**
+ * Get all versions for a project, optionally filtered by loader and/or MC version.
+ */
+export async function getProjectVersions(
+    projectId: string,
+    opts: { loader?: string; mcVersion?: string } = {},
+): Promise<ModrinthVersion[]> {
+    const params = new URLSearchParams();
+    if (opts.loader)    params.set("loaders", JSON.stringify([opts.loader]));
+    if (opts.mcVersion) params.set("game_versions", JSON.stringify([opts.mcVersion]));
+    const res = await fetchWithRetry(`${MODRINTH_BASE}/project/${projectId}/version?${params}`, { headers });
+    if (!res.ok) return [];
+    return res.json() as Promise<ModrinthVersion[]>;
+}
