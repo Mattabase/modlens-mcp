@@ -13,10 +13,12 @@ export async function getDb(): Promise<PrismaClient> {
     const backend = detectBackend();
 
     if (backend === "sqlite") {
-        // Wired in P2
-        throw new Error(
-            `SQLite backend not yet supported. Run \`npm run setup\` to switch backends.`,
-        );
+        const url = process.env.DATABASE_URL ?? "";
+        const { PrismaBetterSQLite3 } = await import("@prisma/adapter-better-sqlite3");
+        const adapter = new PrismaBetterSQLite3({ url });
+        const { PrismaClient: SQLiteClient } = await import("./generated/sqlite/index.js");
+        _client = new SQLiteClient({ adapter }) as unknown as PrismaClient;
+        return _client;
     }
 
     if (backend === "pglite") {

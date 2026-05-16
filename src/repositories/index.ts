@@ -9,8 +9,7 @@ import { detectBackend } from "../db-backend.js";
 export async function getEmbeddingsRepo() {
     const backend = detectBackend();
     if (backend === "sqlite") {
-        // Wired in P2
-        throw new Error("SQLite embeddings not yet implemented. See P2.");
+        return import("./embeddings-sqlite.js");
     }
     return import("./embeddings.js");
 }
