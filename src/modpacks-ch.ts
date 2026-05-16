@@ -298,6 +298,8 @@ export function resolveFileUrl(file: FtbManifestFile): string | null {
     if (file.url) return file.url;
     if (file.curseforge) return cfCdnUrl(file.curseforge.file, file.name);
     if (file.mirror)     return file.mirror;
+    // cf-extract overrides ZIPs use the version ID as their file ID
+    if (file.type === "cf-extract" && file.id) return cfCdnUrl(file.id, file.name);
     return null;
 }
 

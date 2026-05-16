@@ -80,7 +80,7 @@ import {
 import { generateReport } from "./tools/reports.js";
 import { findAssetConflicts, findVanillaOverrides, analyzeModSidedness, analyzePackSidedness, computeModComplexity, computePackChangelog, findDataConflicts } from "./tools/packtools.js";
 import { indexKubeJsScripts, searchKubeJsScripts } from "./tools/kubejs.js";
-import { searchPacksAction, featuredPacksAction, packInfoAction, packManifestAction, syncPackModsAction, searchFtbModsAction, ftbModInfoAction, downloadModAction, listPackVersionsAction, listPackFilesAction, findModInPacksAction } from "./tools/modpacks-ch.js";
+import { searchPacksAction, featuredPacksAction, packInfoAction, packManifestAction, syncPackModsAction, searchFtbModsAction, ftbModInfoAction, downloadModAction, downloadOverridesAction, listPackVersionsAction, listPackFilesAction, findModInPacksAction } from "./tools/modpacks-ch.js";
 import { analyzeCrashLog, findMissingDeps } from "./tools/diagnostics.js";
 import { checkModCompat } from "./tools/compat-check.js";
 import { disconnect } from "./db.js";
@@ -268,11 +268,11 @@ server.tool(
 server.tool(
     "modpacks_ch",
     "Search and sync modpacks from the FTB (modpacks.ch) and CurseForge namespaces — no API key required. " +
-    "action=search|featured|info|manifest|sync_pack_mods|search_ftb_mods|ftb_mod_info|download_mod|list_pack_versions|list_pack_files|find_mod_in_packs. " +
+    "action=search|featured|info|manifest|sync_pack_mods|search_ftb_mods|ftb_mod_info|download_mod|download_overrides|list_pack_versions|list_pack_files|find_mod_in_packs. " +
     "namespace=ftb|curseforge (default: ftb). " +
     "User-Agent is set per FTB team request for usage tracking.",
     {
-        action:           z.enum(["search", "featured", "info", "manifest", "sync_pack_mods", "search_ftb_mods", "ftb_mod_info", "download_mod", "list_pack_versions", "list_pack_files", "find_mod_in_packs"]),
+        action:           z.enum(["search", "featured", "info", "manifest", "sync_pack_mods", "search_ftb_mods", "ftb_mod_info", "download_mod", "download_overrides", "list_pack_versions", "list_pack_files", "find_mod_in_packs"]),
         namespace:        z.enum(["ftb", "curseforge"]).optional().describe("ftb or curseforge (default: ftb)"),
         packId:           z.number().optional().describe("Pack ID (required for info, manifest, sync_pack_mods, list_pack_files)"),
         versionId:        z.number().optional().describe("Version ID (required for manifest, sync_pack_mods, list_pack_files)"),
@@ -334,6 +334,11 @@ server.tool(
                 break;
             case "list_pack_files":
                 result = await listPackFilesAction({ packVersionDbId, namespace, packId, versionId, fileType });
+                break;
+            case "download_overrides":
+                if (!packId)    throw new Error("packId is required for action=download_overrides");
+                if (!versionId) throw new Error("versionId is required for action=download_overrides");
+                result = await downloadOverridesAction({ namespace: ns, packId, versionId, force });
                 break;
             case "find_mod_in_packs":
                 if (modDbId === undefined && cfProject === undefined)

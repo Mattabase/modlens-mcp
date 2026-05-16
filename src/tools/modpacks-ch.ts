@@ -18,13 +18,14 @@
  */
 import { join } from "path";
 import { createHash } from "crypto";
-import { rename } from "fs/promises";
+import { rename, mkdir } from "fs/promises";
+import AdmZip from "adm-zip";
 import { ensureDir, exists, CACHE_ROOT } from "../cache.js";
 import {
     searchPacks, getFeaturedPacks, getPack, getPackManifest,
     getCfPack, getCfPackManifest,
     searchMods, getMod, getModsBatch, resolveModVersionUrl,
-    USER_AGENT,
+    USER_AGENT, cfCdnUrl,
     downloadManifestFile, resolveFileUrl,
     type FtbManifest, type FtbManifestFile, type FtbModVersion,
 } from "../modpacks-ch.js";
@@ -539,4 +540,81 @@ export async function findModInPacksAction(opts: { modDbId?: number; cfProject?:
         return { cfProject: opts.cfProject, packs: rows };
     }
     throw new Error("Provide either modDbId or cfProject");
+}
+
+/**
+ * Download and extract the overrides ZIP (KubeJS scripts, configs, defaultconfigs,
+ * resource overrides, etc.) for a CurseForge pack version.
+ *
+ * The overrides are extracted to:
+ *   CACHE_ROOT/packs/curseforge/{packId}/{versionId}/overrides/
+ *
+ * The corresponding PackFile record is updated to status "extracted".
+ */
+export async function downloadOverridesAction(opts: {
+    namespace:  string;
+    packId:     number;
+    versionId:  number;
+    force?:     boolean;
+}) {
+    const { namespace, packId, versionId, force = false } = opts;
+
+    const manifest = namespace === "curseforge"
+        ? await getCfPackManifest(packId, versionId)
+        : await getPackManifest(packId, versionId);
+
+    if (!manifest) throw new Error(`Manifest not found for pack ${packId} v${versionId} (${namespace})`);
+
+    const overrideFile = manifest.files.find((f) => f.type === "cf-extract");
+    if (!overrideFile) throw new Error("No cf-extract (overrides) entry found in manifest");
+
+    // Build CDN URL directly from version ID (the file ID for cf-extract entries)
+    const url = cfCdnUrl(overrideFile.id, overrideFile.name);
+
+    const packCacheDir  = join(CACHE_ROOT, "packs", namespace, String(packId), String(versionId));
+    const zipPath       = join(packCacheDir, "overrides.zip");
+    const extractDir    = join(packCacheDir, "overrides");
+
+    await mkdir(packCacheDir, { recursive: true });
+
+    // Download if not cached (or forced)
+    if (force || !(await exists(zipPath))) {
+        const tmpPath = zipPath + ".tmp";
+        const res = await fetchWithRetry(url, { headers: MOD_HEADERS }, DOWNLOAD_OPTS);
+        if (!res.ok) throw new Error(`Failed to download overrides.zip: HTTP ${res.status} from ${url}`);
+        const writer = createWriteStream(tmpPath);
+        await pipeline(res.body as unknown as NodeJS.ReadableStream, writer);
+        await rename(tmpPath, zipPath);
+    }
+
+    // Extract
+    await mkdir(extractDir, { recursive: true });
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(extractDir, /* overwrite */ true);
+
+    // Build a summary of extracted paths
+    const entries = zip.getEntries().map((e) => e.entryName);
+    const topDirs = [...new Set(entries.map((e) => e.split("/")[0]))].sort();
+
+    // Update pack_file status in DB
+    const pv = await findPackVersion(namespace, packId, versionId);
+    if (pv) {
+        await upsertPackFile({
+            packVersionId:  pv.id,
+            manifestFileId: overrideFile.id,
+            fileType:       overrideFile.type,
+            fileName:       overrideFile.name,
+            filePath:       overrideFile.path || null,
+            status:         "extracted",
+        });
+    }
+
+    return {
+        status:      "extracted",
+        zipPath,
+        extractDir,
+        fileCount:   entries.length,
+        topDirs,
+        url,
+    };
 }
