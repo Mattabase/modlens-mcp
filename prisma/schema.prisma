@@ -39,6 +39,7 @@ model Mod {
 
   classes       ModClass[]
   modTags       ModTag[]
+  packFiles     PackFile[]
 
   @@unique([modId, version, mcVersion, loader])
   @@index([modId])
@@ -181,4 +182,58 @@ model Primer {
   @@index([fromDataVersion, toDataVersion])
   @@index([modloader])
   @@map("primers")
+}
+
+// ── Modpack version tracking ──────────────────────────────────────────────────
+// One row per (namespace, packId, versionId) that has been synced or inspected.
+
+model PackVersion {
+  id          Int      @id @default(autoincrement())
+  /// "ftb" | "curseforge"
+  namespace   String
+  packId      Int      @map("pack_id")
+  versionId   Int      @map("version_id")
+  packName    String   @map("pack_name")
+  versionName String   @map("version_name")
+  mcVersion   String?  @map("mc_version")
+  modloader   String?
+  syncedAt    DateTime @default(now()) @map("synced_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  files       PackFile[]
+
+  @@unique([namespace, packId, versionId])
+  @@index([namespace, packId])
+  @@map("pack_versions")
+}
+
+// One row per file listed in a pack version manifest.
+// Covers mods, configs, scripts, resource packs, and cf-extract overrides ZIPs.
+// modId is set when the file was ingested as a Mod in this database.
+
+model PackFile {
+  id             Int          @id @default(autoincrement())
+  packVersionId  Int          @map("pack_version_id")
+  packVersion    PackVersion  @relation(fields: [packVersionId], references: [id], onDelete: Cascade)
+  /// file.id from the modpacks.ch manifest
+  manifestFileId Int?         @map("manifest_file_id")
+  /// "mod" | "resource" | "config" | "script" | "cf-extract" | "override" | etc.
+  fileType       String       @map("file_type")
+  fileName       String       @map("file_name")
+  /// Destination path relative to the pack root (from manifest file.path)
+  filePath       String?      @map("file_path")
+  cfProject      Int?         @map("cf_project")
+  cfFile         Int?         @map("cf_file")
+  sha1           String?
+  /// "ingested" | "already_ingested" | "downloaded_zip" | "error" | "skipped" | "not_synced"
+  status         String       @default("not_synced")
+  /// Set when this file was successfully ingested as a Mod row.
+  modId          Int?         @map("mod_id")
+  mod            Mod?         @relation(fields: [modId], references: [id], onDelete: SetNull)
+
+  @@unique([packVersionId, manifestFileId])
+  @@index([packVersionId])
+  @@index([modId])
+  @@index([cfProject])
+  @@map("pack_files")
 }

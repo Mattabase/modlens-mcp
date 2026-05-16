@@ -28,6 +28,11 @@ import {
     type FtbManifest, type FtbManifestFile,
 } from "../modpacks-ch.js";
 import { ingestMod } from "./ingest.js";
+import {
+    upsertPackVersion, upsertPackFile,
+    listPackVersions, listPackFiles,
+    findPacksForMod, findPacksForCfProject, findPackVersion,
+} from "../repositories/packs.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -50,6 +55,7 @@ export interface SyncPackModsOptions {
 interface FileResult {
     name:      string;
     type:      string;
+    fileId?:   number;  // manifest file id (file.id from modpacks.ch API)
     status:    string;
     dbId?:     number;
     message?:  string;
@@ -176,14 +182,15 @@ export async function ftbModInfoAction(modId: number | string) {
  * no CurseForge API key required.
  */
 export async function syncPackModsAction(opts: SyncPackModsOptions): Promise<{
-    packId:    number;
-    versionId: number;
-    namespace: string;
-    total:     number;
-    ingested:  number;
-    skipped:   number;
-    failed:    number;
-    files:     FileResult[];
+    packId:          number;
+    versionId:       number;
+    namespace:       string;
+    packVersionDbId: number;
+    total:           number;
+    ingested:        number;
+    skipped:         number;
+    failed:          number;
+    files:           FileResult[];
 }> {
     const { packId, versionId, namespace, concurrency = 3 } = opts;
     const ingestTypes  = opts.fileTypes   ?? ["mod", "resource"];
@@ -217,6 +224,43 @@ export async function syncPackModsAction(opts: SyncPackModsOptions): Promise<{
         results.push(...batchResults);
     }
 
+    // ── Record pack membership ────────────────────────────────────────────────
+    // Upsert the pack version row first.
+    const mcVersion  = manifest.targets.find((t) => t.name === "minecraft")?.version ?? null;
+    const modloader  = manifest.targets.find((t) => t.type === "modloader")?.name    ?? null;
+    const pvId = await upsertPackVersion({
+        namespace,
+        packId,
+        versionId,
+        packName:    manifest.name,
+        versionName: manifest.version || manifest.name,
+        mcVersion,
+        modloader,
+    });
+
+    // Build a map from manifest file id → processed result.
+    const resultMap = new Map<number, FileResult>();
+    for (const r of results) {
+        if (r.fileId !== undefined) resultMap.set(r.fileId, r);
+    }
+
+    // Upsert one PackFile row per manifest entry (ALL files, not just candidates).
+    await Promise.all(manifest.files.map((f) => {
+        const processed = resultMap.get(f.id);
+        return upsertPackFile({
+            packVersionId:   pvId,
+            manifestFileId:  f.id,
+            fileType:        f.type,
+            fileName:        f.name,
+            filePath:        f.path  || null,
+            cfProject:       f.curseforge?.project ?? null,
+            cfFile:          f.curseforge?.file    ?? null,
+            sha1:            f.sha1 || null,
+            status:          processed?.status ?? "not_synced",
+            modId:           processed?.dbId   ?? null,
+        });
+    }));
+
     const ingested = results.filter((r) => r.status === "ingested" || r.status === "replaced").length;
     const skipped  = results.filter((r) => r.status === "already_ingested" || r.status === "duplicate_version" || r.status === "duplicate_hash").length;
     const failed   = results.filter((r) => r.status === "error").length;
@@ -225,6 +269,7 @@ export async function syncPackModsAction(opts: SyncPackModsOptions): Promise<{
         packId,
         versionId,
         namespace,
+        packVersionDbId: pvId,
         total:    candidates.length,
         ingested,
         skipped,
@@ -253,13 +298,14 @@ async function processFile(file: FtbManifestFile, cacheDir: string): Promise<Fil
         // Only ingest JARs (mods) — ZIPs are resource/datapacks that the
         // ingestMod path doesn't handle yet.
         if (ext === ".zip") {
-            return { name: file.name, type: file.type, status: "downloaded_zip" };
+            return { name: file.name, type: file.type, fileId: file.id, status: "downloaded_zip" };
         }
 
         const result = await ingestMod(destPath, /* skipSource */ true);
         return {
             name:    file.name,
             type:    file.type,
+            fileId:  file.id,
             status:  result.status,
             dbId:    result.status === "ingested" || result.status === "replaced"
                         ? result.mod?.id
@@ -272,8 +318,93 @@ async function processFile(file: FtbManifestFile, cacheDir: string): Promise<Fil
         return {
             name:    file.name,
             type:    file.type,
+            fileId:  file.id,
             status:  "error",
             message: err instanceof Error ? err.message : String(err),
         };
     }
+}
+
+// ── Pack membership queries ───────────────────────────────────────────────────
+
+/** List all pack versions recorded in the DB, optionally filtered by namespace / packId. */
+export async function listPackVersionsAction(namespace?: string, packId?: number) {
+    const rows = await listPackVersions(namespace, packId);
+    return {
+        total: rows.length,
+        versions: rows.map((v) => ({
+            dbId:        v.id,
+            namespace:   v.namespace,
+            packId:      v.packId,
+            versionId:   v.versionId,
+            packName:    v.packName,
+            versionName: v.versionName,
+            mcVersion:   v.mcVersion,
+            modloader:   v.modloader,
+            syncedAt:    v.syncedAt,
+        })),
+    };
+}
+
+/**
+ * List all files recorded for a specific pack version.
+ * Look up the version by either its DB id (packVersionDbId) or
+ * the (namespace + packId + versionId) triple.
+ */
+export async function listPackFilesAction(opts: {
+    packVersionDbId?: number;
+    namespace?: string;
+    packId?: number;
+    versionId?: number;
+    fileType?: string;
+}) {
+    let pvId = opts.packVersionDbId;
+    if (pvId === undefined) {
+        if (!opts.namespace || opts.packId === undefined || opts.versionId === undefined) {
+            throw new Error("Provide either packVersionDbId or (namespace + packId + versionId)");
+        }
+        const pv = await findPackVersion(opts.namespace, opts.packId, opts.versionId);
+        if (!pv) throw new Error(`Pack version not yet recorded — run sync_pack_mods first`);
+        pvId = pv.id;
+    }
+    const files = await listPackFiles(pvId);
+    const filtered = opts.fileType ? files.filter((f) => f.fileType === opts.fileType) : files;
+    return {
+        packVersionDbId: pvId,
+        total:   filtered.length,
+        byType:  Object.fromEntries(
+            [...new Set(files.map((f) => f.fileType))].map((t) => [
+                t,
+                files.filter((f) => f.fileType === t).length,
+            ]),
+        ),
+        files: filtered.map((f) => ({
+            id:             f.id,
+            manifestFileId: f.manifestFileId,
+            fileType:       f.fileType,
+            fileName:       f.fileName,
+            filePath:       f.filePath,
+            cfProject:      f.cfProject,
+            cfFile:         f.cfFile,
+            sha1:           f.sha1,
+            status:         f.status,
+            modId:          f.modId,
+        })),
+    };
+}
+
+/**
+ * Find every pack version that contains a given mod.
+ * Accepts a ModLens DB mod id (modDbId) or a CurseForge project id (cfProject).
+ */
+export async function findModInPacksAction(opts: { modDbId?: number; cfProject?: number }) {
+    if (opts.modDbId !== undefined) {
+        const rows = await findPacksForMod(opts.modDbId);
+        return { modDbId: opts.modDbId, packs: rows };
+    }
+    if (opts.cfProject !== undefined) {
+        const rows = await findPacksForCfProject(opts.cfProject);
+        return { cfProject: opts.cfProject, packs: rows };
+    }
+    throw new Error("Provide either modDbId or cfProject");
 }

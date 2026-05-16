@@ -80,7 +80,7 @@ import {
 import { generateReport } from "./tools/reports.js";
 import { findAssetConflicts, findVanillaOverrides, analyzeModSidedness, analyzePackSidedness, computeModComplexity, computePackChangelog, findDataConflicts } from "./tools/packtools.js";
 import { indexKubeJsScripts, searchKubeJsScripts } from "./tools/kubejs.js";
-import { searchPacksAction, featuredPacksAction, packInfoAction, packManifestAction, syncPackModsAction, searchFtbModsAction, ftbModInfoAction } from "./tools/modpacks-ch.js";
+import { searchPacksAction, featuredPacksAction, packInfoAction, packManifestAction, syncPackModsAction, searchFtbModsAction, ftbModInfoAction, listPackVersionsAction, listPackFilesAction, findModInPacksAction } from "./tools/modpacks-ch.js";
 import { analyzeCrashLog, findMissingDeps } from "./tools/diagnostics.js";
 import { checkModCompat } from "./tools/compat-check.js";
 import { disconnect } from "./db.js";
@@ -268,23 +268,27 @@ server.tool(
 server.tool(
     "modpacks_ch",
     "Search and sync modpacks from the FTB (modpacks.ch) and CurseForge namespaces — no API key required. " +
-    "action=search|featured|info|manifest|sync_pack_mods|search_ftb_mods|ftb_mod_info. " +
+    "action=search|featured|info|manifest|sync_pack_mods|search_ftb_mods|ftb_mod_info|list_pack_versions|list_pack_files|find_mod_in_packs. " +
     "namespace=ftb|curseforge (default: ftb). " +
     "User-Agent is set per FTB team request for usage tracking.",
     {
-        action:       z.enum(["search", "featured", "info", "manifest", "sync_pack_mods", "search_ftb_mods", "ftb_mod_info"]),
-        namespace:    z.enum(["ftb", "curseforge"]).optional().describe("ftb or curseforge (default: ftb)"),
-        packId:       z.number().optional().describe("Pack ID (required for info, manifest, sync_pack_mods)"),
-        versionId:    z.number().optional().describe("Version ID (required for manifest, sync_pack_mods)"),
-        query:        z.string().optional().describe("Search query (required for search, search_ftb_mods)"),
-        modId:        z.union([z.number(), z.string()]).optional().describe("FTB mod ID (required for ftb_mod_info)"),
-        limit:        z.number().optional().describe("Max results for search/featured (default: 20)"),
-        fileTypes:    z.array(z.string()).optional().describe("File types to ingest (default: ['mod','resource'])"),
-        skipServer:   z.boolean().optional().describe("Skip server-only files (default: false)"),
-        skipOptional: z.boolean().optional().describe("Skip optional files (default: false)"),
-        concurrency:  z.number().optional().describe("Parallel downloads for sync_pack_mods (default: 3)"),
+        action:           z.enum(["search", "featured", "info", "manifest", "sync_pack_mods", "search_ftb_mods", "ftb_mod_info", "list_pack_versions", "list_pack_files", "find_mod_in_packs"]),
+        namespace:        z.enum(["ftb", "curseforge"]).optional().describe("ftb or curseforge (default: ftb)"),
+        packId:           z.number().optional().describe("Pack ID (required for info, manifest, sync_pack_mods, list_pack_files)"),
+        versionId:        z.number().optional().describe("Version ID (required for manifest, sync_pack_mods, list_pack_files)"),
+        packVersionDbId:  z.number().optional().describe("Pack version DB id returned by sync_pack_mods (shortcut for list_pack_files)"),
+        query:            z.string().optional().describe("Search query (required for search, search_ftb_mods)"),
+        modId:            z.union([z.number(), z.string()]).optional().describe("FTB mod ID (required for ftb_mod_info)"),
+        modDbId:          z.number().optional().describe("ModLens DB mod id (for find_mod_in_packs)"),
+        cfProject:        z.number().optional().describe("CurseForge project id (for find_mod_in_packs)"),
+        fileType:         z.string().optional().describe("Filter list_pack_files by file type (e.g. mod, resource, config)"),
+        limit:            z.number().optional().describe("Max results for search/featured (default: 20)"),
+        fileTypes:        z.array(z.string()).optional().describe("File types to ingest (default: ['mod','resource'])"),
+        skipServer:       z.boolean().optional().describe("Skip server-only files (default: false)"),
+        skipOptional:     z.boolean().optional().describe("Skip optional files (default: false)"),
+        concurrency:      z.number().optional().describe("Parallel downloads for sync_pack_mods (default: 3)"),
     },
-    async ({ action, namespace, packId, versionId, query, modId, limit, fileTypes, skipServer, skipOptional, concurrency }) => {
+    async ({ action, namespace, packId, versionId, packVersionDbId, query, modId, modDbId, cfProject, fileType, limit, fileTypes, skipServer, skipOptional, concurrency }) => {
         const ns = namespace ?? "ftb";
         let result: unknown;
         switch (action) {
@@ -316,6 +320,17 @@ server.tool(
             case "ftb_mod_info":
                 if (modId === undefined) throw new Error("modId is required for action=ftb_mod_info");
                 result = await ftbModInfoAction(modId);
+                break;
+            case "list_pack_versions":
+                result = await listPackVersionsAction(namespace, packId);
+                break;
+            case "list_pack_files":
+                result = await listPackFilesAction({ packVersionDbId, namespace, packId, versionId, fileType });
+                break;
+            case "find_mod_in_packs":
+                if (modDbId === undefined && cfProject === undefined)
+                    throw new Error("Provide modDbId or cfProject for action=find_mod_in_packs");
+                result = await findModInPacksAction({ modDbId, cfProject });
                 break;
         }
         return out(result);
