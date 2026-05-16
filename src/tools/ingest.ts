@@ -1,6 +1,7 @@
 import { parseJar, computeHashes } from "../processor.js";
-import { lookupBySha512, getProject as getMrProject } from "../modrinth.js";
-import { lookupByFingerprint } from "../curseforge.js";
+import { modrinthPlatformAdapter } from "../modrinth.js";
+import { curseforgePlatformAdapter } from "../curseforge.js";
+import type { PlatformHit } from "../platform-adapter.js";
 import { decompileJar, isDecompileDone } from "../java-tools.js";
 import { indexJar } from "../java-tools.js";
 import { paths, ensureDir } from "../cache.js";
@@ -22,55 +23,21 @@ export type IngestResult =
     | { status: "ingested";          mod: Awaited<ReturnType<typeof findModById>> }
     | { status: "replaced";          mod: Awaited<ReturnType<typeof findModById>>; replacedDbId: number };
 
-// ── Platform lookup result types ─────────────────────────────────────────────
+// ── Platform adapter registry ─────────────────────────────────────────────────
 
-type MrLookupOk  = { platform: "modrinth";   projectId: string; slug?: string; sourceUrl?: string | null };
-type CfLookupOk  = { platform: "curseforge"; projectId: number; slug?: string; sourceUrl?: string };
-type PlatformHit = MrLookupOk | CfLookupOk;
+const PLATFORM_ADAPTERS = [
+    modrinthPlatformAdapter,
+    curseforgePlatformAdapter,
+];
 
 async function lookupPlatforms(
     sha512: string | null,
     murmur2: string | null,
 ): Promise<PlatformHit[]> {
-    const tasks: Promise<PlatformHit | null>[] = [];
-
-    if (sha512) {
-        tasks.push(
-            lookupBySha512(sha512)
-                .then(async (ver) => {
-                    if (!ver) return null;
-                    const proj = await getMrProject(ver.project_id).catch(() => null);
-                    return {
-                        platform: "modrinth" as const,
-                        projectId: ver.project_id,
-                        slug: proj?.slug,
-                        sourceUrl: proj?.source_url,
-                    };
-                })
-                .catch(() => null),
-        );
-    }
-
-    if (murmur2) {
-        const m = parseInt(murmur2, 10);
-        if (!isNaN(m)) {
-            tasks.push(
-                lookupByFingerprint(m)
-                    .then((proj) => {
-                        if (!proj) return null;
-                        return {
-                            platform: "curseforge" as const,
-                            projectId: proj.id,
-                            slug: proj.slug,
-                            sourceUrl: proj.links?.sourceUrl,
-                        };
-                    })
-                    .catch(() => null),
-            );
-        }
-    }
-
-    const results = await Promise.allSettled(tasks);
+    const hashes = { sha512, murmur2 };
+    const results = await Promise.allSettled(
+        PLATFORM_ADAPTERS.map(a => a.lookup(hashes)),
+    );
     return results
         .filter((r): r is PromiseFulfilledResult<PlatformHit | null> => r.status === "fulfilled")
         .map((r) => r.value)

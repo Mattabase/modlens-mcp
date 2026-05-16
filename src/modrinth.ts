@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "./fetch-utils.js";
+import type { PlatformAdapter } from "./platform-adapter.js";
 
 const MODRINTH_BASE = "https://api.modrinth.com/v2";
 const token = process.env.MODRINTH_TOKEN ?? "";
@@ -109,3 +110,19 @@ export async function getProjectVersions(
     if (!res.ok) return [];
     return res.json() as Promise<ModrinthVersion[]>;
 }
+
+export const modrinthPlatformAdapter: PlatformAdapter = {
+    name: "modrinth",
+    async lookup({ sha512 }) {
+        if (!sha512) return null;
+        const ver = await lookupBySha512(sha512).catch(() => null);
+        if (!ver) return null;
+        const proj = await getProject(ver.project_id).catch(() => null);
+        return {
+            platform: "modrinth" as const,
+            projectId: ver.project_id,
+            slug:      proj?.slug,
+            sourceUrl: proj?.source_url,
+        };
+    },
+};

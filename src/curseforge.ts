@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "./fetch-utils.js";
+import type { PlatformAdapter } from "./platform-adapter.js";
 
 const CF_BASE = "https://api.curseforge.com/v1";
 const CF_KEY = process.env.CURSEFORGE_API_KEY ?? "";
@@ -113,3 +114,20 @@ export async function getProjectFiles(
     const data = await res.json() as { data: CFFile[] };
     return data.data;
 }
+
+export const curseforgePlatformAdapter: PlatformAdapter = {
+    name: "curseforge",
+    async lookup({ murmur2 }) {
+        if (!murmur2) return null;
+        const m = parseInt(murmur2, 10);
+        if (isNaN(m)) return null;
+        const proj = await lookupByFingerprint(m).catch(() => null);
+        if (!proj) return null;
+        return {
+            platform: "curseforge" as const,
+            projectId: proj.id,
+            slug:      proj.slug,
+            sourceUrl: proj.links?.sourceUrl,
+        };
+    },
+};
