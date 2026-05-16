@@ -192,3 +192,94 @@ export async function findImplementors(
         implementors:     { count: byInterface.length, classes: byInterface.map(format) },
     };
 }
+
+// ── Registration scanner ───────────────────────────────────────────────────────
+
+/** Known class paths for each registration category, covering NeoForge, Forge, Fabric. */
+const REGISTRATION_TARGETS = {
+    deferredRegister: [
+        "net/neoforged/neoforge/registries/DeferredRegister",
+        "net/minecraftforge/registries/DeferredRegister",
+        "net/fabricmc/fabric/api/object/builder/v1/registry/FabricRegistryBuilder",
+    ],
+    eventHandlers: [
+        "net/neoforged/bus/api/SubscribeEvent",
+        "net/neoforged/fml/common/EventBusSubscriber",
+        "net/minecraftforge/eventbus/api/SubscribeEvent",
+        "net/minecraftforge/fml/common/Mod$EventBusSubscriber",
+    ],
+    commands: [
+        "net/minecraft/commands/Commands",
+        "net/minecraft/commands/CommandSourceStack",
+        "com/mojang/brigadier/CommandDispatcher",
+    ],
+    keybindings: [
+        "net/minecraft/client/KeyMapping",
+        "com/mojang/blaze3d/platform/InputConstants",
+    ],
+    network: [
+        "net/neoforged/neoforge/network/registration/PayloadRegistrar",
+        "net/neoforged/neoforge/network/event/RegisterPayloadHandlersEvent",
+        "net/minecraftforge/network/simple/SimpleChannel",
+        "net/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry",
+    ],
+    config: [
+        "net/neoforged/neoforge/common/ModConfigSpec",
+        "net/minecraftforge/common/ForgeConfigSpec",
+        "me/shedaniel/autoconfig/AutoConfig",
+    ],
+    capabilities: [
+        "net/neoforged/neoforge/capabilities/RegisterCapabilitiesEvent",
+        "net/minecraftforge/event/AttachCapabilitiesEvent",
+        "net/fabricmc/fabric/api/lookup/v1/block/BlockApiLookup",
+    ],
+    lootModifiers: [
+        "net/neoforged/neoforge/common/loot/IGlobalLootModifier",
+        "net/minecraftforge/common/loot/IGlobalLootModifier",
+        "net/fabricmc/fabric/api/loot/v2/LootTableEvents",
+    ],
+    datapackRegistries: [
+        "net/neoforged/neoforge/registries/DataPackRegistriesHooks",
+        "net/neoforged/neoforge/registries/NeoForgeRegistries",
+        "net/neoforged/fml/common/registry/GameRegistry",
+    ],
+};
+
+/**
+ * Scan a mod JAR's class index for registration patterns: DeferredRegister usage,
+ * event handlers, command registrars, keybindings, network payloads, config builders,
+ * capabilities, loot modifiers, and datapack registries.
+ * Uses the JAR index (no decompilation required). Results name the classes involved;
+ * use class_members or get_source to drill down into any of them.
+ */
+export async function scanModRegistrations(dbId: number): Promise<object> {
+    const jarPath = await getModJar(dbId);
+    const index = await indexJar(jarPath);
+
+    const findClasses = (targets: string[]): string[] => {
+        const found = new Set<string>();
+        for (const t of targets) {
+            for (const c of (index.references[t] ?? [])) {
+                found.add(c);
+            }
+        }
+        // Filter out inner classes of the same name (reduce noise; keep if no parent)
+        return [...found].sort();
+    };
+
+    const results: Record<string, { count: number; classes: string[] }> = {};
+    for (const [category, targets] of Object.entries(REGISTRATION_TARGETS)) {
+        const classes = findClasses(targets);
+        if (classes.length > 0) {
+            results[category] = { count: classes.length, classes };
+        }
+    }
+
+    const totalClasses = Object.values(results).reduce((n, r) => n + r.count, 0);
+    return {
+        mod: dbId,
+        totalMatchingClasses: totalClasses,
+        note: "Classes listed reference the registration APIs. Use mod_bytecode class_members or mod source to inspect them further.",
+        registrations: results,
+    };
+}

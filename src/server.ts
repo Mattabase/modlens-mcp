@@ -19,11 +19,13 @@ import {
     listModDamageTypes, getModDamageType,
     getModAtlas,
     listModEnchantments, getModEnchantment,
+    listModGenericDataType, getModGenericDataType,
 } from "./tools/mod-data.js";
 import { getModSource, searchSource, decompileModClass } from "./tools/source.js";
 import {
     searchModClass, getModClassMembers, getModClassBytecode,
     findModReferences, getModInheritance, diffModVersions, findImplementors,
+    scanModRegistrations,
 } from "./tools/bytecode.js";
 import { getMixinTargets, getMixinConflicts, getAtEntries, getAwEntries, resolveMixinTargets } from "./tools/mixins.js";
 import { syncModrinth, syncCurseforge, checkUpdates, downloadSource, batchSyncSources } from "./tools/platform.js";
@@ -177,9 +179,10 @@ server.tool(
     "action=find_refs: find all classes referencing a class/method/field (dbId, target). " +
     "action=inheritance: superclass, interfaces, subclasses, implementors (dbId, className). " +
     "action=diff: added/removed classes between two mod versions (dbIdA, dbIdB). " +
-    "action=find_implementors: find mod classes across DB that extend/implement a target (target, modId, limit).",
+    "action=find_implementors: find mod classes across DB that extend/implement a target (target, modId, limit). " +
+    "action=scan_registrations: scan all classes for registration patterns — DeferredRegister, @SubscribeEvent, commands, keybindings, network payloads, config builders, capabilities, loot modifiers (dbId).",
     {
-        action:    z.enum(["search_class","class_members","bytecode","find_refs","inheritance","diff","find_implementors"]).describe("Operation to perform"),
+        action:    z.enum(["search_class","class_members","bytecode","find_refs","inheritance","diff","find_implementors","scan_registrations"]).describe("Operation to perform"),
         dbId:      z.number().optional().describe("DB id of mod (most actions)"),
         dbIdA:     z.number().optional().describe("Older mod DB id (diff)"),
         dbIdB:     z.number().optional().describe("Newer mod DB id (diff)"),
@@ -199,6 +202,7 @@ server.tool(
             case "inheritance":      result = await getModInheritance(dbId!, className!); break;
             case "diff":             result = await diffModVersions(dbIdA!, dbIdB!); break;
             case "find_implementors":result = await findImplementors(target!, modId, limit); break;
+            case "scan_registrations": result = await scanModRegistrations(dbId!); break;
         }
         return out(result);
     }
@@ -672,7 +676,7 @@ server.tool(
     "action=lang: get translation strings from en_us.json with optional filter (modId, filter, limit). " +
     "action=sounds: get sounds.json — all registered sound events and file mappings (modId, namespace). " +
     "action=atlas: get texture atlas JSON (modId, atlas, namespace). " +
-    "action=registry_entries: list items/blocks/entities registered by a mod via lang key inspection — works without decompilation (modId, type, filter, limit).",
+    "action=registry_entries: list items/blocks/entities/sounds/containers/potions/paintings/attributes/trims/creative tabs/fluids registered by a mod via lang key inspection — works without decompilation (modId, type, filter, limit).",
     {
         action:    z.enum(["list_files","get_file","lang","sounds","atlas","registry_entries"]).describe("Operation to perform"),
         modId:     z.union([z.string(), z.number()]).describe("Mod ID string or numeric DB id"),
@@ -681,7 +685,7 @@ server.tool(
         filter:    z.string().optional().describe("Substring filter on key or value (lang, registry_entries)"),
         namespace: z.string().optional().describe("Namespace override (sounds, atlas)"),
         atlas:     z.string().optional().describe("Atlas name e.g. 'blocks' (atlas)"),
-        type:      z.enum(["item","block","entity_type","enchantment","effect","biome","all"]).optional().describe("Registry type filter (registry_entries, default all)"),
+        type:      z.enum(["item","block","entity_type","enchantment","effect","biome","container","sound","potion","banner_pattern","painting","attribute","trim_material","trim_pattern","creative_tab","jukebox_song","death_message","fluid","all"]).optional().describe("Registry type filter (registry_entries, default all)"),
         limit:     z.number().optional().describe("Max entries (lang, registry_entries)"),
     },
     async ({ action, modId, prefix, path, filter, namespace, atlas, type, limit }) => {
@@ -704,13 +708,15 @@ server.tool(
     "mod_data",
     "Mod JAR structured data content — list or fetch JSON for any data type a mod ships. " +
     "action=list: enumerate all items of a type in the JAR. action=get: fetch full JSON for a specific item. " +
-    "type values: recipe | loot_table | advancement | blockstate | model | biome | structure | data_tag | particle | damage_type | enchantment. " +
+    "type values: recipe | loot_table | advancement | blockstate | model | biome | structure | data_tag | particle | damage_type | enchantment | " +
+    "configured_feature | placed_feature | structure_set | noise | density_function | processor_list | template_pool | " +
+    "dimension_type | dimension | trim_material | trim_pattern | painting_variant | wolf_variant | cat_variant | chat_type. " +
     "Common params: modId (required), namespace (optional scope), filter (list only, substring). " +
     "id: resource id for get, e.g. 'mymod:iron_sword'. modelPath: use instead of id for type=model. " +
     "registry: required for data_tag type, e.g. 'item', 'block', 'entity_type'.",
     {
         action:    z.enum(["list","get"]).describe("list: enumerate items in JAR; get: fetch full JSON"),
-        type:      z.enum(["recipe","loot_table","advancement","blockstate","model","biome","structure","data_tag","particle","damage_type","enchantment"]).describe("Data type to query"),
+        type:      z.enum(["recipe","loot_table","advancement","blockstate","model","biome","structure","data_tag","particle","damage_type","enchantment","configured_feature","placed_feature","structure_set","noise","density_function","processor_list","template_pool","dimension_type","dimension","trim_material","trim_pattern","painting_variant","wolf_variant","cat_variant","chat_type"]).describe("Data type to query"),
         modId:     z.union([z.string(), z.number()]).describe("Mod ID string or numeric DB id"),
         id:        z.string().optional().describe("Resource id for get, e.g. 'mymod:iron_sword' or 'iron_sword'"),
         modelPath: z.string().optional().describe("Model path for type=model get, e.g. 'block/my_block' or 'mymod:item/my_item'"),
@@ -733,6 +739,7 @@ server.tool(
                 case "particle":    result = await listModParticles(modId, namespace, filter); break;
                 case "damage_type": result = await listModDamageTypes(modId, namespace, filter); break;
                 case "enchantment": result = await listModEnchantments(modId, namespace, filter); break;
+                default:            result = await listModGenericDataType(modId, type, namespace, filter); break;
             }
         } else {
             switch (type) {
@@ -747,6 +754,7 @@ server.tool(
                 case "particle":    result = await getModParticle(modId, id!, namespace); break;
                 case "damage_type": result = await getModDamageType(modId, id!, namespace); break;
                 case "enchantment": result = await getModEnchantment(modId, id!, namespace); break;
+                default:            result = await getModGenericDataType(modId, type, id!, namespace); break;
             }
         }
         return out(result);

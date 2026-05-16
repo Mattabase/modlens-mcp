@@ -240,7 +240,12 @@ export async function listModSourceUrls(query?: string): Promise<object> {
 // Lang keys follow the pattern <type>.<modid>.<name>, e.g. item.mymod.my_sword
 // We read the JAR's lang file to enumerate what a mod registers.
 
-type RegistryType = "item" | "block" | "entity_type" | "enchantment" | "effect" | "biome" | "all";
+type RegistryType =
+    | "item" | "block" | "entity_type" | "enchantment" | "effect" | "biome"
+    | "container" | "sound" | "potion" | "banner_pattern" | "painting"
+    | "attribute" | "trim_material" | "trim_pattern" | "creative_tab"
+    | "jukebox_song" | "death_message" | "fluid"
+    | "all";
 
 interface ModRegistryEntry {
     id: string;         // e.g. "mymod:my_sword"
@@ -293,13 +298,25 @@ export async function listModRegistryEntries(
 
     // Key prefixes for each type
     const PREFIX_MAP: Record<RegistryType, string[]> = {
-        item:        ["item."],
-        block:       ["block."],
-        entity_type: ["entity."],
-        enchantment: ["enchantment."],
-        effect:      ["effect."],
-        biome:       ["biome."],
-        all:         [],
+        item:          ["item."],
+        block:         ["block."],
+        entity_type:   ["entity."],
+        enchantment:   ["enchantment."],
+        effect:        ["effect."],
+        biome:         ["biome."],
+        container:     ["container."],
+        sound:         ["subtitles."],
+        potion:        ["potion."],
+        banner_pattern:["banner_pattern."],
+        painting:      ["painting."],
+        attribute:     ["attribute.name."],
+        trim_material: ["trim_material."],
+        trim_pattern:  ["trim_pattern."],
+        creative_tab:  ["itemGroup."],
+        jukebox_song:  ["jukebox_song."],
+        death_message: ["death.attack."],
+        fluid:         ["fluid.", "fluid_type."],
+        all:           [],
     };
 
     const prefixes = PREFIX_MAP[type] ?? [];

@@ -769,3 +769,102 @@ export async function getModEnchantment(
         note: "Not present as a data file. Use list_mod_registry_entries with type='enchantment' to list enchantments from the lang file.",
     };
 }
+
+// ── Generic data-path helpers (worldgen, dimension, variants, etc.) ───────────
+
+/**
+ * Maps mod_data type names → list of candidate subdirectory paths under data/<ns>/.
+ * Some types have alternate folder names for compatibility across MC versions.
+ */
+export const GENERIC_DATA_DIRS: Record<string, string[]> = {
+    configured_feature:  ["worldgen/configured_feature"],
+    placed_feature:      ["worldgen/placed_feature"],
+    structure_set:       ["worldgen/structure_set"],
+    noise:               ["worldgen/noise"],
+    density_function:    ["worldgen/density_function"],
+    processor_list:      ["worldgen/processor_list"],
+    template_pool:       ["worldgen/template_pool"],
+    dimension_type:      ["dimension_type"],
+    dimension:           ["dimension"],
+    trim_material:       ["trim_material"],
+    trim_pattern:        ["trim_pattern"],
+    painting_variant:    ["painting_variant"],
+    wolf_variant:        ["wolf_variant"],
+    cat_variant:         ["cat_variant"],
+    chat_type:           ["chat_type"],
+};
+
+export async function listModGenericDataType(
+    modId: string | number,
+    typeKey: string,
+    namespace?: string,
+    filter?: string,
+): Promise<object> {
+    const mod = await resolveMod(modId);
+    if (!mod) return { error: `Mod not found: ${modId}` };
+
+    const dirs = GENERIC_DATA_DIRS[typeKey];
+    if (!dirs) return { error: `Unknown data type: ${typeKey}` };
+
+    let entries: string[] = [];
+
+    if (namespace) {
+        for (const dir of dirs) {
+            entries.push(...listJsonEntries(mod.jarPath, `data/${namespace}/${dir}/`));
+        }
+    }
+
+    if (entries.length === 0) {
+        const allNs = detectNamespaces(mod.jarPath, "data");
+        for (const ns of allNs) {
+            for (const dir of dirs) {
+                entries.push(...listJsonEntries(mod.jarPath, `data/${ns}/${dir}/`));
+            }
+        }
+    }
+
+    if (filter) {
+        const f = filter.toLowerCase();
+        entries = entries.filter(e => e.toLowerCase().includes(f));
+    }
+
+    const ids = entries.map(e => {
+        // data/<ns>/<dir>/[sub/]name.json → ns:dir/[sub/]name
+        const m = e.match(/^data\/([^/]+)\/(.+?)\.json$/);
+        if (!m) return e;
+        // Strip the type dir prefix to get just the resource path
+        const fullPath = m[2]; // e.g. worldgen/configured_feature/my_feature
+        // Find which dir prefix applies
+        for (const dir of dirs) {
+            if (fullPath.startsWith(dir + "/")) {
+                return `${m[1]}:${fullPath.slice(dir.length + 1)}`;
+            }
+        }
+        return `${m[1]}:${fullPath}`;
+    });
+
+    return { mod: mod.modId, type: typeKey, count: ids.length, entries: ids };
+}
+
+export async function getModGenericDataType(
+    modId: string | number,
+    typeKey: string,
+    id: string,
+    namespace?: string,
+): Promise<object> {
+    const mod = await resolveMod(modId);
+    if (!mod) return { error: `Mod not found: ${modId}` };
+
+    const dirs = GENERIC_DATA_DIRS[typeKey];
+    if (!dirs) return { error: `Unknown data type: ${typeKey}` };
+
+    const ns = namespace ?? (id.includes(":") ? id.split(":")[0] : mod.modId);
+    const path = id.includes(":") ? id.split(":")[1] : id;
+
+    for (const dir of dirs) {
+        const data = readJson(mod.jarPath, `data/${ns}/${dir}/${path}.json`);
+        if (data) return { mod: mod.modId, type: typeKey, id: `${ns}:${path}`, data };
+    }
+
+    return { mod: mod.modId, type: typeKey, id, found: false };
+}
