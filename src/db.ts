@@ -22,10 +22,22 @@ export async function getDb(): Promise<PrismaClient> {
     }
 
     if (backend === "pglite") {
-        // Wired in P3
-        throw new Error(
-            `PGlite backend not yet supported. Run \`npm run setup\` to switch backends.`,
-        );
+        const { PGlite } = await import("@electric-sql/pglite");
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore — optional peer dep, present only at runtime on supported platforms
+        const { PrismaPGlite } = await import("@prisma/adapter-pglite");
+        // pglite:///absolute/path → /absolute/path
+        // pglite://relative/path  → relative/path
+        const dataDir = (process.env.DATABASE_URL ?? "").replace(/^pglite:\/\//, "");
+        if (!dataDir) {
+            throw new Error(
+                "DATABASE_URL for PGlite must be pglite:///path/to/data — data directory path is empty.",
+            );
+        }
+        const pg = await PGlite.create(dataDir);
+        const adapter = new PrismaPGlite(pg);
+        _client = new PrismaClient({ adapter });
+        return _client;
     }
 
     _client = new PrismaClient({
