@@ -167,9 +167,76 @@ function writeMcpConfig(filePath: string, serverEntry: Record<string, unknown>):
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-p.intro(" modlens setup wizard ");
+// Detect whether this is a fresh install or a reconfigure run
+const existingEnv = readEnv();
+const isReconfigure = existsSync(ENV_PATH);
 
-// ── Step 1: Check Docker ──────────────────────────────────────────────────────
+if (isReconfigure) {
+    p.intro(" modlens — reconfigure ");
+    const lines: string[] = [];
+    if (existingEnv.DATABASE_URL)       lines.push(`  DATABASE_URL:       ${existingEnv.DATABASE_URL}`);
+    if (existingEnv.OLLAMA_URL)         lines.push(`  OLLAMA_URL:         ${existingEnv.OLLAMA_URL}`);
+    if (existingEnv.OLLAMA_EMBED_MODEL) lines.push(`  OLLAMA_EMBED_MODEL: ${existingEnv.OLLAMA_EMBED_MODEL}`);
+    if (existingEnv.CURSEFORGE_API_KEY) lines.push(`  CURSEFORGE_API_KEY: (configured)`);
+    if (existingEnv.MODRINTH_TOKEN)     lines.push(`  MODRINTH_TOKEN:     (configured)`);
+    if (lines.length) p.log.message("Current config:\n" + lines.join("\n"));
+} else {
+    p.intro(" modlens setup wizard ");
+}
+
+// ── Section selection ─────────────────────────────────────────────────────────
+type Section = "containers" | "semantic" | "schema" | "pgvector" | "seed" | "backfill" | "mcp";
+const ALL_SECTIONS: Section[] = ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"];
+
+let sections: Set<Section>;
+
+if (!isReconfigure) {
+    // Fresh install: run all steps
+    sections = new Set(ALL_SECTIONS);
+} else {
+    const wizardMode = await p.select({
+        message: "What would you like to do?",
+        options: [
+            { value: "full", label: "Full wizard  — re-run all steps", hint: "safe for upgrades, all ops are idempotent" },
+            { value: "pick", label: "Pick tasks  — choose which steps to run" },
+        ],
+    });
+    checkCancel(wizardMode);
+
+    if (wizardMode === "full") {
+        sections = new Set(ALL_SECTIONS);
+    } else {
+        const hasSemantic = !!existingEnv.OLLAMA_URL;
+        const selected = await p.multiselect<Section>({
+            message: "Select sections to run  (space to toggle, enter to confirm)",
+            options: [
+                { value: "containers", label: "Start / verify Docker containers" },
+                { value: "semantic",   label: "Semantic search config",
+                  hint: hasSemantic ? `current: ${existingEnv.OLLAMA_URL}` : "not configured — add Ollama" },
+                { value: "schema",     label: "Re-apply Prisma schema" },
+                { value: "pgvector",   label: "pgvector extension + embedding columns",
+                  hint: hasSemantic ? "already enabled" : "required for semantic search" },
+                { value: "seed",       label: "Re-seed default docs and primers" },
+                { value: "backfill",   label: "Re-generate embeddings (docs + primers)",
+                  hint: hasSemantic ? "" : "requires Ollama" },
+                { value: "mcp",        label: "Update MCP client config" },
+            ],
+            // Pre-select semantic+pgvector+backfill when Ollama hasn't been configured yet
+            initialValues: hasSemantic ? [] : (["semantic", "pgvector", "backfill"] as Section[]),
+            required: false,
+        });
+        checkCancel(selected);
+        sections = new Set(selected as unknown as Section[]);
+    }
+
+    if (sections.size === 0) {
+        p.outro("Nothing selected — no changes made.");
+        await disconnect();
+        process.exit(0);
+    }
+}
+
+// ── Check Docker (always required) ───────────────────────────────────────────
 {
     const s = p.spinner();
     s.start("Checking Docker");
@@ -182,58 +249,79 @@ p.intro(" modlens setup wizard ");
     s.stop("Docker is running");
 }
 
-// ── Step 2: Semantic search / Ollama ─────────────────────────────────────────
-const wantSemantic = await p.confirm({
-    message: "Enable semantic search? (Ollama + pgvector — optional but recommended)",
-    initialValue: true,
-});
-checkCancel(wantSemantic);
+// ── Semantic search / Ollama config ──────────────────────────────────────────
+// Initialise from existing .env so non-semantic sections can read these
+let wantSemantic: boolean = !!existingEnv.OLLAMA_URL;
+let ollamaUrl: string = existingEnv.OLLAMA_URL ?? "http://localhost:11434";
+let embedModel: string = existingEnv.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+let ollamaMode: string = "skip"; // "docker" | "local" | "remote" | "skip"
 
-let ollamaUrl = "http://localhost:11434";
-let embedModel = "nomic-embed-text";
-
-if (wantSemantic) {
-    // Ask how to run Ollama
-    const ollamaMode = await p.select({
-        message: "How should Ollama run?",
-        options: [
-            { value: "docker",  label: "Docker  (managed by this project's docker-compose — easiest)", hint: "recommended" },
-            { value: "local",   label: "Local install  (Ollama already installed on this machine)" },
-            { value: "remote",  label: "Remote  (Ollama running on another machine)" },
-        ],
+if (sections.has("semantic")) {
+    const answer = await p.confirm({
+        message: "Enable semantic search? (Ollama + pgvector — optional but recommended)",
+        initialValue: wantSemantic,
     });
-    checkCancel(ollamaMode);
+    checkCancel(answer);
+    wantSemantic = answer as boolean;
 
-    if (ollamaMode === "remote") {
-        const url = await p.text({
-            message: "Ollama base URL",
-            placeholder: "http://192.168.1.x:11434",
-            validate: v => (v ?? "").startsWith("http") ? undefined : "Must start with http:// or https://",
+    if (wantSemantic) {
+        const mode = await p.select({
+            message: "How should Ollama run?",
+            options: [
+                { value: "docker", label: "Docker  (managed by this project's docker-compose — easiest)", hint: "recommended" },
+                { value: "local",  label: "Local install  (Ollama already installed on this machine)" },
+                { value: "remote", label: "Remote  (Ollama running on another machine)" },
+            ],
         });
-        checkCancel(url);
-        ollamaUrl = url as string;
-    }
+        checkCancel(mode);
+        ollamaMode = mode as string;
 
-    const modelChoice = await p.select({
-        message: "Embedding model",
-        options: [
-            { value: "nomic-embed-text", label: "nomic-embed-text  (768-dim, fast, good quality)", hint: "recommended" },
-            { value: "mxbai-embed-large", label: "mxbai-embed-large  (1024-dim, higher quality, slower)" },
-            { value: "custom", label: "Custom model name" },
-        ],
-    });
-    checkCancel(modelChoice);
+        if (ollamaMode === "remote") {
+            const existingRemote = existingEnv.OLLAMA_URL?.startsWith("http://localhost") ||
+                                   existingEnv.OLLAMA_URL?.startsWith("http://127") ? "" : (existingEnv.OLLAMA_URL ?? "");
+            const url = await p.text({
+                message: "Ollama base URL",
+                placeholder: "http://192.168.1.x:11434",
+                initialValue: existingRemote,
+                validate: v => (v ?? "").startsWith("http") ? undefined : "Must start with http:// or https://",
+            });
+            checkCancel(url);
+            ollamaUrl = url as string;
+        }
 
-    if (modelChoice === "custom") {
-        const custom = await p.text({ message: "Model name (as shown in `ollama list`)" });
-        checkCancel(custom);
-        embedModel = custom as string;
+        const modelChoice = await p.select({
+            message: "Embedding model",
+            options: [
+                { value: "nomic-embed-text",  label: "nomic-embed-text  (768-dim, fast, good quality)", hint: "recommended" },
+                { value: "mxbai-embed-large", label: "mxbai-embed-large  (1024-dim, higher quality, slower)" },
+                { value: "custom",            label: "Custom model name" },
+            ],
+        });
+        checkCancel(modelChoice);
+
+        if (modelChoice === "custom") {
+            const custom = await p.text({
+                message: "Model name (as shown in `ollama list`)",
+                initialValue: existingEnv.OLLAMA_EMBED_MODEL ?? "",
+            });
+            checkCancel(custom);
+            embedModel = custom as string;
+        } else {
+            embedModel = modelChoice as string;
+        }
     } else {
-        embedModel = modelChoice as string;
+        ollamaMode = "skip";
     }
+} else if (wantSemantic) {
+    // Semantic not reconfigured — infer ollamaMode from existing URL for container startup
+    ollamaMode = existingEnv.OLLAMA_URL?.startsWith("http://localhost") || existingEnv.OLLAMA_URL?.startsWith("http://127")
+        ? "docker"   // assume Docker-managed; --profile semantic is idempotent
+        : "remote";  // remote Ollama — don't need to start local container
+}
 
-    // Start Docker containers (with semantic profile if using Docker Ollama)
-    const profile = ollamaMode === "docker" ? "--profile semantic" : "";
+// ── Start Docker containers ───────────────────────────────────────────────────
+if (sections.has("containers")) {
+    const profile = wantSemantic && ollamaMode === "docker" ? "--profile semantic" : "";
     {
         const s = p.spinner();
         s.start("Starting Docker containers");
@@ -246,78 +334,79 @@ if (wantSemantic) {
         s.stop("Containers started");
     }
 
-    // Wait for Ollama to be ready
-    if (ollamaMode === "docker" || ollamaMode === "local") {
+    // Wait for Ollama (only when we just started or reconfigured it)
+    if (wantSemantic && (ollamaMode === "docker" || ollamaMode === "local")) {
         const s = p.spinner();
         s.start(`Waiting for Ollama at ${ollamaUrl}`);
         const ready = await waitForHttp(`${ollamaUrl}/api/tags`, ollamaMode === "docker" ? 60_000 : 10_000);
         if (!ready) {
             s.error("Ollama did not respond in time");
-            if (ollamaMode === "local") {
-                p.log.warn("Make sure Ollama is running: `ollama serve`");
-            }
-            const cont = await p.confirm({ message: "Continue anyway (skip embedding setup)?" });
+            if (ollamaMode === "local") p.log.warn("Make sure Ollama is running: `ollama serve`");
+            const cont = await p.confirm({ message: "Continue anyway (skip model pull)?" });
             checkCancel(cont);
             if (!cont) process.exit(1);
         } else {
             s.stop("Ollama is ready");
-            // Pull the model
             const s2 = p.spinner();
             s2.start(`Pulling model ${embedModel} (may take a few minutes on first run)`);
             const ok = await pullOllamaModel(ollamaUrl, embedModel);
-            s2.stop(ok ? `Model ${embedModel} ready` : `Pull may not have completed — check with: docker exec modlens-ollama ollama list`);
+            s2.stop(ok
+                ? `Model ${embedModel} ready`
+                : `Pull may not have completed — check with: docker exec modlens-ollama ollama list`);
         }
     }
-} else {
-    // No semantic — just start postgres
-    const s = p.spinner();
-    s.start("Starting PostgreSQL container");
-    const up = run("docker compose up -d");
-    if (!up.ok) {
-        s.error("Failed to start container");
-        p.log.error(up.out);
-        process.exit(1);
+
+    // Wait for PostgreSQL
+    {
+        const s = p.spinner();
+        s.start("Waiting for PostgreSQL");
+        let healthy = false;
+        const deadline = Date.now() + 30_000;
+        while (Date.now() < deadline) {
+            const r = run("docker exec modlens-postgres pg_isready -U modlens", { silent: true });
+            if (r.ok) { healthy = true; break; }
+            await new Promise(r2 => setTimeout(r2, 1000));
+        }
+        s.stop(healthy ? "PostgreSQL is ready" : "PostgreSQL health check timed out — continuing anyway");
     }
-    s.stop("PostgreSQL container started");
+} else if (sections.has("semantic") && wantSemantic && ollamaMode === "docker") {
+    // Semantic config changed to Docker Ollama but containers section wasn't selected — start quietly
+    const s = p.spinner();
+    s.start("Starting containers with semantic profile");
+    const up = run("docker compose --profile semantic up -d");
+    s.stop(up.ok ? "Containers updated" : "Container update had warnings — run: docker compose --profile semantic up -d");
+
+    const s2 = p.spinner();
+    s2.start(`Waiting for Ollama at ${ollamaUrl}`);
+    const ready = await waitForHttp(`${ollamaUrl}/api/tags`, 60_000);
+    if (ready) {
+        s2.stop("Ollama is ready");
+        const s3 = p.spinner();
+        s3.start(`Pulling model ${embedModel}`);
+        const ok = await pullOllamaModel(ollamaUrl, embedModel);
+        s3.stop(ok ? `Model ${embedModel} ready` : "Pull may not have completed");
+    } else {
+        s2.stop("Ollama did not respond — continuing");
+    }
 }
 
-// ── Step 3: Wait for Postgres ─────────────────────────────────────────────────
-{
-    const s = p.spinner();
-    s.start("Waiting for PostgreSQL to be healthy");
-    const ready = await waitForHttp("http://localhost:5433", 30_000).catch(() => false);
-    // pg_isready is more reliable than HTTP
-    let healthy = false;
-    const deadline = Date.now() + 30_000;
-    while (Date.now() < deadline) {
-        const r = run("docker exec modlens-postgres pg_isready -U modlens", { silent: true });
-        if (r.ok) { healthy = true; break; }
-        await new Promise(r2 => setTimeout(r2, 1000));
-    }
-    s.stop(healthy ? "PostgreSQL is ready" : "PostgreSQL health check timed out — continuing anyway");
-}
-
-// ── Step 4: Write .env ────────────────────────────────────────────────────────
-{
-    const existing = readEnv();
+// ── Write .env ────────────────────────────────────────────────────────────────
+if (sections.has("semantic") || sections.has("containers") || !isReconfigure) {
     const env: Record<string, string> = {
-        DATABASE_URL: existing.DATABASE_URL ?? "postgresql://modlens:modlens@localhost:5433/modlens",
+        DATABASE_URL: existingEnv.DATABASE_URL ?? "postgresql://modlens:modlens@localhost:5433/modlens",
         ...(wantSemantic ? {
-            OLLAMA_URL: ollamaUrl,
+            OLLAMA_URL:        ollamaUrl,
             OLLAMA_EMBED_MODEL: embedModel,
         } : {}),
     };
-
-    // Preserve any existing API keys
-    if (existing.CURSEFORGE_API_KEY) env.CURSEFORGE_API_KEY = existing.CURSEFORGE_API_KEY;
-    if (existing.MODRINTH_TOKEN)     env.MODRINTH_TOKEN     = existing.MODRINTH_TOKEN;
-
+    if (existingEnv.CURSEFORGE_API_KEY) env.CURSEFORGE_API_KEY = existingEnv.CURSEFORGE_API_KEY;
+    if (existingEnv.MODRINTH_TOKEN)     env.MODRINTH_TOKEN     = existingEnv.MODRINTH_TOKEN;
     writeEnv(env);
     p.log.success(".env written");
 }
 
-// ── Step 5: Prisma schema ─────────────────────────────────────────────────────
-{
+// ── Prisma schema ─────────────────────────────────────────────────────────────
+if (sections.has("schema")) {
     const s = p.spinner();
     s.start("Applying database schema (prisma db push)");
     const r = run("npx prisma db push --skip-generate", { silent: true });
@@ -329,121 +418,131 @@ if (wantSemantic) {
     s.stop("Database schema applied");
 }
 
-// ── Step 6: pgvector + embedding columns ─────────────────────────────────────
-if (wantSemantic) {
-    const s = p.spinner();
-    s.start("Enabling pgvector extension and adding embedding columns");
-    const r = run("node scripts/enable-pgvector.mjs");
-    if (!r.ok) {
-        s.error("pgvector setup failed");
-        p.log.error(r.out.slice(0, 500));
-        p.log.warn("You can retry manually: npm run db:vector");
+// ── pgvector + embedding columns ──────────────────────────────────────────────
+if (sections.has("pgvector")) {
+    if (!wantSemantic) {
+        p.log.warn("pgvector skipped — semantic search is not enabled");
     } else {
-        s.stop("pgvector ready");
-    }
-}
-
-// ── Step 7: Seed + backfill ───────────────────────────────────────────────────
-const wantSeed = await p.confirm({
-    message: "Seed default documentation and migration primers?",
-    initialValue: true,
-});
-checkCancel(wantSeed);
-
-if (wantSeed) {
-    const s = p.spinner();
-    s.start("Seeding docs and primers");
-    try {
-        await seedDefaultDocumentation();
-        await seedDefaultPrimers();
-        s.stop("Docs and primers seeded");
-    } catch (e) {
-        s.stop("Seed had warnings (data may already exist — that is fine)");
-    }
-}
-
-if (wantSemantic) {
-    const wantBackfill = await p.confirm({
-        message: "Embed existing docs and primers now for semantic search?",
-        initialValue: true,
-    });
-    checkCancel(wantBackfill);
-    if (wantBackfill) {
         const s = p.spinner();
-        s.start("Generating embeddings (docs + primers)");
-        try {
-            await backfillDocEmbeddings();
-            await backfillPrimerEmbeddings();
-            s.stop("Embeddings generated");
-        } catch {
-            s.stop("Backfill had errors — run `node dist/cli.js backfill-embeddings` to retry");
+        s.start("Enabling pgvector extension and adding embedding columns");
+        const r = run("node scripts/enable-pgvector.mjs");
+        if (!r.ok) {
+            s.error("pgvector setup failed");
+            p.log.error(r.out.slice(0, 500));
+            p.log.warn("You can retry manually: npm run db:vector");
+        } else {
+            s.stop("pgvector ready");
         }
     }
 }
 
-// ── Step 8: MCP client config ─────────────────────────────────────────────────
-const serverPath = join(ROOT, "dist", "server.js").replace(/\\/g, "/");
-const envVars: Record<string, string> = {
-    DATABASE_URL: "postgresql://modlens:modlens@localhost:5433/modlens",
-    ...(wantSemantic ? { OLLAMA_URL: ollamaUrl, OLLAMA_EMBED_MODEL: embedModel } : {}),
-};
+// ── Seed docs + primers ───────────────────────────────────────────────────────
+if (sections.has("seed")) {
+    const wantSeed = await p.confirm({
+        message: isReconfigure
+            ? "Re-seed default docs and primers? (safe — uses upsert, will not delete custom entries)"
+            : "Seed default documentation and migration primers?",
+        initialValue: true,
+    });
+    checkCancel(wantSeed);
 
-const mcpClient = await p.select({
-    message: "Configure MCP client?",
-    options: [
-        { value: "vscode",   label: "VS Code (user-level mcp.json)" },
-        { value: "claude",   label: "Claude Desktop" },
-        { value: "show",     label: "Show config snippet — I'll add it myself" },
-        { value: "skip",     label: "Skip" },
-    ],
-});
-checkCancel(mcpClient);
+    if (wantSeed) {
+        const s = p.spinner();
+        s.start("Seeding docs and primers");
+        try {
+            await seedDefaultDocumentation();
+            await seedDefaultPrimers();
+            s.stop("Docs and primers seeded");
+        } catch {
+            s.stop("Seed had warnings (data may already exist — that is fine)");
+        }
+    }
+}
 
-const vscodeEntry = {
-    type: "stdio",
-    command: "node",
-    args: [serverPath],
-    env: envVars,
-};
+// ── Embedding backfill ────────────────────────────────────────────────────────
+if (sections.has("backfill")) {
+    if (!wantSemantic) {
+        p.log.warn("Embedding backfill skipped — semantic search is not enabled");
+    } else {
+        const wantBackfill = await p.confirm({
+            message: isReconfigure
+                ? "Re-generate embeddings for docs and primers? (overwrites existing)"
+                : "Embed existing docs and primers now for semantic search?",
+            initialValue: true,
+        });
+        checkCancel(wantBackfill);
 
-const claudeEntry = {
-    command: "node",
-    args: [serverPath],
-    env: envVars,
-};
+        if (wantBackfill) {
+            const s = p.spinner();
+            s.start("Generating embeddings (docs + primers)");
+            try {
+                await backfillDocEmbeddings();
+                await backfillPrimerEmbeddings();
+                s.stop("Embeddings generated");
+            } catch {
+                s.stop("Backfill had errors — run `node dist/cli.js backfill-embeddings` to retry");
+            }
+        }
+    }
+}
 
-if (mcpClient === "vscode") {
-    const mcpPath = vscodeUserMcpPath();
-    if (!mcpPath) {
-        p.log.warn("Could not find VS Code user directory — showing snippet instead.");
+// ── MCP client config ─────────────────────────────────────────────────────────
+if (sections.has("mcp")) {
+    const serverPath = join(ROOT, "dist", "server.js").replace(/\\/g, "/");
+    const envVars: Record<string, string> = {
+        DATABASE_URL: existingEnv.DATABASE_URL ?? "postgresql://modlens:modlens@localhost:5433/modlens",
+        ...(wantSemantic ? { OLLAMA_URL: ollamaUrl, OLLAMA_EMBED_MODEL: embedModel } : {}),
+    };
+
+    const vscodeEntry = { type: "stdio", command: "node", args: [serverPath], env: envVars };
+    const claudeEntry = { command: "node", args: [serverPath], env: envVars };
+
+    const mcpClient = await p.select({
+        message: "Configure MCP client?",
+        options: [
+            { value: "vscode", label: "VS Code (user-level mcp.json)" },
+            { value: "claude", label: "Claude Desktop" },
+            { value: "show",   label: "Show config snippet — I'll add it myself" },
+            { value: "skip",   label: "Skip" },
+        ],
+    });
+    checkCancel(mcpClient);
+
+    if (mcpClient === "vscode") {
+        const mcpPath = vscodeUserMcpPath();
+        if (!mcpPath) {
+            p.log.warn("Could not find VS Code user directory — showing snippet instead.");
+            p.log.info(JSON.stringify({ servers: { modlens: vscodeEntry } }, null, 2));
+        } else {
+            const ok = writeMcpConfig(mcpPath, vscodeEntry);
+            if (ok) p.log.success(`Written to ${mcpPath}`);
+            else p.log.warn(`Failed to write to ${mcpPath} — add manually.`);
+        }
+    } else if (mcpClient === "claude") {
+        const cfgPath = claudeDesktopConfigPath();
+        if (!cfgPath) {
+            p.log.warn("Could not find Claude Desktop config path — showing snippet instead.");
+            p.log.info(JSON.stringify({ mcpServers: { modlens: claudeEntry } }, null, 2));
+        } else {
+            const ok = writeMcpConfig(cfgPath, claudeEntry);
+            if (ok) p.log.success(`Written to ${cfgPath}`);
+            else p.log.warn(`Failed to write to ${cfgPath} — add manually.`);
+        }
+    } else if (mcpClient === "show") {
+        p.log.message("\n── VS Code (mcp.json) ──");
         p.log.info(JSON.stringify({ servers: { modlens: vscodeEntry } }, null, 2));
-    } else {
-        const ok = writeMcpConfig(mcpPath, vscodeEntry);
-        if (ok) p.log.success(`Written to ${mcpPath}`);
-        else p.log.warn(`Failed to write to ${mcpPath} — add manually.`);
-    }
-} else if (mcpClient === "claude") {
-    const cfgPath = claudeDesktopConfigPath();
-    if (!cfgPath) {
-        p.log.warn("Could not find Claude Desktop config path — showing snippet instead.");
+        p.log.message("\n── Claude Desktop ──");
         p.log.info(JSON.stringify({ mcpServers: { modlens: claudeEntry } }, null, 2));
-    } else {
-        const ok = writeMcpConfig(cfgPath, claudeEntry);
-        if (ok) p.log.success(`Written to ${cfgPath}`);
-        else p.log.warn(`Failed to write to ${cfgPath} — add manually.`);
     }
-} else if (mcpClient === "show") {
-    p.log.message("\n── VS Code (mcp.json) ──");
-    p.log.info(JSON.stringify({ servers: { modlens: vscodeEntry } }, null, 2));
-    p.log.message("\n── Claude Desktop ──");
-    p.log.info(JSON.stringify({ mcpServers: { modlens: claudeEntry } }, null, 2));
 }
 
 // ── Done ──────────────────────────────────────────────────────────────────────
 p.outro(
-    wantSemantic
-        ? "modlens is ready with semantic search! Restart your MCP client to pick up the server."
-        : "modlens is ready! Restart your MCP client to pick up the server.",
+    isReconfigure
+        ? "Done! Restart your MCP client if you changed the server config."
+        : wantSemantic
+            ? "modlens is ready with semantic search! Restart your MCP client to pick up the server."
+            : "modlens is ready! Restart your MCP client to pick up the server.",
 );
 
 await disconnect();
