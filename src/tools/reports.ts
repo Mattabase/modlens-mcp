@@ -23,6 +23,7 @@ import { compareGradleDeps } from "./gradle.js";
 import { getMixinConflicts } from "./mixins.js";
 import { findAtAwConflicts } from "./mixins.js";
 import { findTagConflicts as _ftc } from "./mod-tags.js";
+import { analyzePackSidedness, computeModComplexity, computePackChangelog } from "./packtools.js";
 
 // ── Markdown helpers ──────────────────────────────────────────────────────────
 
@@ -264,7 +265,10 @@ export type ReportType =
     | "mod_overview"
     | "gradle_deps"
     | "pack_compat"
-    | "dep_graph";
+    | "dep_graph"
+    | "sidedness"
+    | "mod_complexity"
+    | "pack_changelog";
 
 async function reportPackCompat(opts: { mcVersion?: string; loader?: string; dbIds?: number[] }): Promise<string> {
     // Run all relevant checks concurrently
@@ -443,6 +447,119 @@ async function reportDepGraph(opts: { mcVersion?: string; modId?: string | numbe
     return md;
 }
 
+async function reportSidedness(opts: { mcVersion?: string; loader?: string }): Promise<string> {
+    const data = await analyzePackSidedness(opts.mcVersion, opts.loader) as {
+        mcVersion: string; loader: string;
+        summary: { client_only: number; server_only: number; client_optional: number; common: number; unknown: number; total: number };
+        note: string;
+        grouped: Record<string, Array<{ mod: string; display: string; version: string; source: string; evidence: string }>>;
+    };
+
+    let md = h1("Mod Sidedness Report");
+    md += `${timestamp()}\n`;
+    if (opts.mcVersion) md += `MC version: ${code(opts.mcVersion)}\n`;
+    if (opts.loader)    md += `Loader: ${code(opts.loader)}\n`;
+
+    md += h2("Summary");
+    md += `| Category | Count |\n|---|---|\n`;
+    md += `| Client-only (safe to remove from server) | ${bold(String(data.summary.client_only))} |\n`;
+    md += `| Client-optional (not required on server)  | ${bold(String(data.summary.client_optional))} |\n`;
+    md += `| Common (required on both sides)           | ${bold(String(data.summary.common))} |\n`;
+    md += `| Server-only (not needed on client)        | ${bold(String(data.summary.server_only))} |\n`;
+    md += `| Unknown                                   | ${bold(String(data.summary.unknown))} |\n`;
+    md += `| **Total**                                 | ${bold(String(data.summary.total))} |\n\n`;
+    md += `> ${data.note}\n`;
+
+    for (const [category, mods] of Object.entries(data.grouped)) {
+        if (mods.length === 0) continue;
+        const label = category === "client_only"     ? "Client-Only Mods"
+                    : category === "client_optional" ? "Client-Optional Mods"
+                    : category === "server_only"     ? "Server-Only Mods"
+                    : category === "common"          ? "Common Mods (required both sides)"
+                    : "Unknown Sidedness";
+        md += h2(`${label} (${mods.length})`);
+        md += tableHeader(["Mod", "Version", "Detection Source", "Evidence"]);
+        for (const m of mods) {
+            md += "\n" + tableRow([code(m.mod), m.version, m.source, m.evidence]);
+        }
+        md += "\n";
+    }
+    return md;
+}
+
+async function reportModComplexity(opts: { mcVersion?: string; loader?: string }): Promise<string> {
+    const data = await computeModComplexity(opts.mcVersion, opts.loader) as {
+        mcVersion: string; loader: string; note: string;
+        mods: Array<{ mod: string; display: string; version: string; loader: string; classCount: number; mixinCount: number; atCount: number; awCount: number; score: number }>;
+    };
+
+    let md = h1("Mod Complexity Report");
+    md += `${timestamp()}\n`;
+    if (opts.mcVersion) md += `MC version: ${code(opts.mcVersion)}\n`;
+    if (opts.loader)    md += `Loader: ${code(opts.loader)}\n`;
+    md += `\n> ${data.note}\n`;
+
+    md += h2(`Complexity Rankings (${data.mods.length} mods, highest first)`);
+    md += tableHeader(["Rank", "Mod", "Version", "Score", "Classes", "Mixin Targets", "AT Entries", "AW Entries"]);
+    for (let i = 0; i < data.mods.length; i++) {
+        const m = data.mods[i];
+        md += "\n" + tableRow([String(i + 1), code(m.mod), m.version, bold(String(m.score)), String(m.classCount), String(m.mixinCount), String(m.atCount), String(m.awCount)]);
+    }
+    md += "\n";
+
+    // Top-5 callout
+    const top5 = data.mods.slice(0, 5);
+    if (top5.length > 0) {
+        md += h2("Top 5 Heaviest Mods");
+        md += `These mods have the largest class-transformer / mixin footprint:\n\n`;
+        for (const m of top5) {
+            md += `- ${bold(code(m.mod))} — score ${bold(String(m.score))}: ${m.classCount} classes, ${m.mixinCount} mixin targets, ${m.atCount + m.awCount} AT/AW entries\n`;
+        }
+    }
+    return md;
+}
+
+async function reportPackChangelog(opts: { oldIds?: number[]; newIds?: number[] }): Promise<string> {
+    if (!opts.oldIds?.length || !opts.newIds?.length) {
+        return "# Pack Changelog\n\nError: both oldIds and newIds are required.\n";
+    }
+    const data = await computePackChangelog(opts.oldIds, opts.newIds) as {
+        summary: { added: number; removed: number; updated: number };
+        oldPackSize: number; newPackSize: number;
+        added:   Array<{ mod: string; display: string; version: string }>;
+        removed: Array<{ mod: string; display: string; version: string }>;
+        updated: Array<{ mod: string; display: string; oldVersion: string; newVersion: string }>;
+    };
+
+    let md = h1("Pack Changelog");
+    md += `${timestamp()}\n`;
+    md += `\nOld pack: ${bold(String(data.oldPackSize))} mods → New pack: ${bold(String(data.newPackSize))} mods\n`;
+    md += h2("Summary");
+    md += `- ✅ Added: ${bold(String(data.summary.added))}\n`;
+    md += `- ❌ Removed: ${bold(String(data.summary.removed))}\n`;
+    md += `- 🔄 Updated: ${bold(String(data.summary.updated))}\n`;
+
+    if (data.added.length > 0) {
+        md += h2(`Added Mods (${data.added.length})`);
+        md += tableHeader(["Mod", "Display Name", "Version"]);
+        for (const m of data.added) md += "\n" + tableRow([code(m.mod), m.display, m.version]);
+        md += "\n";
+    }
+    if (data.removed.length > 0) {
+        md += h2(`Removed Mods (${data.removed.length})`);
+        md += tableHeader(["Mod", "Display Name", "Last Version"]);
+        for (const m of data.removed) md += "\n" + tableRow([code(m.mod), m.display, m.version]);
+        md += "\n";
+    }
+    if (data.updated.length > 0) {
+        md += h2(`Updated Mods (${data.updated.length})`);
+        md += tableHeader(["Mod", "Display Name", "Old Version", "New Version"]);
+        for (const m of data.updated) md += "\n" + tableRow([code(m.mod), m.display, m.oldVersion, m.newVersion]);
+        md += "\n";
+    }
+    return md;
+}
+
 export async function generateReport(opts: {
     report: ReportType;
     savePath?: string;
@@ -452,9 +569,11 @@ export async function generateReport(opts: {
     mcVersion?: string;
     registry?: string;
     minConflicts?: number;
-    groupFilter?: string;
-    modIdFilter?: string;
-    dbIds?: number[];
+    groupFilter?:  string;
+    modIdFilter?:  string;
+    dbIds?:        number[];
+    oldIds?:       number[];
+    newIds?:       number[];
 }): Promise<{ markdown: string; savedTo?: string }> {
     let markdown: string;
 
@@ -480,6 +599,15 @@ export async function generateReport(opts: {
             break;
         case "dep_graph":
             markdown = await reportDepGraph({ mcVersion: opts.mcVersion, modId: opts.modId });
+            break;
+        case "sidedness":
+            markdown = await reportSidedness({ mcVersion: opts.mcVersion, loader: opts.loader });
+            break;
+        case "mod_complexity":
+            markdown = await reportModComplexity({ mcVersion: opts.mcVersion, loader: opts.loader });
+            break;
+        case "pack_changelog":
+            markdown = await reportPackChangelog({ oldIds: opts.oldIds, newIds: opts.newIds });
             break;
         default:
             throw new Error(`Unknown report type: ${(opts as { report: string }).report}`);

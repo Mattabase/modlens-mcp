@@ -1,0 +1,179 @@
+/**
+ * KubeJS script analysis tools.
+ *
+ * Scans a KubeJS scripts directory and indexes what each script does:
+ * which events it listens to, what it modifies (recipes, tags, loot, items, etc.)
+ *
+ * Works on the raw .js / .ts files — no execution required.
+ */
+
+import { readFileSync, readdirSync } from "fs";
+import { join, extname } from "path";
+
+// ── Event pattern registry ────────────────────────────────────────────────────
+
+const KUBEJS_PATTERNS: Record<string, string[]> = {
+    "recipe_add":        ["event.recipes.", "event.shaped(", "event.shapeless(", "event.smelting(", "event.blasting(", "event.smoking(", "event.campfireCooking(", "event.stonecutting(", "event.smithing("],
+    "recipe_remove":     ["event.remove(", "event.replaceInput(", "event.replaceOutput("],
+    "recipe_custom":     ["event.custom("],
+    "tag_modify":        ["event.add(", "event.remove(", "event.removeAll("],
+    "loot_modify":       ["LootJS", "event.modifyLootTables(", "event.addCondition(", "event.addPool("],
+    "item_register":     ["event.create(", "ItemEvents.modification", "event.modify("],
+    "block_register":    ["BlockEvents", "event.create("],
+    "fluid_register":    ["FluidEvents", "event.create("],
+    "entity_register":   ["EntityJSEvents", "EntityEvents"],
+    "worldgen_modify":   ["WorldgenEvents", "event.addLayer(", "event.removeLayer(", "event.addBiome("],
+    "startup_register":  ["StartupEvents.registry", "event.register(", "event.createRecipeSerializer("],
+    "client_asset":      ["ClientEvents", "event.painter(", "event.addLayer("],
+    "player_events":     ["PlayerEvents", "event.give(", "event.sendMessage("],
+    "server_events":     ["ServerEvents.loaded", "ServerEvents.commmandRegistry", "event.addCommand("],
+    "forge_events":      ["ForgeEvents", "event.register("],
+    "jei_integration":   ["JEIEvents", "JEIPlugin", "event.hideItem(", "event.addItem("],
+    "kubejs_additions":  ["KubeJSAdditions", "MoreJSEvents"],
+};
+
+// ── File walker ───────────────────────────────────────────────────────────────
+
+function walkDir(dir: string, exts: string[] = [".js", ".ts"]): string[] {
+    const files: string[] = [];
+    try {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            const full = join(dir, entry.name);
+            if (entry.isDirectory()) {
+                files.push(...walkDir(full, exts));
+            } else if (exts.includes(extname(entry.name).toLowerCase())) {
+                files.push(full);
+            }
+        }
+    } catch { /* skip unreadable dirs */ }
+    return files;
+}
+
+// ── Script scanner ────────────────────────────────────────────────────────────
+
+interface ScriptAnalysis {
+    path:        string;
+    lineCount:   number;
+    byteSize:    number;
+    categories:  string[];
+    snippets:    Record<string, string[]>;  // category → matching lines (capped at 5 each)
+}
+
+function analyzeScript(relativePath: string, content: string): ScriptAnalysis {
+    const lines      = content.split("\n");
+    const categories: string[] = [];
+    const snippets:   Record<string, string[]> = {};
+
+    for (const [category, triggers] of Object.entries(KUBEJS_PATTERNS)) {
+        const matches: string[] = [];
+        for (const line of lines) {
+            const t = line.trim();
+            if (t.startsWith("//") || t.startsWith("*")) continue; // skip comments
+            if (triggers.some(trigger => t.includes(trigger))) {
+                matches.push(t.slice(0, 120));
+            }
+        }
+        if (matches.length > 0) {
+            categories.push(category);
+            snippets[category] = [...new Set(matches)].slice(0, 5); // dedupe + cap
+        }
+    }
+
+    return {
+        path:       relativePath,
+        lineCount:  lines.length,
+        byteSize:   content.length,
+        categories,
+        snippets,
+    };
+}
+
+// ── Public tools ──────────────────────────────────────────────────────────────
+
+/**
+ * Index all KubeJS scripts under a directory.
+ * Returns a per-file breakdown of which event categories each script touches,
+ * plus an overall summary of what the pack's scripts do.
+ *
+ * scriptsDir: absolute path to the kubejs/ folder (or any subfolder like kubejs/server_scripts/)
+ */
+export async function indexKubeJsScripts(scriptsDir: string): Promise<object> {
+    const files = walkDir(scriptsDir);
+    if (files.length === 0) {
+        return { error: `No .js/.ts files found under: ${scriptsDir}` };
+    }
+
+    const scripts: ScriptAnalysis[] = [];
+    for (const file of files) {
+        try {
+            const content = readFileSync(file, "utf8");
+            const rel = file.replace(scriptsDir, "").replace(/\\/g, "/").replace(/^\//, "");
+            scripts.push(analyzeScript(rel, content));
+        } catch { /* skip unreadable */ }
+    }
+
+    // Aggregate: how many scripts touch each category
+    const categorySummary: Record<string, number> = {};
+    for (const s of scripts) {
+        for (const cat of s.categories) {
+            categorySummary[cat] = (categorySummary[cat] ?? 0) + 1;
+        }
+    }
+
+    const totalLines     = scripts.reduce((s, f) => s + f.lineCount, 0);
+    const active         = scripts.filter(s => s.categories.length > 0);
+    const inert          = scripts.filter(s => s.categories.length === 0).map(s => s.path);
+
+    return {
+        scriptsDir,
+        fileCount:       scripts.length,
+        activeScripts:   active.length,
+        totalLines,
+        categorySummary,
+        scripts:         active,
+        inertScripts:    inert,
+    };
+}
+
+/**
+ * Search all KubeJS scripts under a directory for a text pattern.
+ * Returns matching lines with file + line number context.
+ *
+ * scriptsDir: absolute path to the kubejs/ folder
+ * query: substring to search for (case-insensitive)
+ * limit: max results (default 60)
+ */
+export async function searchKubeJsScripts(
+    scriptsDir: string,
+    query: string,
+    limit = 60,
+): Promise<object> {
+    const files     = walkDir(scriptsDir);
+    const lower     = query.toLowerCase();
+    const results: Array<{ file: string; line: number; content: string }> = [];
+
+    outer:
+    for (const file of files) {
+        try {
+            const lines = readFileSync(file, "utf8").split("\n");
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].toLowerCase().includes(lower)) {
+                    results.push({
+                        file:    file.replace(scriptsDir, "").replace(/\\/g, "/").replace(/^\//, ""),
+                        line:    i + 1,
+                        content: lines[i].trim().slice(0, 200),
+                    });
+                    if (results.length >= limit) break outer;
+                }
+            }
+        } catch { /* skip */ }
+    }
+
+    return {
+        scriptsDir,
+        query,
+        totalMatches: results.length,
+        capped:       results.length >= limit,
+        results,
+    };
+}

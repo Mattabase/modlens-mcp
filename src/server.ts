@@ -77,6 +77,8 @@ import {
     getModGradleFiles, searchGradleFiles, compareGradleDeps,
 } from "./tools/gradle.js";
 import { generateReport } from "./tools/reports.js";
+import { findAssetConflicts, findVanillaOverrides, analyzeModSidedness, analyzePackSidedness, computeModComplexity, computePackChangelog } from "./tools/packtools.js";
+import { indexKubeJsScripts, searchKubeJsScripts } from "./tools/kubejs.js";
 import { disconnect } from "./db.js";
 
 // Load .env
@@ -915,22 +917,87 @@ server.tool(
     "report=gradle_deps: gradle dependency comparison report (groupFilter, modIdFilter). " +
     "report=pack_compat: one-shot pack compatibility audit combining mixin conflicts, AT/AW conflicts, tag conflicts, and dep issues (mcVersion, loader). " +
     "report=dep_graph: full mod dependency graph with Mermaid diagram — shows requires/required-by relationships and orphaned mods (mcVersion, modId for single-mod focus). " +
+    "report=sidedness: classify all mods as client_only / client_optional / common / server_only (mcVersion, loader). " +
+    "report=mod_complexity: rank mods by class count + mixin + AT/AW footprint — useful for crash/lag triage (mcVersion, loader). " +
+    "report=pack_changelog: diff two pack snapshots — added/removed/updated mods (oldIds, newIds required). " +
     "savePath: optional absolute path to save the .md file.",
     {
-        report:       z.enum(["mixin_conflicts","tag_conflicts","version_conflicts","mod_overview","gradle_deps","pack_compat","dep_graph"]).describe("Which report to generate"),
+        report:       z.enum(["mixin_conflicts","tag_conflicts","version_conflicts","mod_overview","gradle_deps","pack_compat","dep_graph","sidedness","mod_complexity","pack_changelog"]).describe("Which report to generate"),
         savePath:     z.string().optional().describe("Absolute path to save the .md file, e.g. 'C:/reports/mixin_conflicts.md'"),
-        modId:        z.union([z.string(), z.number()]).optional().describe("Required for mod_overview report"),
-        loader:       z.string().optional().describe("Loader filter for mixin_conflicts, pack_compat"),
-        mcVersion:    z.string().optional().describe("MC version filter for mixin_conflicts, pack_compat"),
+        modId:        z.union([z.string(), z.number()]).optional().describe("Required for mod_overview; scopes dep_graph to one mod"),
+        loader:       z.string().optional().describe("Loader filter for mixin_conflicts, pack_compat, sidedness, mod_complexity"),
+        mcVersion:    z.string().optional().describe("MC version filter for mixin_conflicts, pack_compat, sidedness, mod_complexity, dep_graph"),
         registry:     z.string().optional().describe("Registry filter for tag_conflicts"),
         minConflicts: z.number().optional().describe("Min mods to count as conflict (default 2)"),
         groupFilter:  z.string().optional().describe("Dep group filter for gradle_deps"),
         modIdFilter:  z.string().optional().describe("Mod filter for gradle_deps"),
         dbIds:        z.array(z.number()).optional().describe("DB ids of specific mods to include in pack_compat scope"),
+        oldIds:       z.array(z.number()).optional().describe("DB ids of mods in the OLD pack snapshot (pack_changelog)"),
+        newIds:       z.array(z.number()).optional().describe("DB ids of mods in the NEW pack snapshot (pack_changelog)"),
     },
-    async ({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds }) => {
-        const result = await generateReport({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds });
+    async ({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds, oldIds, newIds }) => {
+        const result = await generateReport({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds, oldIds, newIds });
         return out(result.savedTo ? `Saved to: ${result.savedTo}\n\n${result.markdown}` : result.markdown);
+    }
+);
+
+// ── 20. pack_tools ────────────────────────────────────────────────────────────
+
+server.tool(
+    "pack_tools",
+    "Modpack-specific analysis tools. " +
+    "action=asset_conflicts: find assets/ paths shipped by 2+ mods \u2014 last-loaded mod silently wins, causing visual/audio corruption (assetType, mcVersion, loader, limit). " +
+    "action=vanilla_overrides: find mods overriding data/minecraft/ or assets/minecraft/ \u2014 affects vanilla recipes, loot tables, textures (overrideType, dataSubtype, mcVersion, loader). " +
+    "action=sidedness: determine whether a single mod is client_only / client_optional / common / server_only (modId). " +
+    "action=pack_sidedness: classify ALL mods in the DB by sidedness in one pass (mcVersion, loader). " +
+    "action=complexity: compute class/mixin/AT/AW complexity score per mod \u2014 ranked list for perf/crash triage (mcVersion, loader). " +
+    "action=pack_changelog: diff two pack snapshots by DB id lists \u2014 added/removed/updated mods (oldIds, newIds).",
+    {
+        action:      z.enum(["asset_conflicts","vanilla_overrides","sidedness","pack_sidedness","complexity","pack_changelog"]).describe("Operation to perform"),
+        modId:       z.union([z.string(), z.number()]).optional().describe("Mod to analyse (sidedness)"),
+        assetType:   z.enum(["textures","models","sounds","blockstates","shaders","all"]).optional().describe("Asset sub-folder filter (asset_conflicts)"),
+        overrideType:z.enum(["data","assets","all"]).optional().describe("Override type filter (vanilla_overrides)"),
+        dataSubtype: z.string().optional().describe("Data subfolder, e.g. 'recipes', 'loot_tables', 'advancements' (vanilla_overrides)"),
+        mcVersion:   z.string().optional().describe("MC version filter"),
+        loader:      z.string().optional().describe("Loader filter (neoforge|forge|fabric|quilt)"),
+        oldIds:      z.array(z.number()).optional().describe("Old pack snapshot DB ids (pack_changelog)"),
+        newIds:      z.array(z.number()).optional().describe("New pack snapshot DB ids (pack_changelog)"),
+        limit:       z.number().optional().describe("Max conflicts returned (asset_conflicts, default 300)"),
+    },
+    async ({ action, modId, assetType, overrideType, dataSubtype, mcVersion, loader, oldIds, newIds, limit }) => {
+        let result: unknown;
+        switch (action) {
+            case "asset_conflicts":   result = await findAssetConflicts(assetType, mcVersion, loader, limit); break;
+            case "vanilla_overrides": result = await findVanillaOverrides(overrideType, dataSubtype, mcVersion, loader); break;
+            case "sidedness":         result = await analyzeModSidedness(modId!); break;
+            case "pack_sidedness":    result = await analyzePackSidedness(mcVersion, loader); break;
+            case "complexity":        result = await computeModComplexity(mcVersion, loader); break;
+            case "pack_changelog":    result = await computePackChangelog(oldIds!, newIds!); break;
+        }
+        return out(result);
+    }
+);
+
+// ── 21. kubejs ────────────────────────────────────────────────────────────────
+
+server.tool(
+    "kubejs",
+    "KubeJS script analysis tools. " +
+    "action=index: scan a kubejs scripts directory and produce a per-file breakdown of which event categories are touched \u2014 recipe changes, tag modifications, loot overrides, item/block registration, worldgen, etc. (scriptsDir). " +
+    "action=search: full-text search across all scripts in a directory (scriptsDir, query, limit).",
+    {
+        action:     z.enum(["index","search"]).describe("Operation to perform"),
+        scriptsDir: z.string().describe("Absolute path to the kubejs/ folder or a subfolder like kubejs/server_scripts/"),
+        query:      z.string().optional().describe("Text to search for (search action)"),
+        limit:      z.number().optional().describe("Max search results (default 60)"),
+    },
+    async ({ action, scriptsDir, query, limit }) => {
+        let result: unknown;
+        switch (action) {
+            case "index":  result = await indexKubeJsScripts(scriptsDir); break;
+            case "search": result = await searchKubeJsScripts(scriptsDir, query!, limit); break;
+        }
+        return out(result);
     }
 );
 
