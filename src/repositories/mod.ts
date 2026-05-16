@@ -106,25 +106,30 @@ export async function getMixinConflictRaw(
     minConflicts = 2,
 ): Promise<Array<{ className: string; modCount: number; modIds: number[] }>> {
     const params: unknown[] = [minConflicts];
-    const whereClauses: string[] = ["m.has_mixins = true"];
+    const whereClauses: string[] = ["has_mixins = true"];
 
-    if (loader)    { params.push(loader);    whereClauses.push(`m.loader = $${params.length}`); }
-    if (mcVersion) { params.push(mcVersion); whereClauses.push(`m.mc_version = $${params.length}`); }
+    if (loader)    { params.push(loader);    whereClauses.push(`loader = $${params.length}`); }
+    if (mcVersion) { params.push(mcVersion); whereClauses.push(`mc_version = $${params.length}`); }
 
     const whereSQL = whereClauses.join(" AND ");
 
     const rows = await db().$queryRawUnsafe<
         Array<{ class_name: string; mod_count: string; mod_ids: number[] }>
     >(`
+        WITH deduped AS (
+            SELECT DISTINCT ON (mod_id) id, mod_id, mixin_targets
+            FROM "mods"
+            WHERE ${whereSQL}
+            ORDER BY mod_id, id DESC
+        )
         SELECT
             t.class_name,
-            COUNT(DISTINCT m.id)::int AS mod_count,
-            ARRAY_AGG(DISTINCT m.id) AS mod_ids
-        FROM "mods" m
-        CROSS JOIN LATERAL jsonb_array_elements_text(m.mixin_targets::jsonb) AS t(class_name)
-        WHERE ${whereSQL}
+            COUNT(DISTINCT d.mod_id)::int AS mod_count,
+            ARRAY_AGG(DISTINCT d.id) AS mod_ids
+        FROM deduped d
+        CROSS JOIN LATERAL jsonb_array_elements_text(d.mixin_targets::jsonb) AS t(class_name)
         GROUP BY t.class_name
-        HAVING COUNT(DISTINCT m.id) >= $1
+        HAVING COUNT(DISTINCT d.mod_id) >= $1
         ORDER BY mod_count DESC
     `, ...params);
 
@@ -234,8 +239,12 @@ export async function listModsForDepGraph(mcVersion?: string): Promise<DepModRow
     }) as Promise<DepModRow[]>;
 }
 
-export async function listModsForConflictCheck(): Promise<DepModRow[]> {
+export async function listModsForConflictCheck(opts?: { mcVersion?: string; loader?: string }): Promise<DepModRow[]> {
+    const where: Record<string, unknown> = {};
+    if (opts?.mcVersion) where["mcVersion"] = opts.mcVersion;
+    if (opts?.loader)    where["loader"]    = opts.loader;
     return db().mod.findMany({
+        where,
         select: {
             id: true, modId: true, displayName: true, version: true,
             mcVersion: true, loader: true, dependencies: true, metadata: true,

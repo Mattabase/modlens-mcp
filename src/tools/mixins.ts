@@ -197,10 +197,16 @@ export async function findAtAwConflicts(mcVersion?: string, loader?: string): Pr
         ...(loader ? { loader } : {}),
     });
 
+    // Deduplicate by modId — keep highest DB id (most recently ingested version)
+    const dedupedMods = [...mods
+        .sort((a, b) => b.id - a.id)
+        .reduce((m, mod) => { if (!m.has(mod.modId)) m.set(mod.modId, mod); return m; }, new Map<string, typeof mods[0]>())
+        .values()];
+
     // Map: canonical target signature → [{mod, access}]
     const atMap = new Map<string, Array<{ mod: string; display: string; version: string; loader: string; access: string }>>();
 
-    for (const mod of mods) {
+    for (const mod of dedupedMods) {
         const addEntry = (sig: string, access: string) => {
             if (!atMap.has(sig)) atMap.set(sig, []);
             atMap.get(sig)!.push({ mod: mod.modId, display: mod.displayName, version: mod.version, loader: mod.loader, access });
@@ -242,8 +248,8 @@ export async function findAtAwConflicts(mcVersion?: string, loader?: string): Pr
     return {
         mcVersion: mcVersion ?? "(all)",
         loader: loader ?? "(all)",
-        totalModsWithAt: mods.filter(m => m.hasAt).length,
-        totalModsWithAw: mods.filter(m => m.hasAw).length,
+        totalModsWithAt: dedupedMods.filter(m => m.hasAt).length,
+        totalModsWithAw: dedupedMods.filter(m => m.hasAw).length,
         summary: {
             sharedTargets: sharedTargets.length,
             accessConflicts: accessConflicts.length,

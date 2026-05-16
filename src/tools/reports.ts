@@ -268,7 +268,7 @@ export type ReportType =
 async function reportPackCompat(opts: { mcVersion?: string; loader?: string; dbIds?: number[] }): Promise<string> {
     // Run all relevant checks concurrently
     const [versionData, atawData, mixinData, tagData] = await Promise.all([
-        findVersionConflicts() as Promise<{
+        findVersionConflicts({ mcVersion: opts.mcVersion, loader: opts.loader }) as Promise<{
             duplicateModIds: { count: number; mods: Array<{ modId: string; display: string; ingestedVersions: Array<{ version: string; mcVersion: string; loader: string; dbId: number }> }> };
             unsatisfiedDeps: { count: number; deps: Array<{ declaredBy: string; depId: string; requiredRange: string; foundVersions: string[]; required: boolean }> };
         }>,

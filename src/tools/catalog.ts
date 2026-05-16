@@ -92,8 +92,8 @@ export async function getDependencies(modId: string | number, recursive = false)
  * Detect version conflicts: multiple ingested versions of the same modId.
  * Also checks cross-mod dependency version range satisfaction.
  */
-export async function findVersionConflicts(): Promise<object> {
-    const mods = await listModsForConflictCheck();
+export async function findVersionConflicts(opts?: { mcVersion?: string; loader?: string }): Promise<object> {
+    const mods = await listModsForConflictCheck(opts);
 
     // 1. Multiple ingested versions of the same modId
     const byModId: Record<string, typeof mods> = {};
