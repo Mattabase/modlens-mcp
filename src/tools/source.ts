@@ -44,18 +44,23 @@ export async function getModSource(dbId: number, path?: string): Promise<string>
     return content.slice(0, 50_000); // cap at 50KB
 }
 
-export async function searchSource(query: string, dbId?: number, isRegex = false, limit = 50): Promise<Array<{ file: string; line: number; text: string; }>> {
+export async function searchSource(
+    query: string,
+    dbId?: number,
+    isRegex = false,
+    limit = 50,
+): Promise<Array<{ modId: string; modVersion: string; file: string; line: number; text: string }>> {
     if (dbId !== undefined) validateDbId(dbId);
     const mods = dbId
         ? [await findModById(dbId)]
         : await listMods({ decompiled: true });
 
-    const results: Array<{ file: string; line: number; text: string; }> = [];
+    const results: Array<{ modId: string; modVersion: string; file: string; line: number; text: string }> = [];
     const regex = isRegex ? safeRegex(query, "i") : null;
 
     for (const mod of mods) {
         if (!mod?.decompPath) continue;
-        await searchDir(mod.decompPath, mod.decompPath, query, regex, results, limit);
+        await searchDir(mod.decompPath, mod.decompPath, query, regex, results, limit, mod.modId, mod.version);
         if (results.length >= limit) break;
     }
     return results.slice(0, limit);
@@ -66,8 +71,10 @@ async function searchDir(
     dir: string,
     query: string,
     regex: RegExp | null,
-    results: Array<{ file: string; line: number; text: string; }>,
-    limit: number
+    results: Array<{ modId: string; modVersion: string; file: string; line: number; text: string }>,
+    limit: number,
+    modId: string,
+    modVersion: string,
 ): Promise<void> {
     if (results.length >= limit) return;
     const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
@@ -75,7 +82,7 @@ async function searchDir(
         if (results.length >= limit) break;
         const fullPath = join(dir, entry.name);
         if (entry.isDirectory()) {
-            await searchDir(base, fullPath, query, regex, results, limit);
+            await searchDir(base, fullPath, query, regex, results, limit, modId, modVersion);
         } else if (entry.name.endsWith(".java")) {
             const content = await readFile(fullPath, "utf8").catch(() => "");
             const lines = content.split("\n");
@@ -83,7 +90,7 @@ async function searchDir(
                 const line = lines[i];
                 const matches = regex ? regex.test(line) : line.toLowerCase().includes(query.toLowerCase());
                 if (matches) {
-                    results.push({ file: relative(base, fullPath), line: i + 1, text: line.trim().slice(0, 200) });
+                    results.push({ modId, modVersion, file: relative(base, fullPath), line: i + 1, text: line.trim().slice(0, 200) });
                     if (results.length >= limit) break;
                 }
             }

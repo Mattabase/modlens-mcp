@@ -126,7 +126,7 @@ server.tool(
     "action=decompile_status: poll background decompile job (dbId). " +
     "action=decompile_class: decompile a single class on demand (dbId, className). " +
     "action=source: browse or read decompiled source tree (dbId, path). " +
-    "action=search_source: text/regex search across decompiled source (query, dbId, isRegex, limit). " +
+    "action=search_source: text/regex search across decompiled source — omit dbId to search ALL decompiled mods (query, dbId?, isRegex, limit). " +
     "action=reindex: re-index class names (dbId optional). " +
     "action=batch_ingest: ingest all JARs in a directory (directory, skipSource, indexClasses, replace).",
     {
