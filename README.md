@@ -193,7 +193,7 @@ fabric-api-versions  --mc-version=1.21.1  --limit=20
 
 ## MCP Tools Reference
 
-All 155 individual tools have been consolidated into **18 grouped tools** to stay within MCP client tool-count limits. Each tool takes a required `action` parameter that selects the operation, plus optional params specific to that action.
+All 155 individual tools have been consolidated into **21 grouped tools** to stay within MCP client tool-count limits. Each tool takes a required `action` parameter that selects the operation, plus optional params specific to that action.
 
 ### Tool Index
 
@@ -216,7 +216,11 @@ All 155 individual tools have been consolidated into **18 grouped tools** to sta
 | 15 | `mod_tags` | 7 | Cross-mod tag indexing + conflict detection |
 | 16 | `mixin_scan` | 5 | Cross-mod mixin conflict analysis |
 | 17 | `gradle` | 3 | Gradle build file analysis |
-| 18 | `reports` | 5 report types | Markdown report generation |
+| 18 | `reports` | 10 report types | Markdown report generation |
+| 19 | `pack_tools` | 7 | Modpack asset/data conflict analysis |
+| 20 | `analyze_crash_log` | — | Triage crash logs against mod class index |
+| 21 | `find_missing_deps` | — | Find mods with missing declared dependencies |
+| 22 | `check_mod_compat` | — | Pre-flight compatibility check for a candidate JAR |
 
 ---
 
@@ -237,9 +241,9 @@ All 155 individual tools have been consolidated into **18 grouped tools** to sta
 | `decompile_status` | dbId | Poll background decompile job |
 | `decompile_class` | dbId, className | Decompile a single class on demand |
 | `source` | dbId, path | Browse or read decompiled source tree |
-| `search_source` | query, dbId, isRegex, limit | Text/regex search across decompiled source |
+| `search_source` | query, dbId?, isRegex, limit | Text/regex search across decompiled source — omit `dbId` to search **all** decompiled mods (results include `modId` + `modVersion`) |
 | `reindex` | dbId? | Re-index class names |
-| `batch_ingest` | directory, skipSource, indexClasses | Ingest all JARs in a directory |
+| `batch_ingest` | directory, skipSource, indexClasses, replace | Ingest all JARs in a directory. `replace=true` deletes any existing DB row for the same `modId` before inserting — keeps DB in sync with disk |
 
 ### 2. `mod_bytecode` — Mod JAR Class Analysis
 
@@ -459,8 +463,57 @@ Common params: `modId` (required), `namespace` (optional scope), `filter` (list)
 | `version_conflicts` | — | Duplicate modId + unsatisfied deps |
 | `mod_overview` | modId | Full overview for one mod |
 | `gradle_deps` | groupFilter, modIdFilter | Gradle dependency comparison |
+| `pack_compat` | mcVersion, loader | One-shot pack audit: mixin conflicts + AT/AW shared targets + tag conflicts + dep issues |
+| `dep_graph` | mcVersion, modId? | Full dependency graph with Mermaid diagram |
+| `sidedness` | mcVersion, loader | Classify all mods as client_only / client_optional / common / server_only |
+| `mod_complexity` | mcVersion, loader | Rank mods by class count + mixin + AT/AW footprint |
+| `pack_changelog` | oldIds[], newIds[] | Diff two pack snapshots — added/removed/updated mods |
 
 All reports accept an optional `savePath` to write the `.md` file to disk.
+
+### 19. `pack_tools` — Modpack Asset & Data Conflict Analysis
+
+| action | Key params | Description |
+|--------|-----------|-------------|
+| `asset_conflicts` | mcVersion?, loader?, limit | Resource pack path collisions across all mods |
+| `data_conflicts` | dataType?, mcVersion?, loader?, limit | Data pack path collisions (recipes, loot tables, advancements, …) |
+| `vanilla_overrides` | type=asset\|data\|both, mcVersion?, loader? | Paths where mods override vanilla files |
+| `complexity` | mcVersion?, loader?, limit | Rank mods by JAR entry count (complexity proxy) |
+| `pack_sidedness` | mcVersion?, loader? | Classify mods by presence of client/server entry points |
+| `missing_assets` | mcVersion?, loader?, limit | Mod JAR entries referencing textures/models that don't exist |
+| `at_conflicts` | mcVersion?, loader? | AT/AW entries targeted by multiple mods |
+
+### 20. `analyze_crash_log` — Crash Log Triage
+
+Paste a NeoForge/Forge/Fabric crash log. Cross-references stack frames against the `ModClass` index and returns suspects ranked by frame count, plus coverage warning if the class index is sparse.
+
+| param | Description |
+|-------|-------------|
+| `logText` | Full text of the crash report or log snippet |
+
+### 21. `find_missing_deps` — Missing Dependency Detection
+
+Reads all ingested mods' declared dependencies and checks each dep ID against the ingested modId set. Skips known platform-provided deps (minecraft, neoforge, forge, fabric-api, java).
+
+| param | Description |
+|-------|-------------|
+| `mcVersion` | Filter to a specific MC version |
+| `loader` | Filter to a specific loader |
+
+### 22. `check_mod_compat` — Pre-flight JAR Compatibility Check
+
+Runs a candidate JAR through 5 checks without requiring it to be ingested first:
+1. Mixin target conflicts with existing mods
+2. AT/AW entry overlaps
+3. Asset path conflicts
+4. Missing declared dependencies
+5. Sidedness detection
+
+| param | Description |
+|-------|-------------|
+| `jarPath` | Absolute path to the candidate mod JAR |
+| `mcVersion` | Filter comparison pool to this MC version |
+| `loader` | Filter comparison pool to this loader |
 
 ---
 
@@ -469,8 +522,8 @@ All reports accept an optional `savePath` to write the `.md` file to disk.
 ### Ingest a modpack
 
 ```bash
-# 1. Ingest all mods
-node dist/cli.js batch-ingest /path/to/mods --index
+# 1. Ingest all mods (--replace keeps DB in sync if re-running after updates)
+node dist/cli.js batch-ingest /path/to/mods --index --replace
 
 # 2. Resolve mixin targets (enables conflict detection)
 node dist/cli.js batch-resolve-mixins
@@ -483,6 +536,45 @@ node dist/cli.js batch-resolve-mixins
 
 # 5. Ingest the loader for cross-reference
 node dist/cli.js ingest-neoforge 21.1.228
+```
+
+### Run a full pack compatibility audit
+
+```bash
+# via MCP — generates a Markdown report scoped to your pack
+reports  report=pack_compat  loader=neoforge  mcVersion=1.21.1  savePath=C:/reports/pack-compat.md
+```
+
+The scorecard covers: duplicate mod IDs, unsatisfied deps, mixin-conflicted classes, and tag hard conflicts. AT/AW shared targets are shown separately as informational (they can only widen access, never cause crashes).
+
+### Pre-flight check a new mod before adding it
+
+```bash
+# via MCP — checks against all mods currently in DB, no ingestion needed
+check_mod_compat  jarPath=/path/to/newmod-1.0.jar  loader=neoforge  mcVersion=1.21.1
+```
+
+### Triage a crash log
+
+```bash
+# via MCP — paste the crash report, get ranked suspect mods
+analyze_crash_log  logText="<paste full crash log here>"
+```
+
+### Find missing dependencies
+
+```bash
+# via MCP
+find_missing_deps  loader=neoforge  mcVersion=1.21.1
+```
+
+### Cross-mod source search
+
+```bash
+# via MCP — grep across ALL decompiled mod sources at once
+mod  action=search_source  query=LivingEntity  isRegex=false
+mod  action=search_source  query="@Mixin.*LivingEntity"  isRegex=true
+# Results include modId + modVersion so you know which mod each hit came from
 ```
 
 ### Detect mixin conflicts
