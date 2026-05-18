@@ -78,6 +78,9 @@ import { searchPacksAction, featuredPacksAction, packInfoAction, packManifestAct
 import { analyzeCrashLog, findMissingDeps } from "./tools/diagnostics.js";
 import { checkModCompat } from "./tools/compat-check.js";
 import { disconnect } from "./db.js";
+import { mcPaths } from "./minecraft.js";
+import { findModById } from "./repositories/mod.js";
+import { CACHE_ROOT } from "./cache.js";
 
 // Load .env — try ~/.modlens/.env first (npx/installed users), then local .env (git-clone users)
 import { readFileSync, existsSync } from "fs";
@@ -114,13 +117,13 @@ function out(result: unknown): { content: Array<{ type: "text"; text: string }> 
 
 server.tool(
     "mod",
-    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_semantic|search_semantic. Omit dbId on search_source to grep all decompiled mods. batch_ingest replace=true removes old modId row first. batch_decompile decompiles all not-yet-decompiled mods with concurrency control. index_semantic/search_semantic require Ollama running.",
+    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_semantic|search_semantic|get_paths. get_paths returns jarPath and decompPath (null if not yet decompiled) so the agent can grep/search files natively. Omit dbId on search_source to grep all decompiled mods. batch_ingest replace=true removes old modId row first. batch_decompile decompiles all not-yet-decompiled mods with concurrency control. index_semantic/search_semantic require Ollama running.",
     {
         action: z.enum([
             "ingest","list","get","search","stats","dependencies","dep_graph",
             "version_conflicts","source_urls","decompile","decompile_status",
             "decompile_class","source","search_source","reindex","batch_ingest",
-            "batch_decompile","index_semantic","search_semantic",
+            "batch_decompile","index_semantic","search_semantic","get_paths",
         ]),
         jarPath:      z.string().optional(),
         modId:        z.union([z.string(), z.number()]).optional().describe("mod ID or DB id"),
@@ -163,6 +166,19 @@ server.tool(
             case "batch_decompile":  result = await batchDecompileMods({ concurrency: (limit ?? 2) }); break;
             case "index_semantic":   result = await indexModSourceSemantic(dbId!, (limit as number | undefined) ?? 50); break;
             case "search_semantic":  result = await searchModSourceSemantic(query!, dbId!, limit ?? 10); break;
+            case "get_paths": {
+                const mod = await findModById(dbId!);
+                if (!mod) throw new Error(`Mod #${dbId} not found`);
+                result = {
+                    dbId: mod.id,
+                    modId: mod.modId,
+                    version: mod.version,
+                    jarPath: mod.jarPath,
+                    decompPath: mod.decompPath ?? null,
+                    cacheRoot: CACHE_ROOT,
+                };
+                break;
+            }
         }
         return out(result);
     }
@@ -405,9 +421,9 @@ server.tool(
 
 server.tool(
     "mc_source",
-    "Vanilla Minecraft source code, decompilation, and validation. action=search_class|get_source|bytecode|class_members|find_refs|inheritance|diff|diff_detailed|decompile|decompile_status|search_code|index|search_indexed|search_events|validate_aw|analyze_mixin|index_semantic|search_semantic. diff_detailed gives AST-level method/field changes with breaking-change flags per class; add semantic=true for cosine similarity scoring (requires Ollama + index_semantic run first). index_semantic/search_semantic require Ollama running.",
+    "Vanilla Minecraft source code, decompilation, and validation. action=search_class|get_source|bytecode|class_members|find_refs|inheritance|diff|diff_detailed|decompile|decompile_status|search_code|index|search_indexed|search_events|validate_aw|analyze_mixin|index_semantic|search_semantic|get_paths. get_paths returns the on-disk jar, decompiled source directory, and index paths so the agent can grep/search files natively. diff_detailed gives AST-level method/field changes with breaking-change flags per class; add semantic=true for cosine similarity scoring (requires Ollama + index_semantic run first). index_semantic/search_semantic require Ollama running.",
     {
-        action:     z.enum(["search_class","get_source","bytecode","class_members","find_refs","inheritance","diff","diff_detailed","decompile","decompile_status","search_code","index","search_indexed","search_events","validate_aw","analyze_mixin","index_semantic","search_semantic"]),
+        action:     z.enum(["search_class","get_source","bytecode","class_members","find_refs","inheritance","diff","diff_detailed","decompile","decompile_status","search_code","index","search_indexed","search_events","validate_aw","analyze_mixin","index_semantic","search_semantic","get_paths"]),
         version:    z.string().optional(),
         versionA:   z.string().optional(),
         versionB:   z.string().optional(),
@@ -451,6 +467,17 @@ server.tool(
             case "analyze_mixin":   result = await analyzeMixin(source!, v!); break;
             case "index_semantic":  result = await indexMcSourceSemantic(v!, (limit as number | undefined) ?? 50); break;
             case "search_semantic": result = await searchMcSourceSemantic(query!, v!, limit ?? 10); break;
+            case "get_paths": {
+                const ver = v!;
+                result = {
+                    version: ver,
+                    jarPath:      mcPaths.jar(ver),
+                    decompPath:   mcPaths.decompiled(ver),
+                    indexPath:    mcPaths.index(ver),
+                    cacheRoot:    CACHE_ROOT,
+                };
+                break;
+            }
         }
         return out(result);
     }
