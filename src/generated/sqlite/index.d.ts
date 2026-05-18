@@ -29,6 +29,16 @@ export type ModClass = $Result.DefaultSelection<Prisma.$ModClassPayload>
  */
 export type McVersion = $Result.DefaultSelection<Prisma.$McVersionPayload>
 /**
+ * Model McVersionDiff
+ * 
+ */
+export type McVersionDiff = $Result.DefaultSelection<Prisma.$McVersionDiffPayload>
+/**
+ * Model ModVersionDiff
+ * 
+ */
+export type ModVersionDiff = $Result.DefaultSelection<Prisma.$ModVersionDiffPayload>
+/**
  * Model ModTag
  * 
  */
@@ -38,6 +48,11 @@ export type ModTag = $Result.DefaultSelection<Prisma.$ModTagPayload>
  * 
  */
 export type McSourceFile = $Result.DefaultSelection<Prisma.$McSourceFilePayload>
+/**
+ * Model ModSourceFile
+ * 
+ */
+export type ModSourceFile = $Result.DefaultSelection<Prisma.$ModSourceFilePayload>
 /**
  * Model DocEntry
  * 
@@ -198,6 +213,26 @@ export class PrismaClient<
   get mcVersion(): Prisma.McVersionDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.mcVersionDiff`: Exposes CRUD operations for the **McVersionDiff** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more McVersionDiffs
+    * const mcVersionDiffs = await prisma.mcVersionDiff.findMany()
+    * ```
+    */
+  get mcVersionDiff(): Prisma.McVersionDiffDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.modVersionDiff`: Exposes CRUD operations for the **ModVersionDiff** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModVersionDiffs
+    * const modVersionDiffs = await prisma.modVersionDiff.findMany()
+    * ```
+    */
+  get modVersionDiff(): Prisma.ModVersionDiffDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.modTag`: Exposes CRUD operations for the **ModTag** model.
     * Example usage:
     * ```ts
@@ -216,6 +251,16 @@ export class PrismaClient<
     * ```
     */
   get mcSourceFile(): Prisma.McSourceFileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.modSourceFile`: Exposes CRUD operations for the **ModSourceFile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModSourceFiles
+    * const modSourceFiles = await prisma.modSourceFile.findMany()
+    * ```
+    */
+  get modSourceFile(): Prisma.ModSourceFileDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.docEntry`: Exposes CRUD operations for the **DocEntry** model.
@@ -680,8 +725,11 @@ export namespace Prisma {
     Mod: 'Mod',
     ModClass: 'ModClass',
     McVersion: 'McVersion',
+    McVersionDiff: 'McVersionDiff',
+    ModVersionDiff: 'ModVersionDiff',
     ModTag: 'ModTag',
     McSourceFile: 'McSourceFile',
+    ModSourceFile: 'ModSourceFile',
     DocEntry: 'DocEntry',
     Primer: 'Primer'
   };
@@ -702,7 +750,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "mod" | "modClass" | "mcVersion" | "modTag" | "mcSourceFile" | "docEntry" | "primer"
+      modelProps: "mod" | "modClass" | "mcVersion" | "mcVersionDiff" | "modVersionDiff" | "modTag" | "mcSourceFile" | "modSourceFile" | "docEntry" | "primer"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -928,6 +976,154 @@ export namespace Prisma {
           }
         }
       }
+      McVersionDiff: {
+        payload: Prisma.$McVersionDiffPayload<ExtArgs>
+        fields: Prisma.McVersionDiffFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.McVersionDiffFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.McVersionDiffFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          findFirst: {
+            args: Prisma.McVersionDiffFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.McVersionDiffFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          findMany: {
+            args: Prisma.McVersionDiffFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>[]
+          }
+          create: {
+            args: Prisma.McVersionDiffCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          createMany: {
+            args: Prisma.McVersionDiffCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.McVersionDiffCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>[]
+          }
+          delete: {
+            args: Prisma.McVersionDiffDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          update: {
+            args: Prisma.McVersionDiffUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          deleteMany: {
+            args: Prisma.McVersionDiffDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.McVersionDiffUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.McVersionDiffUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>[]
+          }
+          upsert: {
+            args: Prisma.McVersionDiffUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$McVersionDiffPayload>
+          }
+          aggregate: {
+            args: Prisma.McVersionDiffAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMcVersionDiff>
+          }
+          groupBy: {
+            args: Prisma.McVersionDiffGroupByArgs<ExtArgs>
+            result: $Utils.Optional<McVersionDiffGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.McVersionDiffCountArgs<ExtArgs>
+            result: $Utils.Optional<McVersionDiffCountAggregateOutputType> | number
+          }
+        }
+      }
+      ModVersionDiff: {
+        payload: Prisma.$ModVersionDiffPayload<ExtArgs>
+        fields: Prisma.ModVersionDiffFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModVersionDiffFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModVersionDiffFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          findFirst: {
+            args: Prisma.ModVersionDiffFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModVersionDiffFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          findMany: {
+            args: Prisma.ModVersionDiffFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>[]
+          }
+          create: {
+            args: Prisma.ModVersionDiffCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          createMany: {
+            args: Prisma.ModVersionDiffCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModVersionDiffCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>[]
+          }
+          delete: {
+            args: Prisma.ModVersionDiffDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          update: {
+            args: Prisma.ModVersionDiffUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          deleteMany: {
+            args: Prisma.ModVersionDiffDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModVersionDiffUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModVersionDiffUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>[]
+          }
+          upsert: {
+            args: Prisma.ModVersionDiffUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModVersionDiffPayload>
+          }
+          aggregate: {
+            args: Prisma.ModVersionDiffAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModVersionDiff>
+          }
+          groupBy: {
+            args: Prisma.ModVersionDiffGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModVersionDiffGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModVersionDiffCountArgs<ExtArgs>
+            result: $Utils.Optional<ModVersionDiffCountAggregateOutputType> | number
+          }
+        }
+      }
       ModTag: {
         payload: Prisma.$ModTagPayload<ExtArgs>
         fields: Prisma.ModTagFieldRefs
@@ -1073,6 +1269,80 @@ export namespace Prisma {
           count: {
             args: Prisma.McSourceFileCountArgs<ExtArgs>
             result: $Utils.Optional<McSourceFileCountAggregateOutputType> | number
+          }
+        }
+      }
+      ModSourceFile: {
+        payload: Prisma.$ModSourceFilePayload<ExtArgs>
+        fields: Prisma.ModSourceFileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModSourceFileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModSourceFileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          findFirst: {
+            args: Prisma.ModSourceFileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModSourceFileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          findMany: {
+            args: Prisma.ModSourceFileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>[]
+          }
+          create: {
+            args: Prisma.ModSourceFileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          createMany: {
+            args: Prisma.ModSourceFileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModSourceFileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>[]
+          }
+          delete: {
+            args: Prisma.ModSourceFileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          update: {
+            args: Prisma.ModSourceFileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          deleteMany: {
+            args: Prisma.ModSourceFileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModSourceFileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModSourceFileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>[]
+          }
+          upsert: {
+            args: Prisma.ModSourceFileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModSourceFilePayload>
+          }
+          aggregate: {
+            args: Prisma.ModSourceFileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModSourceFile>
+          }
+          groupBy: {
+            args: Prisma.ModSourceFileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModSourceFileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModSourceFileCountArgs<ExtArgs>
+            result: $Utils.Optional<ModSourceFileCountAggregateOutputType> | number
           }
         }
       }
@@ -1323,8 +1593,11 @@ export namespace Prisma {
     mod?: ModOmit
     modClass?: ModClassOmit
     mcVersion?: McVersionOmit
+    mcVersionDiff?: McVersionDiffOmit
+    modVersionDiff?: ModVersionDiffOmit
     modTag?: ModTagOmit
     mcSourceFile?: McSourceFileOmit
+    modSourceFile?: ModSourceFileOmit
     docEntry?: DocEntryOmit
     primer?: PrimerOmit
   }
@@ -1409,11 +1682,13 @@ export namespace Prisma {
   export type ModCountOutputType = {
     classes: number
     modTags: number
+    sourceFiles: number
   }
 
   export type ModCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     classes?: boolean | ModCountOutputTypeCountClassesArgs
     modTags?: boolean | ModCountOutputTypeCountModTagsArgs
+    sourceFiles?: boolean | ModCountOutputTypeCountSourceFilesArgs
   }
 
   // Custom InputTypes
@@ -1439,6 +1714,13 @@ export namespace Prisma {
    */
   export type ModCountOutputTypeCountModTagsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ModTagWhereInput
+  }
+
+  /**
+   * ModCountOutputType without action
+   */
+  export type ModCountOutputTypeCountSourceFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModSourceFileWhereInput
   }
 
 
@@ -1857,6 +2139,7 @@ export namespace Prisma {
     updatedAt?: boolean
     classes?: boolean | Mod$classesArgs<ExtArgs>
     modTags?: boolean | Mod$modTagsArgs<ExtArgs>
+    sourceFiles?: boolean | Mod$sourceFilesArgs<ExtArgs>
     _count?: boolean | ModCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["mod"]>
 
@@ -1954,6 +2237,7 @@ export namespace Prisma {
   export type ModInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     classes?: boolean | Mod$classesArgs<ExtArgs>
     modTags?: boolean | Mod$modTagsArgs<ExtArgs>
+    sourceFiles?: boolean | Mod$sourceFilesArgs<ExtArgs>
     _count?: boolean | ModCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ModIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1964,6 +2248,7 @@ export namespace Prisma {
     objects: {
       classes: Prisma.$ModClassPayload<ExtArgs>[]
       modTags: Prisma.$ModTagPayload<ExtArgs>[]
+      sourceFiles: Prisma.$ModSourceFilePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -2389,6 +2674,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     classes<T extends Mod$classesArgs<ExtArgs> = {}>(args?: Subset<T, Mod$classesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModClassPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     modTags<T extends Mod$modTagsArgs<ExtArgs> = {}>(args?: Subset<T, Mod$modTagsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    sourceFiles<T extends Mod$sourceFilesArgs<ExtArgs> = {}>(args?: Subset<T, Mod$sourceFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2876,6 +3162,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ModTagScalarFieldEnum | ModTagScalarFieldEnum[]
+  }
+
+  /**
+   * Mod.sourceFiles
+   */
+  export type Mod$sourceFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    where?: ModSourceFileWhereInput
+    orderBy?: ModSourceFileOrderByWithRelationInput | ModSourceFileOrderByWithRelationInput[]
+    cursor?: ModSourceFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ModSourceFileScalarFieldEnum | ModSourceFileScalarFieldEnum[]
   }
 
   /**
@@ -5163,6 +5473,2094 @@ export namespace Prisma {
 
 
   /**
+   * Model McVersionDiff
+   */
+
+  export type AggregateMcVersionDiff = {
+    _count: McVersionDiffCountAggregateOutputType | null
+    _avg: McVersionDiffAvgAggregateOutputType | null
+    _sum: McVersionDiffSumAggregateOutputType | null
+    _min: McVersionDiffMinAggregateOutputType | null
+    _max: McVersionDiffMaxAggregateOutputType | null
+  }
+
+  export type McVersionDiffAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type McVersionDiffSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type McVersionDiffMinAggregateOutputType = {
+    id: number | null
+    versionA: string | null
+    versionB: string | null
+    packagesHash: string | null
+    result: string | null
+    createdAt: Date | null
+  }
+
+  export type McVersionDiffMaxAggregateOutputType = {
+    id: number | null
+    versionA: string | null
+    versionB: string | null
+    packagesHash: string | null
+    result: string | null
+    createdAt: Date | null
+  }
+
+  export type McVersionDiffCountAggregateOutputType = {
+    id: number
+    versionA: number
+    versionB: number
+    packagesHash: number
+    result: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type McVersionDiffAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type McVersionDiffSumAggregateInputType = {
+    id?: true
+  }
+
+  export type McVersionDiffMinAggregateInputType = {
+    id?: true
+    versionA?: true
+    versionB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+  }
+
+  export type McVersionDiffMaxAggregateInputType = {
+    id?: true
+    versionA?: true
+    versionB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+  }
+
+  export type McVersionDiffCountAggregateInputType = {
+    id?: true
+    versionA?: true
+    versionB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type McVersionDiffAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which McVersionDiff to aggregate.
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of McVersionDiffs to fetch.
+     */
+    orderBy?: McVersionDiffOrderByWithRelationInput | McVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: McVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` McVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` McVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned McVersionDiffs
+    **/
+    _count?: true | McVersionDiffCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: McVersionDiffAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: McVersionDiffSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: McVersionDiffMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: McVersionDiffMaxAggregateInputType
+  }
+
+  export type GetMcVersionDiffAggregateType<T extends McVersionDiffAggregateArgs> = {
+        [P in keyof T & keyof AggregateMcVersionDiff]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMcVersionDiff[P]>
+      : GetScalarType<T[P], AggregateMcVersionDiff[P]>
+  }
+
+
+
+
+  export type McVersionDiffGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: McVersionDiffWhereInput
+    orderBy?: McVersionDiffOrderByWithAggregationInput | McVersionDiffOrderByWithAggregationInput[]
+    by: McVersionDiffScalarFieldEnum[] | McVersionDiffScalarFieldEnum
+    having?: McVersionDiffScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: McVersionDiffCountAggregateInputType | true
+    _avg?: McVersionDiffAvgAggregateInputType
+    _sum?: McVersionDiffSumAggregateInputType
+    _min?: McVersionDiffMinAggregateInputType
+    _max?: McVersionDiffMaxAggregateInputType
+  }
+
+  export type McVersionDiffGroupByOutputType = {
+    id: number
+    versionA: string
+    versionB: string
+    packagesHash: string
+    result: string
+    createdAt: Date
+    _count: McVersionDiffCountAggregateOutputType | null
+    _avg: McVersionDiffAvgAggregateOutputType | null
+    _sum: McVersionDiffSumAggregateOutputType | null
+    _min: McVersionDiffMinAggregateOutputType | null
+    _max: McVersionDiffMaxAggregateOutputType | null
+  }
+
+  type GetMcVersionDiffGroupByPayload<T extends McVersionDiffGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<McVersionDiffGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof McVersionDiffGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], McVersionDiffGroupByOutputType[P]>
+            : GetScalarType<T[P], McVersionDiffGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type McVersionDiffSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    versionA?: boolean
+    versionB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["mcVersionDiff"]>
+
+  export type McVersionDiffSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    versionA?: boolean
+    versionB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["mcVersionDiff"]>
+
+  export type McVersionDiffSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    versionA?: boolean
+    versionB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["mcVersionDiff"]>
+
+  export type McVersionDiffSelectScalar = {
+    id?: boolean
+    versionA?: boolean
+    versionB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }
+
+  export type McVersionDiffOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "versionA" | "versionB" | "packagesHash" | "result" | "createdAt", ExtArgs["result"]["mcVersionDiff"]>
+
+  export type $McVersionDiffPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "McVersionDiff"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      versionA: string
+      versionB: string
+      packagesHash: string
+      result: string
+      createdAt: Date
+    }, ExtArgs["result"]["mcVersionDiff"]>
+    composites: {}
+  }
+
+  type McVersionDiffGetPayload<S extends boolean | null | undefined | McVersionDiffDefaultArgs> = $Result.GetResult<Prisma.$McVersionDiffPayload, S>
+
+  type McVersionDiffCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<McVersionDiffFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: McVersionDiffCountAggregateInputType | true
+    }
+
+  export interface McVersionDiffDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['McVersionDiff'], meta: { name: 'McVersionDiff' } }
+    /**
+     * Find zero or one McVersionDiff that matches the filter.
+     * @param {McVersionDiffFindUniqueArgs} args - Arguments to find a McVersionDiff
+     * @example
+     * // Get one McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends McVersionDiffFindUniqueArgs>(args: SelectSubset<T, McVersionDiffFindUniqueArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one McVersionDiff that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {McVersionDiffFindUniqueOrThrowArgs} args - Arguments to find a McVersionDiff
+     * @example
+     * // Get one McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends McVersionDiffFindUniqueOrThrowArgs>(args: SelectSubset<T, McVersionDiffFindUniqueOrThrowArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first McVersionDiff that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffFindFirstArgs} args - Arguments to find a McVersionDiff
+     * @example
+     * // Get one McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends McVersionDiffFindFirstArgs>(args?: SelectSubset<T, McVersionDiffFindFirstArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first McVersionDiff that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffFindFirstOrThrowArgs} args - Arguments to find a McVersionDiff
+     * @example
+     * // Get one McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends McVersionDiffFindFirstOrThrowArgs>(args?: SelectSubset<T, McVersionDiffFindFirstOrThrowArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more McVersionDiffs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all McVersionDiffs
+     * const mcVersionDiffs = await prisma.mcVersionDiff.findMany()
+     * 
+     * // Get first 10 McVersionDiffs
+     * const mcVersionDiffs = await prisma.mcVersionDiff.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const mcVersionDiffWithIdOnly = await prisma.mcVersionDiff.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends McVersionDiffFindManyArgs>(args?: SelectSubset<T, McVersionDiffFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a McVersionDiff.
+     * @param {McVersionDiffCreateArgs} args - Arguments to create a McVersionDiff.
+     * @example
+     * // Create one McVersionDiff
+     * const McVersionDiff = await prisma.mcVersionDiff.create({
+     *   data: {
+     *     // ... data to create a McVersionDiff
+     *   }
+     * })
+     * 
+     */
+    create<T extends McVersionDiffCreateArgs>(args: SelectSubset<T, McVersionDiffCreateArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many McVersionDiffs.
+     * @param {McVersionDiffCreateManyArgs} args - Arguments to create many McVersionDiffs.
+     * @example
+     * // Create many McVersionDiffs
+     * const mcVersionDiff = await prisma.mcVersionDiff.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends McVersionDiffCreateManyArgs>(args?: SelectSubset<T, McVersionDiffCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many McVersionDiffs and returns the data saved in the database.
+     * @param {McVersionDiffCreateManyAndReturnArgs} args - Arguments to create many McVersionDiffs.
+     * @example
+     * // Create many McVersionDiffs
+     * const mcVersionDiff = await prisma.mcVersionDiff.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many McVersionDiffs and only return the `id`
+     * const mcVersionDiffWithIdOnly = await prisma.mcVersionDiff.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends McVersionDiffCreateManyAndReturnArgs>(args?: SelectSubset<T, McVersionDiffCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a McVersionDiff.
+     * @param {McVersionDiffDeleteArgs} args - Arguments to delete one McVersionDiff.
+     * @example
+     * // Delete one McVersionDiff
+     * const McVersionDiff = await prisma.mcVersionDiff.delete({
+     *   where: {
+     *     // ... filter to delete one McVersionDiff
+     *   }
+     * })
+     * 
+     */
+    delete<T extends McVersionDiffDeleteArgs>(args: SelectSubset<T, McVersionDiffDeleteArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one McVersionDiff.
+     * @param {McVersionDiffUpdateArgs} args - Arguments to update one McVersionDiff.
+     * @example
+     * // Update one McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends McVersionDiffUpdateArgs>(args: SelectSubset<T, McVersionDiffUpdateArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more McVersionDiffs.
+     * @param {McVersionDiffDeleteManyArgs} args - Arguments to filter McVersionDiffs to delete.
+     * @example
+     * // Delete a few McVersionDiffs
+     * const { count } = await prisma.mcVersionDiff.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends McVersionDiffDeleteManyArgs>(args?: SelectSubset<T, McVersionDiffDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more McVersionDiffs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many McVersionDiffs
+     * const mcVersionDiff = await prisma.mcVersionDiff.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends McVersionDiffUpdateManyArgs>(args: SelectSubset<T, McVersionDiffUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more McVersionDiffs and returns the data updated in the database.
+     * @param {McVersionDiffUpdateManyAndReturnArgs} args - Arguments to update many McVersionDiffs.
+     * @example
+     * // Update many McVersionDiffs
+     * const mcVersionDiff = await prisma.mcVersionDiff.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more McVersionDiffs and only return the `id`
+     * const mcVersionDiffWithIdOnly = await prisma.mcVersionDiff.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends McVersionDiffUpdateManyAndReturnArgs>(args: SelectSubset<T, McVersionDiffUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one McVersionDiff.
+     * @param {McVersionDiffUpsertArgs} args - Arguments to update or create a McVersionDiff.
+     * @example
+     * // Update or create a McVersionDiff
+     * const mcVersionDiff = await prisma.mcVersionDiff.upsert({
+     *   create: {
+     *     // ... data to create a McVersionDiff
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the McVersionDiff we want to update
+     *   }
+     * })
+     */
+    upsert<T extends McVersionDiffUpsertArgs>(args: SelectSubset<T, McVersionDiffUpsertArgs<ExtArgs>>): Prisma__McVersionDiffClient<$Result.GetResult<Prisma.$McVersionDiffPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of McVersionDiffs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffCountArgs} args - Arguments to filter McVersionDiffs to count.
+     * @example
+     * // Count the number of McVersionDiffs
+     * const count = await prisma.mcVersionDiff.count({
+     *   where: {
+     *     // ... the filter for the McVersionDiffs we want to count
+     *   }
+     * })
+    **/
+    count<T extends McVersionDiffCountArgs>(
+      args?: Subset<T, McVersionDiffCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], McVersionDiffCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a McVersionDiff.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends McVersionDiffAggregateArgs>(args: Subset<T, McVersionDiffAggregateArgs>): Prisma.PrismaPromise<GetMcVersionDiffAggregateType<T>>
+
+    /**
+     * Group by McVersionDiff.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {McVersionDiffGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends McVersionDiffGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: McVersionDiffGroupByArgs['orderBy'] }
+        : { orderBy?: McVersionDiffGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, McVersionDiffGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMcVersionDiffGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the McVersionDiff model
+   */
+  readonly fields: McVersionDiffFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for McVersionDiff.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__McVersionDiffClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the McVersionDiff model
+   */
+  interface McVersionDiffFieldRefs {
+    readonly id: FieldRef<"McVersionDiff", 'Int'>
+    readonly versionA: FieldRef<"McVersionDiff", 'String'>
+    readonly versionB: FieldRef<"McVersionDiff", 'String'>
+    readonly packagesHash: FieldRef<"McVersionDiff", 'String'>
+    readonly result: FieldRef<"McVersionDiff", 'String'>
+    readonly createdAt: FieldRef<"McVersionDiff", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * McVersionDiff findUnique
+   */
+  export type McVersionDiffFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which McVersionDiff to fetch.
+     */
+    where: McVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * McVersionDiff findUniqueOrThrow
+   */
+  export type McVersionDiffFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which McVersionDiff to fetch.
+     */
+    where: McVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * McVersionDiff findFirst
+   */
+  export type McVersionDiffFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which McVersionDiff to fetch.
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of McVersionDiffs to fetch.
+     */
+    orderBy?: McVersionDiffOrderByWithRelationInput | McVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for McVersionDiffs.
+     */
+    cursor?: McVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` McVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` McVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of McVersionDiffs.
+     */
+    distinct?: McVersionDiffScalarFieldEnum | McVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * McVersionDiff findFirstOrThrow
+   */
+  export type McVersionDiffFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which McVersionDiff to fetch.
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of McVersionDiffs to fetch.
+     */
+    orderBy?: McVersionDiffOrderByWithRelationInput | McVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for McVersionDiffs.
+     */
+    cursor?: McVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` McVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` McVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of McVersionDiffs.
+     */
+    distinct?: McVersionDiffScalarFieldEnum | McVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * McVersionDiff findMany
+   */
+  export type McVersionDiffFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which McVersionDiffs to fetch.
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of McVersionDiffs to fetch.
+     */
+    orderBy?: McVersionDiffOrderByWithRelationInput | McVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing McVersionDiffs.
+     */
+    cursor?: McVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` McVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` McVersionDiffs.
+     */
+    skip?: number
+    distinct?: McVersionDiffScalarFieldEnum | McVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * McVersionDiff create
+   */
+  export type McVersionDiffCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data needed to create a McVersionDiff.
+     */
+    data: XOR<McVersionDiffCreateInput, McVersionDiffUncheckedCreateInput>
+  }
+
+  /**
+   * McVersionDiff createMany
+   */
+  export type McVersionDiffCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many McVersionDiffs.
+     */
+    data: McVersionDiffCreateManyInput | McVersionDiffCreateManyInput[]
+  }
+
+  /**
+   * McVersionDiff createManyAndReturn
+   */
+  export type McVersionDiffCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data used to create many McVersionDiffs.
+     */
+    data: McVersionDiffCreateManyInput | McVersionDiffCreateManyInput[]
+  }
+
+  /**
+   * McVersionDiff update
+   */
+  export type McVersionDiffUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data needed to update a McVersionDiff.
+     */
+    data: XOR<McVersionDiffUpdateInput, McVersionDiffUncheckedUpdateInput>
+    /**
+     * Choose, which McVersionDiff to update.
+     */
+    where: McVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * McVersionDiff updateMany
+   */
+  export type McVersionDiffUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update McVersionDiffs.
+     */
+    data: XOR<McVersionDiffUpdateManyMutationInput, McVersionDiffUncheckedUpdateManyInput>
+    /**
+     * Filter which McVersionDiffs to update
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * Limit how many McVersionDiffs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * McVersionDiff updateManyAndReturn
+   */
+  export type McVersionDiffUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data used to update McVersionDiffs.
+     */
+    data: XOR<McVersionDiffUpdateManyMutationInput, McVersionDiffUncheckedUpdateManyInput>
+    /**
+     * Filter which McVersionDiffs to update
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * Limit how many McVersionDiffs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * McVersionDiff upsert
+   */
+  export type McVersionDiffUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * The filter to search for the McVersionDiff to update in case it exists.
+     */
+    where: McVersionDiffWhereUniqueInput
+    /**
+     * In case the McVersionDiff found by the `where` argument doesn't exist, create a new McVersionDiff with this data.
+     */
+    create: XOR<McVersionDiffCreateInput, McVersionDiffUncheckedCreateInput>
+    /**
+     * In case the McVersionDiff was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<McVersionDiffUpdateInput, McVersionDiffUncheckedUpdateInput>
+  }
+
+  /**
+   * McVersionDiff delete
+   */
+  export type McVersionDiffDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter which McVersionDiff to delete.
+     */
+    where: McVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * McVersionDiff deleteMany
+   */
+  export type McVersionDiffDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which McVersionDiffs to delete
+     */
+    where?: McVersionDiffWhereInput
+    /**
+     * Limit how many McVersionDiffs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * McVersionDiff without action
+   */
+  export type McVersionDiffDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the McVersionDiff
+     */
+    select?: McVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the McVersionDiff
+     */
+    omit?: McVersionDiffOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ModVersionDiff
+   */
+
+  export type AggregateModVersionDiff = {
+    _count: ModVersionDiffCountAggregateOutputType | null
+    _avg: ModVersionDiffAvgAggregateOutputType | null
+    _sum: ModVersionDiffSumAggregateOutputType | null
+    _min: ModVersionDiffMinAggregateOutputType | null
+    _max: ModVersionDiffMaxAggregateOutputType | null
+  }
+
+  export type ModVersionDiffAvgAggregateOutputType = {
+    id: number | null
+    modDbIdA: number | null
+    modDbIdB: number | null
+  }
+
+  export type ModVersionDiffSumAggregateOutputType = {
+    id: number | null
+    modDbIdA: number | null
+    modDbIdB: number | null
+  }
+
+  export type ModVersionDiffMinAggregateOutputType = {
+    id: number | null
+    modDbIdA: number | null
+    modDbIdB: number | null
+    packagesHash: string | null
+    result: string | null
+    createdAt: Date | null
+  }
+
+  export type ModVersionDiffMaxAggregateOutputType = {
+    id: number | null
+    modDbIdA: number | null
+    modDbIdB: number | null
+    packagesHash: string | null
+    result: string | null
+    createdAt: Date | null
+  }
+
+  export type ModVersionDiffCountAggregateOutputType = {
+    id: number
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash: number
+    result: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ModVersionDiffAvgAggregateInputType = {
+    id?: true
+    modDbIdA?: true
+    modDbIdB?: true
+  }
+
+  export type ModVersionDiffSumAggregateInputType = {
+    id?: true
+    modDbIdA?: true
+    modDbIdB?: true
+  }
+
+  export type ModVersionDiffMinAggregateInputType = {
+    id?: true
+    modDbIdA?: true
+    modDbIdB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+  }
+
+  export type ModVersionDiffMaxAggregateInputType = {
+    id?: true
+    modDbIdA?: true
+    modDbIdB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+  }
+
+  export type ModVersionDiffCountAggregateInputType = {
+    id?: true
+    modDbIdA?: true
+    modDbIdB?: true
+    packagesHash?: true
+    result?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ModVersionDiffAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModVersionDiff to aggregate.
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModVersionDiffs to fetch.
+     */
+    orderBy?: ModVersionDiffOrderByWithRelationInput | ModVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModVersionDiffs
+    **/
+    _count?: true | ModVersionDiffCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ModVersionDiffAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ModVersionDiffSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModVersionDiffMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModVersionDiffMaxAggregateInputType
+  }
+
+  export type GetModVersionDiffAggregateType<T extends ModVersionDiffAggregateArgs> = {
+        [P in keyof T & keyof AggregateModVersionDiff]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModVersionDiff[P]>
+      : GetScalarType<T[P], AggregateModVersionDiff[P]>
+  }
+
+
+
+
+  export type ModVersionDiffGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModVersionDiffWhereInput
+    orderBy?: ModVersionDiffOrderByWithAggregationInput | ModVersionDiffOrderByWithAggregationInput[]
+    by: ModVersionDiffScalarFieldEnum[] | ModVersionDiffScalarFieldEnum
+    having?: ModVersionDiffScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModVersionDiffCountAggregateInputType | true
+    _avg?: ModVersionDiffAvgAggregateInputType
+    _sum?: ModVersionDiffSumAggregateInputType
+    _min?: ModVersionDiffMinAggregateInputType
+    _max?: ModVersionDiffMaxAggregateInputType
+  }
+
+  export type ModVersionDiffGroupByOutputType = {
+    id: number
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash: string
+    result: string
+    createdAt: Date
+    _count: ModVersionDiffCountAggregateOutputType | null
+    _avg: ModVersionDiffAvgAggregateOutputType | null
+    _sum: ModVersionDiffSumAggregateOutputType | null
+    _min: ModVersionDiffMinAggregateOutputType | null
+    _max: ModVersionDiffMaxAggregateOutputType | null
+  }
+
+  type GetModVersionDiffGroupByPayload<T extends ModVersionDiffGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModVersionDiffGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModVersionDiffGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModVersionDiffGroupByOutputType[P]>
+            : GetScalarType<T[P], ModVersionDiffGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModVersionDiffSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modDbIdA?: boolean
+    modDbIdB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["modVersionDiff"]>
+
+  export type ModVersionDiffSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modDbIdA?: boolean
+    modDbIdB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["modVersionDiff"]>
+
+  export type ModVersionDiffSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modDbIdA?: boolean
+    modDbIdB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["modVersionDiff"]>
+
+  export type ModVersionDiffSelectScalar = {
+    id?: boolean
+    modDbIdA?: boolean
+    modDbIdB?: boolean
+    packagesHash?: boolean
+    result?: boolean
+    createdAt?: boolean
+  }
+
+  export type ModVersionDiffOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modDbIdA" | "modDbIdB" | "packagesHash" | "result" | "createdAt", ExtArgs["result"]["modVersionDiff"]>
+
+  export type $ModVersionDiffPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModVersionDiff"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      modDbIdA: number
+      modDbIdB: number
+      packagesHash: string
+      result: string
+      createdAt: Date
+    }, ExtArgs["result"]["modVersionDiff"]>
+    composites: {}
+  }
+
+  type ModVersionDiffGetPayload<S extends boolean | null | undefined | ModVersionDiffDefaultArgs> = $Result.GetResult<Prisma.$ModVersionDiffPayload, S>
+
+  type ModVersionDiffCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModVersionDiffFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModVersionDiffCountAggregateInputType | true
+    }
+
+  export interface ModVersionDiffDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModVersionDiff'], meta: { name: 'ModVersionDiff' } }
+    /**
+     * Find zero or one ModVersionDiff that matches the filter.
+     * @param {ModVersionDiffFindUniqueArgs} args - Arguments to find a ModVersionDiff
+     * @example
+     * // Get one ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModVersionDiffFindUniqueArgs>(args: SelectSubset<T, ModVersionDiffFindUniqueArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModVersionDiff that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModVersionDiffFindUniqueOrThrowArgs} args - Arguments to find a ModVersionDiff
+     * @example
+     * // Get one ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModVersionDiffFindUniqueOrThrowArgs>(args: SelectSubset<T, ModVersionDiffFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModVersionDiff that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffFindFirstArgs} args - Arguments to find a ModVersionDiff
+     * @example
+     * // Get one ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModVersionDiffFindFirstArgs>(args?: SelectSubset<T, ModVersionDiffFindFirstArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModVersionDiff that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffFindFirstOrThrowArgs} args - Arguments to find a ModVersionDiff
+     * @example
+     * // Get one ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModVersionDiffFindFirstOrThrowArgs>(args?: SelectSubset<T, ModVersionDiffFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModVersionDiffs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModVersionDiffs
+     * const modVersionDiffs = await prisma.modVersionDiff.findMany()
+     * 
+     * // Get first 10 ModVersionDiffs
+     * const modVersionDiffs = await prisma.modVersionDiff.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const modVersionDiffWithIdOnly = await prisma.modVersionDiff.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModVersionDiffFindManyArgs>(args?: SelectSubset<T, ModVersionDiffFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModVersionDiff.
+     * @param {ModVersionDiffCreateArgs} args - Arguments to create a ModVersionDiff.
+     * @example
+     * // Create one ModVersionDiff
+     * const ModVersionDiff = await prisma.modVersionDiff.create({
+     *   data: {
+     *     // ... data to create a ModVersionDiff
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModVersionDiffCreateArgs>(args: SelectSubset<T, ModVersionDiffCreateArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModVersionDiffs.
+     * @param {ModVersionDiffCreateManyArgs} args - Arguments to create many ModVersionDiffs.
+     * @example
+     * // Create many ModVersionDiffs
+     * const modVersionDiff = await prisma.modVersionDiff.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModVersionDiffCreateManyArgs>(args?: SelectSubset<T, ModVersionDiffCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModVersionDiffs and returns the data saved in the database.
+     * @param {ModVersionDiffCreateManyAndReturnArgs} args - Arguments to create many ModVersionDiffs.
+     * @example
+     * // Create many ModVersionDiffs
+     * const modVersionDiff = await prisma.modVersionDiff.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModVersionDiffs and only return the `id`
+     * const modVersionDiffWithIdOnly = await prisma.modVersionDiff.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModVersionDiffCreateManyAndReturnArgs>(args?: SelectSubset<T, ModVersionDiffCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModVersionDiff.
+     * @param {ModVersionDiffDeleteArgs} args - Arguments to delete one ModVersionDiff.
+     * @example
+     * // Delete one ModVersionDiff
+     * const ModVersionDiff = await prisma.modVersionDiff.delete({
+     *   where: {
+     *     // ... filter to delete one ModVersionDiff
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModVersionDiffDeleteArgs>(args: SelectSubset<T, ModVersionDiffDeleteArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModVersionDiff.
+     * @param {ModVersionDiffUpdateArgs} args - Arguments to update one ModVersionDiff.
+     * @example
+     * // Update one ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModVersionDiffUpdateArgs>(args: SelectSubset<T, ModVersionDiffUpdateArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModVersionDiffs.
+     * @param {ModVersionDiffDeleteManyArgs} args - Arguments to filter ModVersionDiffs to delete.
+     * @example
+     * // Delete a few ModVersionDiffs
+     * const { count } = await prisma.modVersionDiff.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModVersionDiffDeleteManyArgs>(args?: SelectSubset<T, ModVersionDiffDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModVersionDiffs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModVersionDiffs
+     * const modVersionDiff = await prisma.modVersionDiff.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModVersionDiffUpdateManyArgs>(args: SelectSubset<T, ModVersionDiffUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModVersionDiffs and returns the data updated in the database.
+     * @param {ModVersionDiffUpdateManyAndReturnArgs} args - Arguments to update many ModVersionDiffs.
+     * @example
+     * // Update many ModVersionDiffs
+     * const modVersionDiff = await prisma.modVersionDiff.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModVersionDiffs and only return the `id`
+     * const modVersionDiffWithIdOnly = await prisma.modVersionDiff.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModVersionDiffUpdateManyAndReturnArgs>(args: SelectSubset<T, ModVersionDiffUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModVersionDiff.
+     * @param {ModVersionDiffUpsertArgs} args - Arguments to update or create a ModVersionDiff.
+     * @example
+     * // Update or create a ModVersionDiff
+     * const modVersionDiff = await prisma.modVersionDiff.upsert({
+     *   create: {
+     *     // ... data to create a ModVersionDiff
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModVersionDiff we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModVersionDiffUpsertArgs>(args: SelectSubset<T, ModVersionDiffUpsertArgs<ExtArgs>>): Prisma__ModVersionDiffClient<$Result.GetResult<Prisma.$ModVersionDiffPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModVersionDiffs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffCountArgs} args - Arguments to filter ModVersionDiffs to count.
+     * @example
+     * // Count the number of ModVersionDiffs
+     * const count = await prisma.modVersionDiff.count({
+     *   where: {
+     *     // ... the filter for the ModVersionDiffs we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModVersionDiffCountArgs>(
+      args?: Subset<T, ModVersionDiffCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModVersionDiffCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModVersionDiff.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModVersionDiffAggregateArgs>(args: Subset<T, ModVersionDiffAggregateArgs>): Prisma.PrismaPromise<GetModVersionDiffAggregateType<T>>
+
+    /**
+     * Group by ModVersionDiff.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModVersionDiffGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModVersionDiffGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModVersionDiffGroupByArgs['orderBy'] }
+        : { orderBy?: ModVersionDiffGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModVersionDiffGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModVersionDiffGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModVersionDiff model
+   */
+  readonly fields: ModVersionDiffFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModVersionDiff.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModVersionDiffClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModVersionDiff model
+   */
+  interface ModVersionDiffFieldRefs {
+    readonly id: FieldRef<"ModVersionDiff", 'Int'>
+    readonly modDbIdA: FieldRef<"ModVersionDiff", 'Int'>
+    readonly modDbIdB: FieldRef<"ModVersionDiff", 'Int'>
+    readonly packagesHash: FieldRef<"ModVersionDiff", 'String'>
+    readonly result: FieldRef<"ModVersionDiff", 'String'>
+    readonly createdAt: FieldRef<"ModVersionDiff", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModVersionDiff findUnique
+   */
+  export type ModVersionDiffFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which ModVersionDiff to fetch.
+     */
+    where: ModVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * ModVersionDiff findUniqueOrThrow
+   */
+  export type ModVersionDiffFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which ModVersionDiff to fetch.
+     */
+    where: ModVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * ModVersionDiff findFirst
+   */
+  export type ModVersionDiffFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which ModVersionDiff to fetch.
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModVersionDiffs to fetch.
+     */
+    orderBy?: ModVersionDiffOrderByWithRelationInput | ModVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModVersionDiffs.
+     */
+    cursor?: ModVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModVersionDiffs.
+     */
+    distinct?: ModVersionDiffScalarFieldEnum | ModVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * ModVersionDiff findFirstOrThrow
+   */
+  export type ModVersionDiffFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which ModVersionDiff to fetch.
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModVersionDiffs to fetch.
+     */
+    orderBy?: ModVersionDiffOrderByWithRelationInput | ModVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModVersionDiffs.
+     */
+    cursor?: ModVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModVersionDiffs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModVersionDiffs.
+     */
+    distinct?: ModVersionDiffScalarFieldEnum | ModVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * ModVersionDiff findMany
+   */
+  export type ModVersionDiffFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter, which ModVersionDiffs to fetch.
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModVersionDiffs to fetch.
+     */
+    orderBy?: ModVersionDiffOrderByWithRelationInput | ModVersionDiffOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModVersionDiffs.
+     */
+    cursor?: ModVersionDiffWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModVersionDiffs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModVersionDiffs.
+     */
+    skip?: number
+    distinct?: ModVersionDiffScalarFieldEnum | ModVersionDiffScalarFieldEnum[]
+  }
+
+  /**
+   * ModVersionDiff create
+   */
+  export type ModVersionDiffCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ModVersionDiff.
+     */
+    data: XOR<ModVersionDiffCreateInput, ModVersionDiffUncheckedCreateInput>
+  }
+
+  /**
+   * ModVersionDiff createMany
+   */
+  export type ModVersionDiffCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModVersionDiffs.
+     */
+    data: ModVersionDiffCreateManyInput | ModVersionDiffCreateManyInput[]
+  }
+
+  /**
+   * ModVersionDiff createManyAndReturn
+   */
+  export type ModVersionDiffCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModVersionDiffs.
+     */
+    data: ModVersionDiffCreateManyInput | ModVersionDiffCreateManyInput[]
+  }
+
+  /**
+   * ModVersionDiff update
+   */
+  export type ModVersionDiffUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ModVersionDiff.
+     */
+    data: XOR<ModVersionDiffUpdateInput, ModVersionDiffUncheckedUpdateInput>
+    /**
+     * Choose, which ModVersionDiff to update.
+     */
+    where: ModVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * ModVersionDiff updateMany
+   */
+  export type ModVersionDiffUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModVersionDiffs.
+     */
+    data: XOR<ModVersionDiffUpdateManyMutationInput, ModVersionDiffUncheckedUpdateManyInput>
+    /**
+     * Filter which ModVersionDiffs to update
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * Limit how many ModVersionDiffs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModVersionDiff updateManyAndReturn
+   */
+  export type ModVersionDiffUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * The data used to update ModVersionDiffs.
+     */
+    data: XOR<ModVersionDiffUpdateManyMutationInput, ModVersionDiffUncheckedUpdateManyInput>
+    /**
+     * Filter which ModVersionDiffs to update
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * Limit how many ModVersionDiffs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModVersionDiff upsert
+   */
+  export type ModVersionDiffUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ModVersionDiff to update in case it exists.
+     */
+    where: ModVersionDiffWhereUniqueInput
+    /**
+     * In case the ModVersionDiff found by the `where` argument doesn't exist, create a new ModVersionDiff with this data.
+     */
+    create: XOR<ModVersionDiffCreateInput, ModVersionDiffUncheckedCreateInput>
+    /**
+     * In case the ModVersionDiff was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModVersionDiffUpdateInput, ModVersionDiffUncheckedUpdateInput>
+  }
+
+  /**
+   * ModVersionDiff delete
+   */
+  export type ModVersionDiffDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+    /**
+     * Filter which ModVersionDiff to delete.
+     */
+    where: ModVersionDiffWhereUniqueInput
+  }
+
+  /**
+   * ModVersionDiff deleteMany
+   */
+  export type ModVersionDiffDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModVersionDiffs to delete
+     */
+    where?: ModVersionDiffWhereInput
+    /**
+     * Limit how many ModVersionDiffs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModVersionDiff without action
+   */
+  export type ModVersionDiffDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModVersionDiff
+     */
+    select?: ModVersionDiffSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModVersionDiff
+     */
+    omit?: ModVersionDiffOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model ModTag
    */
 
@@ -7373,6 +9771,1100 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: McSourceFileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ModSourceFile
+   */
+
+  export type AggregateModSourceFile = {
+    _count: ModSourceFileCountAggregateOutputType | null
+    _avg: ModSourceFileAvgAggregateOutputType | null
+    _sum: ModSourceFileSumAggregateOutputType | null
+    _min: ModSourceFileMinAggregateOutputType | null
+    _max: ModSourceFileMaxAggregateOutputType | null
+  }
+
+  export type ModSourceFileAvgAggregateOutputType = {
+    id: number | null
+    modId: number | null
+  }
+
+  export type ModSourceFileSumAggregateOutputType = {
+    id: number | null
+    modId: number | null
+  }
+
+  export type ModSourceFileMinAggregateOutputType = {
+    id: number | null
+    modId: number | null
+    className: string | null
+    content: string | null
+    embedding: Bytes | null
+  }
+
+  export type ModSourceFileMaxAggregateOutputType = {
+    id: number | null
+    modId: number | null
+    className: string | null
+    content: string | null
+    embedding: Bytes | null
+  }
+
+  export type ModSourceFileCountAggregateOutputType = {
+    id: number
+    modId: number
+    className: number
+    content: number
+    embedding: number
+    _all: number
+  }
+
+
+  export type ModSourceFileAvgAggregateInputType = {
+    id?: true
+    modId?: true
+  }
+
+  export type ModSourceFileSumAggregateInputType = {
+    id?: true
+    modId?: true
+  }
+
+  export type ModSourceFileMinAggregateInputType = {
+    id?: true
+    modId?: true
+    className?: true
+    content?: true
+    embedding?: true
+  }
+
+  export type ModSourceFileMaxAggregateInputType = {
+    id?: true
+    modId?: true
+    className?: true
+    content?: true
+    embedding?: true
+  }
+
+  export type ModSourceFileCountAggregateInputType = {
+    id?: true
+    modId?: true
+    className?: true
+    content?: true
+    embedding?: true
+    _all?: true
+  }
+
+  export type ModSourceFileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModSourceFile to aggregate.
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModSourceFiles to fetch.
+     */
+    orderBy?: ModSourceFileOrderByWithRelationInput | ModSourceFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModSourceFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModSourceFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModSourceFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModSourceFiles
+    **/
+    _count?: true | ModSourceFileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ModSourceFileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ModSourceFileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModSourceFileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModSourceFileMaxAggregateInputType
+  }
+
+  export type GetModSourceFileAggregateType<T extends ModSourceFileAggregateArgs> = {
+        [P in keyof T & keyof AggregateModSourceFile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModSourceFile[P]>
+      : GetScalarType<T[P], AggregateModSourceFile[P]>
+  }
+
+
+
+
+  export type ModSourceFileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModSourceFileWhereInput
+    orderBy?: ModSourceFileOrderByWithAggregationInput | ModSourceFileOrderByWithAggregationInput[]
+    by: ModSourceFileScalarFieldEnum[] | ModSourceFileScalarFieldEnum
+    having?: ModSourceFileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModSourceFileCountAggregateInputType | true
+    _avg?: ModSourceFileAvgAggregateInputType
+    _sum?: ModSourceFileSumAggregateInputType
+    _min?: ModSourceFileMinAggregateInputType
+    _max?: ModSourceFileMaxAggregateInputType
+  }
+
+  export type ModSourceFileGroupByOutputType = {
+    id: number
+    modId: number
+    className: string
+    content: string
+    embedding: Bytes | null
+    _count: ModSourceFileCountAggregateOutputType | null
+    _avg: ModSourceFileAvgAggregateOutputType | null
+    _sum: ModSourceFileSumAggregateOutputType | null
+    _min: ModSourceFileMinAggregateOutputType | null
+    _max: ModSourceFileMaxAggregateOutputType | null
+  }
+
+  type GetModSourceFileGroupByPayload<T extends ModSourceFileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModSourceFileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModSourceFileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModSourceFileGroupByOutputType[P]>
+            : GetScalarType<T[P], ModSourceFileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModSourceFileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modId?: boolean
+    className?: boolean
+    content?: boolean
+    embedding?: boolean
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["modSourceFile"]>
+
+  export type ModSourceFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modId?: boolean
+    className?: boolean
+    content?: boolean
+    embedding?: boolean
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["modSourceFile"]>
+
+  export type ModSourceFileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    modId?: boolean
+    className?: boolean
+    content?: boolean
+    embedding?: boolean
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["modSourceFile"]>
+
+  export type ModSourceFileSelectScalar = {
+    id?: boolean
+    modId?: boolean
+    className?: boolean
+    content?: boolean
+    embedding?: boolean
+  }
+
+  export type ModSourceFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modId" | "className" | "content" | "embedding", ExtArgs["result"]["modSourceFile"]>
+  export type ModSourceFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }
+  export type ModSourceFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }
+  export type ModSourceFileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mod?: boolean | ModDefaultArgs<ExtArgs>
+  }
+
+  export type $ModSourceFilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModSourceFile"
+    objects: {
+      mod: Prisma.$ModPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      modId: number
+      className: string
+      content: string
+      embedding: Prisma.Bytes | null
+    }, ExtArgs["result"]["modSourceFile"]>
+    composites: {}
+  }
+
+  type ModSourceFileGetPayload<S extends boolean | null | undefined | ModSourceFileDefaultArgs> = $Result.GetResult<Prisma.$ModSourceFilePayload, S>
+
+  type ModSourceFileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModSourceFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModSourceFileCountAggregateInputType | true
+    }
+
+  export interface ModSourceFileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModSourceFile'], meta: { name: 'ModSourceFile' } }
+    /**
+     * Find zero or one ModSourceFile that matches the filter.
+     * @param {ModSourceFileFindUniqueArgs} args - Arguments to find a ModSourceFile
+     * @example
+     * // Get one ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModSourceFileFindUniqueArgs>(args: SelectSubset<T, ModSourceFileFindUniqueArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModSourceFile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModSourceFileFindUniqueOrThrowArgs} args - Arguments to find a ModSourceFile
+     * @example
+     * // Get one ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModSourceFileFindUniqueOrThrowArgs>(args: SelectSubset<T, ModSourceFileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModSourceFile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileFindFirstArgs} args - Arguments to find a ModSourceFile
+     * @example
+     * // Get one ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModSourceFileFindFirstArgs>(args?: SelectSubset<T, ModSourceFileFindFirstArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModSourceFile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileFindFirstOrThrowArgs} args - Arguments to find a ModSourceFile
+     * @example
+     * // Get one ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModSourceFileFindFirstOrThrowArgs>(args?: SelectSubset<T, ModSourceFileFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModSourceFiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModSourceFiles
+     * const modSourceFiles = await prisma.modSourceFile.findMany()
+     * 
+     * // Get first 10 ModSourceFiles
+     * const modSourceFiles = await prisma.modSourceFile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const modSourceFileWithIdOnly = await prisma.modSourceFile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModSourceFileFindManyArgs>(args?: SelectSubset<T, ModSourceFileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModSourceFile.
+     * @param {ModSourceFileCreateArgs} args - Arguments to create a ModSourceFile.
+     * @example
+     * // Create one ModSourceFile
+     * const ModSourceFile = await prisma.modSourceFile.create({
+     *   data: {
+     *     // ... data to create a ModSourceFile
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModSourceFileCreateArgs>(args: SelectSubset<T, ModSourceFileCreateArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModSourceFiles.
+     * @param {ModSourceFileCreateManyArgs} args - Arguments to create many ModSourceFiles.
+     * @example
+     * // Create many ModSourceFiles
+     * const modSourceFile = await prisma.modSourceFile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModSourceFileCreateManyArgs>(args?: SelectSubset<T, ModSourceFileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModSourceFiles and returns the data saved in the database.
+     * @param {ModSourceFileCreateManyAndReturnArgs} args - Arguments to create many ModSourceFiles.
+     * @example
+     * // Create many ModSourceFiles
+     * const modSourceFile = await prisma.modSourceFile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModSourceFiles and only return the `id`
+     * const modSourceFileWithIdOnly = await prisma.modSourceFile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModSourceFileCreateManyAndReturnArgs>(args?: SelectSubset<T, ModSourceFileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModSourceFile.
+     * @param {ModSourceFileDeleteArgs} args - Arguments to delete one ModSourceFile.
+     * @example
+     * // Delete one ModSourceFile
+     * const ModSourceFile = await prisma.modSourceFile.delete({
+     *   where: {
+     *     // ... filter to delete one ModSourceFile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModSourceFileDeleteArgs>(args: SelectSubset<T, ModSourceFileDeleteArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModSourceFile.
+     * @param {ModSourceFileUpdateArgs} args - Arguments to update one ModSourceFile.
+     * @example
+     * // Update one ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModSourceFileUpdateArgs>(args: SelectSubset<T, ModSourceFileUpdateArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModSourceFiles.
+     * @param {ModSourceFileDeleteManyArgs} args - Arguments to filter ModSourceFiles to delete.
+     * @example
+     * // Delete a few ModSourceFiles
+     * const { count } = await prisma.modSourceFile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModSourceFileDeleteManyArgs>(args?: SelectSubset<T, ModSourceFileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModSourceFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModSourceFiles
+     * const modSourceFile = await prisma.modSourceFile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModSourceFileUpdateManyArgs>(args: SelectSubset<T, ModSourceFileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModSourceFiles and returns the data updated in the database.
+     * @param {ModSourceFileUpdateManyAndReturnArgs} args - Arguments to update many ModSourceFiles.
+     * @example
+     * // Update many ModSourceFiles
+     * const modSourceFile = await prisma.modSourceFile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModSourceFiles and only return the `id`
+     * const modSourceFileWithIdOnly = await prisma.modSourceFile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModSourceFileUpdateManyAndReturnArgs>(args: SelectSubset<T, ModSourceFileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModSourceFile.
+     * @param {ModSourceFileUpsertArgs} args - Arguments to update or create a ModSourceFile.
+     * @example
+     * // Update or create a ModSourceFile
+     * const modSourceFile = await prisma.modSourceFile.upsert({
+     *   create: {
+     *     // ... data to create a ModSourceFile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModSourceFile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModSourceFileUpsertArgs>(args: SelectSubset<T, ModSourceFileUpsertArgs<ExtArgs>>): Prisma__ModSourceFileClient<$Result.GetResult<Prisma.$ModSourceFilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModSourceFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileCountArgs} args - Arguments to filter ModSourceFiles to count.
+     * @example
+     * // Count the number of ModSourceFiles
+     * const count = await prisma.modSourceFile.count({
+     *   where: {
+     *     // ... the filter for the ModSourceFiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModSourceFileCountArgs>(
+      args?: Subset<T, ModSourceFileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModSourceFileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModSourceFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModSourceFileAggregateArgs>(args: Subset<T, ModSourceFileAggregateArgs>): Prisma.PrismaPromise<GetModSourceFileAggregateType<T>>
+
+    /**
+     * Group by ModSourceFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModSourceFileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModSourceFileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModSourceFileGroupByArgs['orderBy'] }
+        : { orderBy?: ModSourceFileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModSourceFileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModSourceFileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModSourceFile model
+   */
+  readonly fields: ModSourceFileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModSourceFile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModSourceFileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    mod<T extends ModDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ModDefaultArgs<ExtArgs>>): Prisma__ModClient<$Result.GetResult<Prisma.$ModPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModSourceFile model
+   */
+  interface ModSourceFileFieldRefs {
+    readonly id: FieldRef<"ModSourceFile", 'Int'>
+    readonly modId: FieldRef<"ModSourceFile", 'Int'>
+    readonly className: FieldRef<"ModSourceFile", 'String'>
+    readonly content: FieldRef<"ModSourceFile", 'String'>
+    readonly embedding: FieldRef<"ModSourceFile", 'Bytes'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModSourceFile findUnique
+   */
+  export type ModSourceFileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ModSourceFile to fetch.
+     */
+    where: ModSourceFileWhereUniqueInput
+  }
+
+  /**
+   * ModSourceFile findUniqueOrThrow
+   */
+  export type ModSourceFileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ModSourceFile to fetch.
+     */
+    where: ModSourceFileWhereUniqueInput
+  }
+
+  /**
+   * ModSourceFile findFirst
+   */
+  export type ModSourceFileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ModSourceFile to fetch.
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModSourceFiles to fetch.
+     */
+    orderBy?: ModSourceFileOrderByWithRelationInput | ModSourceFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModSourceFiles.
+     */
+    cursor?: ModSourceFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModSourceFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModSourceFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModSourceFiles.
+     */
+    distinct?: ModSourceFileScalarFieldEnum | ModSourceFileScalarFieldEnum[]
+  }
+
+  /**
+   * ModSourceFile findFirstOrThrow
+   */
+  export type ModSourceFileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ModSourceFile to fetch.
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModSourceFiles to fetch.
+     */
+    orderBy?: ModSourceFileOrderByWithRelationInput | ModSourceFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModSourceFiles.
+     */
+    cursor?: ModSourceFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModSourceFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModSourceFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModSourceFiles.
+     */
+    distinct?: ModSourceFileScalarFieldEnum | ModSourceFileScalarFieldEnum[]
+  }
+
+  /**
+   * ModSourceFile findMany
+   */
+  export type ModSourceFileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ModSourceFiles to fetch.
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModSourceFiles to fetch.
+     */
+    orderBy?: ModSourceFileOrderByWithRelationInput | ModSourceFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModSourceFiles.
+     */
+    cursor?: ModSourceFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModSourceFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModSourceFiles.
+     */
+    skip?: number
+    distinct?: ModSourceFileScalarFieldEnum | ModSourceFileScalarFieldEnum[]
+  }
+
+  /**
+   * ModSourceFile create
+   */
+  export type ModSourceFileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ModSourceFile.
+     */
+    data: XOR<ModSourceFileCreateInput, ModSourceFileUncheckedCreateInput>
+  }
+
+  /**
+   * ModSourceFile createMany
+   */
+  export type ModSourceFileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModSourceFiles.
+     */
+    data: ModSourceFileCreateManyInput | ModSourceFileCreateManyInput[]
+  }
+
+  /**
+   * ModSourceFile createManyAndReturn
+   */
+  export type ModSourceFileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModSourceFiles.
+     */
+    data: ModSourceFileCreateManyInput | ModSourceFileCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ModSourceFile update
+   */
+  export type ModSourceFileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ModSourceFile.
+     */
+    data: XOR<ModSourceFileUpdateInput, ModSourceFileUncheckedUpdateInput>
+    /**
+     * Choose, which ModSourceFile to update.
+     */
+    where: ModSourceFileWhereUniqueInput
+  }
+
+  /**
+   * ModSourceFile updateMany
+   */
+  export type ModSourceFileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModSourceFiles.
+     */
+    data: XOR<ModSourceFileUpdateManyMutationInput, ModSourceFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ModSourceFiles to update
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * Limit how many ModSourceFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModSourceFile updateManyAndReturn
+   */
+  export type ModSourceFileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * The data used to update ModSourceFiles.
+     */
+    data: XOR<ModSourceFileUpdateManyMutationInput, ModSourceFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ModSourceFiles to update
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * Limit how many ModSourceFiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ModSourceFile upsert
+   */
+  export type ModSourceFileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ModSourceFile to update in case it exists.
+     */
+    where: ModSourceFileWhereUniqueInput
+    /**
+     * In case the ModSourceFile found by the `where` argument doesn't exist, create a new ModSourceFile with this data.
+     */
+    create: XOR<ModSourceFileCreateInput, ModSourceFileUncheckedCreateInput>
+    /**
+     * In case the ModSourceFile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModSourceFileUpdateInput, ModSourceFileUncheckedUpdateInput>
+  }
+
+  /**
+   * ModSourceFile delete
+   */
+  export type ModSourceFileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
+    /**
+     * Filter which ModSourceFile to delete.
+     */
+    where: ModSourceFileWhereUniqueInput
+  }
+
+  /**
+   * ModSourceFile deleteMany
+   */
+  export type ModSourceFileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModSourceFiles to delete
+     */
+    where?: ModSourceFileWhereInput
+    /**
+     * Limit how many ModSourceFiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModSourceFile without action
+   */
+  export type ModSourceFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModSourceFile
+     */
+    select?: ModSourceFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModSourceFile
+     */
+    omit?: ModSourceFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ModSourceFileInclude<ExtArgs> | null
   }
 
 
@@ -9730,6 +13222,30 @@ export namespace Prisma {
   export type McVersionScalarFieldEnum = (typeof McVersionScalarFieldEnum)[keyof typeof McVersionScalarFieldEnum]
 
 
+  export const McVersionDiffScalarFieldEnum: {
+    id: 'id',
+    versionA: 'versionA',
+    versionB: 'versionB',
+    packagesHash: 'packagesHash',
+    result: 'result',
+    createdAt: 'createdAt'
+  };
+
+  export type McVersionDiffScalarFieldEnum = (typeof McVersionDiffScalarFieldEnum)[keyof typeof McVersionDiffScalarFieldEnum]
+
+
+  export const ModVersionDiffScalarFieldEnum: {
+    id: 'id',
+    modDbIdA: 'modDbIdA',
+    modDbIdB: 'modDbIdB',
+    packagesHash: 'packagesHash',
+    result: 'result',
+    createdAt: 'createdAt'
+  };
+
+  export type ModVersionDiffScalarFieldEnum = (typeof ModVersionDiffScalarFieldEnum)[keyof typeof ModVersionDiffScalarFieldEnum]
+
+
   export const ModTagScalarFieldEnum: {
     id: 'id',
     modId: 'modId',
@@ -9752,6 +13268,17 @@ export namespace Prisma {
   };
 
   export type McSourceFileScalarFieldEnum = (typeof McSourceFileScalarFieldEnum)[keyof typeof McSourceFileScalarFieldEnum]
+
+
+  export const ModSourceFileScalarFieldEnum: {
+    id: 'id',
+    modId: 'modId',
+    className: 'className',
+    content: 'content',
+    embedding: 'embedding'
+  };
+
+  export type ModSourceFileScalarFieldEnum = (typeof ModSourceFileScalarFieldEnum)[keyof typeof ModSourceFileScalarFieldEnum]
 
 
   export const DocEntryScalarFieldEnum: {
@@ -9892,6 +13419,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Mod"> | Date | string
     classes?: ModClassListRelationFilter
     modTags?: ModTagListRelationFilter
+    sourceFiles?: ModSourceFileListRelationFilter
   }
 
   export type ModOrderByWithRelationInput = {
@@ -9924,6 +13452,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     classes?: ModClassOrderByRelationAggregateInput
     modTags?: ModTagOrderByRelationAggregateInput
+    sourceFiles?: ModSourceFileOrderByRelationAggregateInput
   }
 
   export type ModWhereUniqueInput = Prisma.AtLeast<{
@@ -9960,6 +13489,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Mod"> | Date | string
     classes?: ModClassListRelationFilter
     modTags?: ModTagListRelationFilter
+    sourceFiles?: ModSourceFileListRelationFilter
   }, "id" | "jarPath" | "modId_version_mcVersion_loader">
 
   export type ModOrderByWithAggregationInput = {
@@ -10170,6 +13700,126 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"McVersion"> | Date | string
   }
 
+  export type McVersionDiffWhereInput = {
+    AND?: McVersionDiffWhereInput | McVersionDiffWhereInput[]
+    OR?: McVersionDiffWhereInput[]
+    NOT?: McVersionDiffWhereInput | McVersionDiffWhereInput[]
+    id?: IntFilter<"McVersionDiff"> | number
+    versionA?: StringFilter<"McVersionDiff"> | string
+    versionB?: StringFilter<"McVersionDiff"> | string
+    packagesHash?: StringFilter<"McVersionDiff"> | string
+    result?: StringFilter<"McVersionDiff"> | string
+    createdAt?: DateTimeFilter<"McVersionDiff"> | Date | string
+  }
+
+  export type McVersionDiffOrderByWithRelationInput = {
+    id?: SortOrder
+    versionA?: SortOrder
+    versionB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type McVersionDiffWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    versionA_versionB_packagesHash?: McVersionDiffVersionAVersionBPackagesHashCompoundUniqueInput
+    AND?: McVersionDiffWhereInput | McVersionDiffWhereInput[]
+    OR?: McVersionDiffWhereInput[]
+    NOT?: McVersionDiffWhereInput | McVersionDiffWhereInput[]
+    versionA?: StringFilter<"McVersionDiff"> | string
+    versionB?: StringFilter<"McVersionDiff"> | string
+    packagesHash?: StringFilter<"McVersionDiff"> | string
+    result?: StringFilter<"McVersionDiff"> | string
+    createdAt?: DateTimeFilter<"McVersionDiff"> | Date | string
+  }, "id" | "versionA_versionB_packagesHash">
+
+  export type McVersionDiffOrderByWithAggregationInput = {
+    id?: SortOrder
+    versionA?: SortOrder
+    versionB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+    _count?: McVersionDiffCountOrderByAggregateInput
+    _avg?: McVersionDiffAvgOrderByAggregateInput
+    _max?: McVersionDiffMaxOrderByAggregateInput
+    _min?: McVersionDiffMinOrderByAggregateInput
+    _sum?: McVersionDiffSumOrderByAggregateInput
+  }
+
+  export type McVersionDiffScalarWhereWithAggregatesInput = {
+    AND?: McVersionDiffScalarWhereWithAggregatesInput | McVersionDiffScalarWhereWithAggregatesInput[]
+    OR?: McVersionDiffScalarWhereWithAggregatesInput[]
+    NOT?: McVersionDiffScalarWhereWithAggregatesInput | McVersionDiffScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"McVersionDiff"> | number
+    versionA?: StringWithAggregatesFilter<"McVersionDiff"> | string
+    versionB?: StringWithAggregatesFilter<"McVersionDiff"> | string
+    packagesHash?: StringWithAggregatesFilter<"McVersionDiff"> | string
+    result?: StringWithAggregatesFilter<"McVersionDiff"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"McVersionDiff"> | Date | string
+  }
+
+  export type ModVersionDiffWhereInput = {
+    AND?: ModVersionDiffWhereInput | ModVersionDiffWhereInput[]
+    OR?: ModVersionDiffWhereInput[]
+    NOT?: ModVersionDiffWhereInput | ModVersionDiffWhereInput[]
+    id?: IntFilter<"ModVersionDiff"> | number
+    modDbIdA?: IntFilter<"ModVersionDiff"> | number
+    modDbIdB?: IntFilter<"ModVersionDiff"> | number
+    packagesHash?: StringFilter<"ModVersionDiff"> | string
+    result?: StringFilter<"ModVersionDiff"> | string
+    createdAt?: DateTimeFilter<"ModVersionDiff"> | Date | string
+  }
+
+  export type ModVersionDiffOrderByWithRelationInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModVersionDiffWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    modDbIdA_modDbIdB_packagesHash?: ModVersionDiffModDbIdAModDbIdBPackagesHashCompoundUniqueInput
+    AND?: ModVersionDiffWhereInput | ModVersionDiffWhereInput[]
+    OR?: ModVersionDiffWhereInput[]
+    NOT?: ModVersionDiffWhereInput | ModVersionDiffWhereInput[]
+    modDbIdA?: IntFilter<"ModVersionDiff"> | number
+    modDbIdB?: IntFilter<"ModVersionDiff"> | number
+    packagesHash?: StringFilter<"ModVersionDiff"> | string
+    result?: StringFilter<"ModVersionDiff"> | string
+    createdAt?: DateTimeFilter<"ModVersionDiff"> | Date | string
+  }, "id" | "modDbIdA_modDbIdB_packagesHash">
+
+  export type ModVersionDiffOrderByWithAggregationInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+    _count?: ModVersionDiffCountOrderByAggregateInput
+    _avg?: ModVersionDiffAvgOrderByAggregateInput
+    _max?: ModVersionDiffMaxOrderByAggregateInput
+    _min?: ModVersionDiffMinOrderByAggregateInput
+    _sum?: ModVersionDiffSumOrderByAggregateInput
+  }
+
+  export type ModVersionDiffScalarWhereWithAggregatesInput = {
+    AND?: ModVersionDiffScalarWhereWithAggregatesInput | ModVersionDiffScalarWhereWithAggregatesInput[]
+    OR?: ModVersionDiffScalarWhereWithAggregatesInput[]
+    NOT?: ModVersionDiffScalarWhereWithAggregatesInput | ModVersionDiffScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"ModVersionDiff"> | number
+    modDbIdA?: IntWithAggregatesFilter<"ModVersionDiff"> | number
+    modDbIdB?: IntWithAggregatesFilter<"ModVersionDiff"> | number
+    packagesHash?: StringWithAggregatesFilter<"ModVersionDiff"> | string
+    result?: StringWithAggregatesFilter<"ModVersionDiff"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"ModVersionDiff"> | Date | string
+  }
+
   export type ModTagWhereInput = {
     AND?: ModTagWhereInput | ModTagWhereInput[]
     OR?: ModTagWhereInput[]
@@ -10293,6 +13943,64 @@ export namespace Prisma {
     className?: StringWithAggregatesFilter<"McSourceFile"> | string
     content?: StringWithAggregatesFilter<"McSourceFile"> | string
     embedding?: BytesNullableWithAggregatesFilter<"McSourceFile"> | Bytes | null
+  }
+
+  export type ModSourceFileWhereInput = {
+    AND?: ModSourceFileWhereInput | ModSourceFileWhereInput[]
+    OR?: ModSourceFileWhereInput[]
+    NOT?: ModSourceFileWhereInput | ModSourceFileWhereInput[]
+    id?: IntFilter<"ModSourceFile"> | number
+    modId?: IntFilter<"ModSourceFile"> | number
+    className?: StringFilter<"ModSourceFile"> | string
+    content?: StringFilter<"ModSourceFile"> | string
+    embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+    mod?: XOR<ModScalarRelationFilter, ModWhereInput>
+  }
+
+  export type ModSourceFileOrderByWithRelationInput = {
+    id?: SortOrder
+    modId?: SortOrder
+    className?: SortOrder
+    content?: SortOrder
+    embedding?: SortOrderInput | SortOrder
+    mod?: ModOrderByWithRelationInput
+  }
+
+  export type ModSourceFileWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    modId_className?: ModSourceFileModIdClassNameCompoundUniqueInput
+    AND?: ModSourceFileWhereInput | ModSourceFileWhereInput[]
+    OR?: ModSourceFileWhereInput[]
+    NOT?: ModSourceFileWhereInput | ModSourceFileWhereInput[]
+    modId?: IntFilter<"ModSourceFile"> | number
+    className?: StringFilter<"ModSourceFile"> | string
+    content?: StringFilter<"ModSourceFile"> | string
+    embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+    mod?: XOR<ModScalarRelationFilter, ModWhereInput>
+  }, "id" | "modId_className">
+
+  export type ModSourceFileOrderByWithAggregationInput = {
+    id?: SortOrder
+    modId?: SortOrder
+    className?: SortOrder
+    content?: SortOrder
+    embedding?: SortOrderInput | SortOrder
+    _count?: ModSourceFileCountOrderByAggregateInput
+    _avg?: ModSourceFileAvgOrderByAggregateInput
+    _max?: ModSourceFileMaxOrderByAggregateInput
+    _min?: ModSourceFileMinOrderByAggregateInput
+    _sum?: ModSourceFileSumOrderByAggregateInput
+  }
+
+  export type ModSourceFileScalarWhereWithAggregatesInput = {
+    AND?: ModSourceFileScalarWhereWithAggregatesInput | ModSourceFileScalarWhereWithAggregatesInput[]
+    OR?: ModSourceFileScalarWhereWithAggregatesInput[]
+    NOT?: ModSourceFileScalarWhereWithAggregatesInput | ModSourceFileScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"ModSourceFile"> | number
+    modId?: IntWithAggregatesFilter<"ModSourceFile"> | number
+    className?: StringWithAggregatesFilter<"ModSourceFile"> | string
+    content?: StringWithAggregatesFilter<"ModSourceFile"> | string
+    embedding?: BytesNullableWithAggregatesFilter<"ModSourceFile"> | Bytes | null
   }
 
   export type DocEntryWhereInput = {
@@ -10517,6 +14225,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     classes?: ModClassCreateNestedManyWithoutModInput
     modTags?: ModTagCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileCreateNestedManyWithoutModInput
   }
 
   export type ModUncheckedCreateInput = {
@@ -10549,6 +14258,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     classes?: ModClassUncheckedCreateNestedManyWithoutModInput
     modTags?: ModTagUncheckedCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileUncheckedCreateNestedManyWithoutModInput
   }
 
   export type ModUpdateInput = {
@@ -10580,6 +14290,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     classes?: ModClassUpdateManyWithoutModNestedInput
     modTags?: ModTagUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUpdateManyWithoutModNestedInput
   }
 
   export type ModUncheckedUpdateInput = {
@@ -10612,6 +14323,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     classes?: ModClassUncheckedUpdateManyWithoutModNestedInput
     modTags?: ModTagUncheckedUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUncheckedUpdateManyWithoutModNestedInput
   }
 
   export type ModCreateManyInput = {
@@ -10847,6 +14559,126 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type McVersionDiffCreateInput = {
+    versionA: string
+    versionB: string
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type McVersionDiffUncheckedCreateInput = {
+    id?: number
+    versionA: string
+    versionB: string
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type McVersionDiffUpdateInput = {
+    versionA?: StringFieldUpdateOperationsInput | string
+    versionB?: StringFieldUpdateOperationsInput | string
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type McVersionDiffUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    versionA?: StringFieldUpdateOperationsInput | string
+    versionB?: StringFieldUpdateOperationsInput | string
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type McVersionDiffCreateManyInput = {
+    id?: number
+    versionA: string
+    versionB: string
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type McVersionDiffUpdateManyMutationInput = {
+    versionA?: StringFieldUpdateOperationsInput | string
+    versionB?: StringFieldUpdateOperationsInput | string
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type McVersionDiffUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    versionA?: StringFieldUpdateOperationsInput | string
+    versionB?: StringFieldUpdateOperationsInput | string
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModVersionDiffCreateInput = {
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type ModVersionDiffUncheckedCreateInput = {
+    id?: number
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type ModVersionDiffUpdateInput = {
+    modDbIdA?: IntFieldUpdateOperationsInput | number
+    modDbIdB?: IntFieldUpdateOperationsInput | number
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModVersionDiffUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    modDbIdA?: IntFieldUpdateOperationsInput | number
+    modDbIdB?: IntFieldUpdateOperationsInput | number
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModVersionDiffCreateManyInput = {
+    id?: number
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash?: string
+    result: string
+    createdAt?: Date | string
+  }
+
+  export type ModVersionDiffUpdateManyMutationInput = {
+    modDbIdA?: IntFieldUpdateOperationsInput | number
+    modDbIdB?: IntFieldUpdateOperationsInput | number
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ModVersionDiffUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    modDbIdA?: IntFieldUpdateOperationsInput | number
+    modDbIdB?: IntFieldUpdateOperationsInput | number
+    packagesHash?: StringFieldUpdateOperationsInput | string
+    result?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ModTagCreateInput = {
     registry: string
     tagPath: string
@@ -10960,6 +14792,58 @@ export namespace Prisma {
   export type McSourceFileUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     mcVersionId?: IntFieldUpdateOperationsInput | number
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+  }
+
+  export type ModSourceFileCreateInput = {
+    className: string
+    content: string
+    embedding?: Bytes | null
+    mod: ModCreateNestedOneWithoutSourceFilesInput
+  }
+
+  export type ModSourceFileUncheckedCreateInput = {
+    id?: number
+    modId: number
+    className: string
+    content: string
+    embedding?: Bytes | null
+  }
+
+  export type ModSourceFileUpdateInput = {
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    mod?: ModUpdateOneRequiredWithoutSourceFilesNestedInput
+  }
+
+  export type ModSourceFileUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    modId?: IntFieldUpdateOperationsInput | number
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+  }
+
+  export type ModSourceFileCreateManyInput = {
+    id?: number
+    modId: number
+    className: string
+    content: string
+    embedding?: Bytes | null
+  }
+
+  export type ModSourceFileUpdateManyMutationInput = {
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+  }
+
+  export type ModSourceFileUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    modId?: IntFieldUpdateOperationsInput | number
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
@@ -11268,6 +15152,12 @@ export namespace Prisma {
     none?: ModTagWhereInput
   }
 
+  export type ModSourceFileListRelationFilter = {
+    every?: ModSourceFileWhereInput
+    some?: ModSourceFileWhereInput
+    none?: ModSourceFileWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -11278,6 +15168,10 @@ export namespace Prisma {
   }
 
   export type ModTagOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ModSourceFileOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -11579,6 +15473,92 @@ export namespace Prisma {
     id?: SortOrder
   }
 
+  export type McVersionDiffVersionAVersionBPackagesHashCompoundUniqueInput = {
+    versionA: string
+    versionB: string
+    packagesHash: string
+  }
+
+  export type McVersionDiffCountOrderByAggregateInput = {
+    id?: SortOrder
+    versionA?: SortOrder
+    versionB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type McVersionDiffAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type McVersionDiffMaxOrderByAggregateInput = {
+    id?: SortOrder
+    versionA?: SortOrder
+    versionB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type McVersionDiffMinOrderByAggregateInput = {
+    id?: SortOrder
+    versionA?: SortOrder
+    versionB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type McVersionDiffSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type ModVersionDiffModDbIdAModDbIdBPackagesHashCompoundUniqueInput = {
+    modDbIdA: number
+    modDbIdB: number
+    packagesHash: string
+  }
+
+  export type ModVersionDiffCountOrderByAggregateInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModVersionDiffAvgOrderByAggregateInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+  }
+
+  export type ModVersionDiffMaxOrderByAggregateInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModVersionDiffMinOrderByAggregateInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+    packagesHash?: SortOrder
+    result?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ModVersionDiffSumOrderByAggregateInput = {
+    id?: SortOrder
+    modDbIdA?: SortOrder
+    modDbIdB?: SortOrder
+  }
+
   export type ModTagCountOrderByAggregateInput = {
     id?: SortOrder
     modId?: SortOrder
@@ -11678,6 +15658,45 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBytesNullableFilter<$PrismaModel>
     _max?: NestedBytesNullableFilter<$PrismaModel>
+  }
+
+  export type ModSourceFileModIdClassNameCompoundUniqueInput = {
+    modId: number
+    className: string
+  }
+
+  export type ModSourceFileCountOrderByAggregateInput = {
+    id?: SortOrder
+    modId?: SortOrder
+    className?: SortOrder
+    content?: SortOrder
+    embedding?: SortOrder
+  }
+
+  export type ModSourceFileAvgOrderByAggregateInput = {
+    id?: SortOrder
+    modId?: SortOrder
+  }
+
+  export type ModSourceFileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    modId?: SortOrder
+    className?: SortOrder
+    content?: SortOrder
+    embedding?: SortOrder
+  }
+
+  export type ModSourceFileMinOrderByAggregateInput = {
+    id?: SortOrder
+    modId?: SortOrder
+    className?: SortOrder
+    content?: SortOrder
+    embedding?: SortOrder
+  }
+
+  export type ModSourceFileSumOrderByAggregateInput = {
+    id?: SortOrder
+    modId?: SortOrder
   }
 
   export type DocEntryCountOrderByAggregateInput = {
@@ -11813,6 +15832,13 @@ export namespace Prisma {
     connect?: ModTagWhereUniqueInput | ModTagWhereUniqueInput[]
   }
 
+  export type ModSourceFileCreateNestedManyWithoutModInput = {
+    create?: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput> | ModSourceFileCreateWithoutModInput[] | ModSourceFileUncheckedCreateWithoutModInput[]
+    connectOrCreate?: ModSourceFileCreateOrConnectWithoutModInput | ModSourceFileCreateOrConnectWithoutModInput[]
+    createMany?: ModSourceFileCreateManyModInputEnvelope
+    connect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+  }
+
   export type ModClassUncheckedCreateNestedManyWithoutModInput = {
     create?: XOR<ModClassCreateWithoutModInput, ModClassUncheckedCreateWithoutModInput> | ModClassCreateWithoutModInput[] | ModClassUncheckedCreateWithoutModInput[]
     connectOrCreate?: ModClassCreateOrConnectWithoutModInput | ModClassCreateOrConnectWithoutModInput[]
@@ -11825,6 +15851,13 @@ export namespace Prisma {
     connectOrCreate?: ModTagCreateOrConnectWithoutModInput | ModTagCreateOrConnectWithoutModInput[]
     createMany?: ModTagCreateManyModInputEnvelope
     connect?: ModTagWhereUniqueInput | ModTagWhereUniqueInput[]
+  }
+
+  export type ModSourceFileUncheckedCreateNestedManyWithoutModInput = {
+    create?: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput> | ModSourceFileCreateWithoutModInput[] | ModSourceFileUncheckedCreateWithoutModInput[]
+    connectOrCreate?: ModSourceFileCreateOrConnectWithoutModInput | ModSourceFileCreateOrConnectWithoutModInput[]
+    createMany?: ModSourceFileCreateManyModInputEnvelope
+    connect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -11879,6 +15912,20 @@ export namespace Prisma {
     deleteMany?: ModTagScalarWhereInput | ModTagScalarWhereInput[]
   }
 
+  export type ModSourceFileUpdateManyWithoutModNestedInput = {
+    create?: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput> | ModSourceFileCreateWithoutModInput[] | ModSourceFileUncheckedCreateWithoutModInput[]
+    connectOrCreate?: ModSourceFileCreateOrConnectWithoutModInput | ModSourceFileCreateOrConnectWithoutModInput[]
+    upsert?: ModSourceFileUpsertWithWhereUniqueWithoutModInput | ModSourceFileUpsertWithWhereUniqueWithoutModInput[]
+    createMany?: ModSourceFileCreateManyModInputEnvelope
+    set?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    disconnect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    delete?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    connect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    update?: ModSourceFileUpdateWithWhereUniqueWithoutModInput | ModSourceFileUpdateWithWhereUniqueWithoutModInput[]
+    updateMany?: ModSourceFileUpdateManyWithWhereWithoutModInput | ModSourceFileUpdateManyWithWhereWithoutModInput[]
+    deleteMany?: ModSourceFileScalarWhereInput | ModSourceFileScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -11913,6 +15960,20 @@ export namespace Prisma {
     update?: ModTagUpdateWithWhereUniqueWithoutModInput | ModTagUpdateWithWhereUniqueWithoutModInput[]
     updateMany?: ModTagUpdateManyWithWhereWithoutModInput | ModTagUpdateManyWithWhereWithoutModInput[]
     deleteMany?: ModTagScalarWhereInput | ModTagScalarWhereInput[]
+  }
+
+  export type ModSourceFileUncheckedUpdateManyWithoutModNestedInput = {
+    create?: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput> | ModSourceFileCreateWithoutModInput[] | ModSourceFileUncheckedCreateWithoutModInput[]
+    connectOrCreate?: ModSourceFileCreateOrConnectWithoutModInput | ModSourceFileCreateOrConnectWithoutModInput[]
+    upsert?: ModSourceFileUpsertWithWhereUniqueWithoutModInput | ModSourceFileUpsertWithWhereUniqueWithoutModInput[]
+    createMany?: ModSourceFileCreateManyModInputEnvelope
+    set?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    disconnect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    delete?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    connect?: ModSourceFileWhereUniqueInput | ModSourceFileWhereUniqueInput[]
+    update?: ModSourceFileUpdateWithWhereUniqueWithoutModInput | ModSourceFileUpdateWithWhereUniqueWithoutModInput[]
+    updateMany?: ModSourceFileUpdateManyWithWhereWithoutModInput | ModSourceFileUpdateManyWithWhereWithoutModInput[]
+    deleteMany?: ModSourceFileScalarWhereInput | ModSourceFileScalarWhereInput[]
   }
 
   export type ModCreateNestedOneWithoutClassesInput = {
@@ -12001,6 +16062,20 @@ export namespace Prisma {
     upsert?: McVersionUpsertWithoutSourceFilesInput
     connect?: McVersionWhereUniqueInput
     update?: XOR<XOR<McVersionUpdateToOneWithWhereWithoutSourceFilesInput, McVersionUpdateWithoutSourceFilesInput>, McVersionUncheckedUpdateWithoutSourceFilesInput>
+  }
+
+  export type ModCreateNestedOneWithoutSourceFilesInput = {
+    create?: XOR<ModCreateWithoutSourceFilesInput, ModUncheckedCreateWithoutSourceFilesInput>
+    connectOrCreate?: ModCreateOrConnectWithoutSourceFilesInput
+    connect?: ModWhereUniqueInput
+  }
+
+  export type ModUpdateOneRequiredWithoutSourceFilesNestedInput = {
+    create?: XOR<ModCreateWithoutSourceFilesInput, ModUncheckedCreateWithoutSourceFilesInput>
+    connectOrCreate?: ModCreateOrConnectWithoutSourceFilesInput
+    upsert?: ModUpsertWithoutSourceFilesInput
+    connect?: ModWhereUniqueInput
+    update?: XOR<XOR<ModUpdateToOneWithWhereWithoutSourceFilesInput, ModUpdateWithoutSourceFilesInput>, ModUncheckedUpdateWithoutSourceFilesInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -12246,6 +16321,28 @@ export namespace Prisma {
     data: ModTagCreateManyModInput | ModTagCreateManyModInput[]
   }
 
+  export type ModSourceFileCreateWithoutModInput = {
+    className: string
+    content: string
+    embedding?: Bytes | null
+  }
+
+  export type ModSourceFileUncheckedCreateWithoutModInput = {
+    id?: number
+    className: string
+    content: string
+    embedding?: Bytes | null
+  }
+
+  export type ModSourceFileCreateOrConnectWithoutModInput = {
+    where: ModSourceFileWhereUniqueInput
+    create: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput>
+  }
+
+  export type ModSourceFileCreateManyModInputEnvelope = {
+    data: ModSourceFileCreateManyModInput | ModSourceFileCreateManyModInput[]
+  }
+
   export type ModClassUpsertWithWhereUniqueWithoutModInput = {
     where: ModClassWhereUniqueInput
     update: XOR<ModClassUpdateWithoutModInput, ModClassUncheckedUpdateWithoutModInput>
@@ -12303,6 +16400,33 @@ export namespace Prisma {
     replace?: BoolFilter<"ModTag"> | boolean
   }
 
+  export type ModSourceFileUpsertWithWhereUniqueWithoutModInput = {
+    where: ModSourceFileWhereUniqueInput
+    update: XOR<ModSourceFileUpdateWithoutModInput, ModSourceFileUncheckedUpdateWithoutModInput>
+    create: XOR<ModSourceFileCreateWithoutModInput, ModSourceFileUncheckedCreateWithoutModInput>
+  }
+
+  export type ModSourceFileUpdateWithWhereUniqueWithoutModInput = {
+    where: ModSourceFileWhereUniqueInput
+    data: XOR<ModSourceFileUpdateWithoutModInput, ModSourceFileUncheckedUpdateWithoutModInput>
+  }
+
+  export type ModSourceFileUpdateManyWithWhereWithoutModInput = {
+    where: ModSourceFileScalarWhereInput
+    data: XOR<ModSourceFileUpdateManyMutationInput, ModSourceFileUncheckedUpdateManyWithoutModInput>
+  }
+
+  export type ModSourceFileScalarWhereInput = {
+    AND?: ModSourceFileScalarWhereInput | ModSourceFileScalarWhereInput[]
+    OR?: ModSourceFileScalarWhereInput[]
+    NOT?: ModSourceFileScalarWhereInput | ModSourceFileScalarWhereInput[]
+    id?: IntFilter<"ModSourceFile"> | number
+    modId?: IntFilter<"ModSourceFile"> | number
+    className?: StringFilter<"ModSourceFile"> | string
+    content?: StringFilter<"ModSourceFile"> | string
+    embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+  }
+
   export type ModCreateWithoutClassesInput = {
     modId: string
     displayName: string
@@ -12331,6 +16455,7 @@ export namespace Prisma {
     ingestedAt?: Date | string
     updatedAt?: Date | string
     modTags?: ModTagCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileCreateNestedManyWithoutModInput
   }
 
   export type ModUncheckedCreateWithoutClassesInput = {
@@ -12362,6 +16487,7 @@ export namespace Prisma {
     ingestedAt?: Date | string
     updatedAt?: Date | string
     modTags?: ModTagUncheckedCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileUncheckedCreateNestedManyWithoutModInput
   }
 
   export type ModCreateOrConnectWithoutClassesInput = {
@@ -12408,6 +16534,7 @@ export namespace Prisma {
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modTags?: ModTagUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUpdateManyWithoutModNestedInput
   }
 
   export type ModUncheckedUpdateWithoutClassesInput = {
@@ -12439,6 +16566,7 @@ export namespace Prisma {
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modTags?: ModTagUncheckedUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUncheckedUpdateManyWithoutModNestedInput
   }
 
   export type McSourceFileCreateWithoutMcVersionInput = {
@@ -12518,6 +16646,7 @@ export namespace Prisma {
     ingestedAt?: Date | string
     updatedAt?: Date | string
     classes?: ModClassCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileCreateNestedManyWithoutModInput
   }
 
   export type ModUncheckedCreateWithoutModTagsInput = {
@@ -12549,6 +16678,7 @@ export namespace Prisma {
     ingestedAt?: Date | string
     updatedAt?: Date | string
     classes?: ModClassUncheckedCreateNestedManyWithoutModInput
+    sourceFiles?: ModSourceFileUncheckedCreateNestedManyWithoutModInput
   }
 
   export type ModCreateOrConnectWithoutModTagsInput = {
@@ -12595,6 +16725,7 @@ export namespace Prisma {
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     classes?: ModClassUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUpdateManyWithoutModNestedInput
   }
 
   export type ModUncheckedUpdateWithoutModTagsInput = {
@@ -12626,6 +16757,7 @@ export namespace Prisma {
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     classes?: ModClassUncheckedUpdateManyWithoutModNestedInput
+    sourceFiles?: ModSourceFileUncheckedUpdateManyWithoutModNestedInput
   }
 
   export type McVersionCreateWithoutSourceFilesInput = {
@@ -12690,6 +16822,148 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ModCreateWithoutSourceFilesInput = {
+    modId: string
+    displayName: string
+    version: string
+    mcVersion: string
+    loader: string
+    jarPath: string
+    sha256?: string | null
+    murmur2?: string | null
+    sha512?: string | null
+    sourcePath?: string | null
+    decompPath?: string | null
+    decompiled?: boolean
+    modrinthId?: string | null
+    curseforgeId?: number | null
+    hasMixins?: boolean
+    hasAt?: boolean
+    hasAw?: boolean
+    mixinConfigs?: string
+    mixinTargets?: string
+    atEntries?: string
+    awEntries?: string
+    dependencies?: string
+    metadata?: string
+    tags?: string
+    ingestedAt?: Date | string
+    updatedAt?: Date | string
+    classes?: ModClassCreateNestedManyWithoutModInput
+    modTags?: ModTagCreateNestedManyWithoutModInput
+  }
+
+  export type ModUncheckedCreateWithoutSourceFilesInput = {
+    id?: number
+    modId: string
+    displayName: string
+    version: string
+    mcVersion: string
+    loader: string
+    jarPath: string
+    sha256?: string | null
+    murmur2?: string | null
+    sha512?: string | null
+    sourcePath?: string | null
+    decompPath?: string | null
+    decompiled?: boolean
+    modrinthId?: string | null
+    curseforgeId?: number | null
+    hasMixins?: boolean
+    hasAt?: boolean
+    hasAw?: boolean
+    mixinConfigs?: string
+    mixinTargets?: string
+    atEntries?: string
+    awEntries?: string
+    dependencies?: string
+    metadata?: string
+    tags?: string
+    ingestedAt?: Date | string
+    updatedAt?: Date | string
+    classes?: ModClassUncheckedCreateNestedManyWithoutModInput
+    modTags?: ModTagUncheckedCreateNestedManyWithoutModInput
+  }
+
+  export type ModCreateOrConnectWithoutSourceFilesInput = {
+    where: ModWhereUniqueInput
+    create: XOR<ModCreateWithoutSourceFilesInput, ModUncheckedCreateWithoutSourceFilesInput>
+  }
+
+  export type ModUpsertWithoutSourceFilesInput = {
+    update: XOR<ModUpdateWithoutSourceFilesInput, ModUncheckedUpdateWithoutSourceFilesInput>
+    create: XOR<ModCreateWithoutSourceFilesInput, ModUncheckedCreateWithoutSourceFilesInput>
+    where?: ModWhereInput
+  }
+
+  export type ModUpdateToOneWithWhereWithoutSourceFilesInput = {
+    where?: ModWhereInput
+    data: XOR<ModUpdateWithoutSourceFilesInput, ModUncheckedUpdateWithoutSourceFilesInput>
+  }
+
+  export type ModUpdateWithoutSourceFilesInput = {
+    modId?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    mcVersion?: StringFieldUpdateOperationsInput | string
+    loader?: StringFieldUpdateOperationsInput | string
+    jarPath?: StringFieldUpdateOperationsInput | string
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    murmur2?: NullableStringFieldUpdateOperationsInput | string | null
+    sha512?: NullableStringFieldUpdateOperationsInput | string | null
+    sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
+    decompPath?: NullableStringFieldUpdateOperationsInput | string | null
+    decompiled?: BoolFieldUpdateOperationsInput | boolean
+    modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
+    curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
+    hasMixins?: BoolFieldUpdateOperationsInput | boolean
+    hasAt?: BoolFieldUpdateOperationsInput | boolean
+    hasAw?: BoolFieldUpdateOperationsInput | boolean
+    mixinConfigs?: StringFieldUpdateOperationsInput | string
+    mixinTargets?: StringFieldUpdateOperationsInput | string
+    atEntries?: StringFieldUpdateOperationsInput | string
+    awEntries?: StringFieldUpdateOperationsInput | string
+    dependencies?: StringFieldUpdateOperationsInput | string
+    metadata?: StringFieldUpdateOperationsInput | string
+    tags?: StringFieldUpdateOperationsInput | string
+    ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    classes?: ModClassUpdateManyWithoutModNestedInput
+    modTags?: ModTagUpdateManyWithoutModNestedInput
+  }
+
+  export type ModUncheckedUpdateWithoutSourceFilesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    modId?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    version?: StringFieldUpdateOperationsInput | string
+    mcVersion?: StringFieldUpdateOperationsInput | string
+    loader?: StringFieldUpdateOperationsInput | string
+    jarPath?: StringFieldUpdateOperationsInput | string
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    murmur2?: NullableStringFieldUpdateOperationsInput | string | null
+    sha512?: NullableStringFieldUpdateOperationsInput | string | null
+    sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
+    decompPath?: NullableStringFieldUpdateOperationsInput | string | null
+    decompiled?: BoolFieldUpdateOperationsInput | boolean
+    modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
+    curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
+    hasMixins?: BoolFieldUpdateOperationsInput | boolean
+    hasAt?: BoolFieldUpdateOperationsInput | boolean
+    hasAw?: BoolFieldUpdateOperationsInput | boolean
+    mixinConfigs?: StringFieldUpdateOperationsInput | string
+    mixinTargets?: StringFieldUpdateOperationsInput | string
+    atEntries?: StringFieldUpdateOperationsInput | string
+    awEntries?: StringFieldUpdateOperationsInput | string
+    dependencies?: StringFieldUpdateOperationsInput | string
+    metadata?: StringFieldUpdateOperationsInput | string
+    tags?: StringFieldUpdateOperationsInput | string
+    ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    classes?: ModClassUncheckedUpdateManyWithoutModNestedInput
+    modTags?: ModTagUncheckedUpdateManyWithoutModNestedInput
+  }
+
   export type ModClassCreateManyModInput = {
     id?: number
     className: string
@@ -12705,6 +16979,13 @@ export namespace Prisma {
     namespace: string
     entries?: string
     replace?: boolean
+  }
+
+  export type ModSourceFileCreateManyModInput = {
+    id?: number
+    className: string
+    content: string
+    embedding?: Bytes | null
   }
 
   export type ModClassUpdateWithoutModInput = {
@@ -12754,6 +17035,26 @@ export namespace Prisma {
     namespace?: StringFieldUpdateOperationsInput | string
     entries?: StringFieldUpdateOperationsInput | string
     replace?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type ModSourceFileUpdateWithoutModInput = {
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+  }
+
+  export type ModSourceFileUncheckedUpdateWithoutModInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+  }
+
+  export type ModSourceFileUncheckedUpdateManyWithoutModInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    className?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
   }
 
   export type McSourceFileCreateManyMcVersionInput = {

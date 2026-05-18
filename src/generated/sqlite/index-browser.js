@@ -169,6 +169,24 @@ exports.Prisma.McVersionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.McVersionDiffScalarFieldEnum = {
+  id: 'id',
+  versionA: 'versionA',
+  versionB: 'versionB',
+  packagesHash: 'packagesHash',
+  result: 'result',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ModVersionDiffScalarFieldEnum = {
+  id: 'id',
+  modDbIdA: 'modDbIdA',
+  modDbIdB: 'modDbIdB',
+  packagesHash: 'packagesHash',
+  result: 'result',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.ModTagScalarFieldEnum = {
   id: 'id',
   modId: 'modId',
@@ -182,6 +200,14 @@ exports.Prisma.ModTagScalarFieldEnum = {
 exports.Prisma.McSourceFileScalarFieldEnum = {
   id: 'id',
   mcVersionId: 'mcVersionId',
+  className: 'className',
+  content: 'content',
+  embedding: 'embedding'
+};
+
+exports.Prisma.ModSourceFileScalarFieldEnum = {
+  id: 'id',
+  modId: 'modId',
   className: 'className',
   content: 'content',
   embedding: 'embedding'
@@ -235,8 +261,11 @@ exports.Prisma.ModelName = {
   Mod: 'Mod',
   ModClass: 'ModClass',
   McVersion: 'McVersion',
+  McVersionDiff: 'McVersionDiff',
+  ModVersionDiff: 'ModVersionDiff',
   ModTag: 'ModTag',
   McSourceFile: 'McSourceFile',
+  ModSourceFile: 'ModSourceFile',
   DocEntry: 'DocEntry',
   Primer: 'Primer'
 };

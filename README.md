@@ -255,9 +255,11 @@ All MCP tools are available from the command line:
 node dist/cli.js <command> [args] [--flags]
 ```
 
-Run without arguments (or `--help`) to print the full command list.
+Run without arguments (or `--help`) to print the full command list. Every MCP tool action has a CLI equivalent.
 
 ### Quick Reference
+
+**Database & Catalog**
 
 | Command | Description |
 |---------|-------------|
@@ -266,84 +268,235 @@ Run without arguments (or `--help`) to print the full command list.
 | `get <modId>` | Get mod metadata |
 | `search <query>` | Search mods |
 | `deps <modId>` | List dependencies |
-| `ingest <jarPath>` | Ingest a mod JAR |
+| `dep-graph` | Full dependency graph |
+| `version-conflicts` | Duplicate modIds + unsatisfied deps |
+| `source-urls [query]` | List GitHub/GitLab source URLs |
+
+**Ingest**
+
+| Command | Description |
+|---------|-------------|
+| `ingest <jarPath>` | Ingest a mod JAR (WSL paths auto-converted) |
 | `ingest-neoforge <version>` | Download + ingest NeoForge |
 | `ingest-fabric-api <version>` | Download + ingest Fabric API |
 | `batch-ingest <dir>` | Ingest all JARs in a directory |
+| `batch-decompile` | Decompile all un-decompiled mods |
+| `batch-sync` | Bulk sync from Modrinth/CurseForge |
 | `reindex` | Index class names for un-indexed mods |
+
+**Decompile & Source**
+
+| Command | Description |
+|---------|-------------|
 | `decompile <dbId>` | Decompile entire mod JAR |
+| `decompile-status <dbId>` | Poll decompilation progress |
 | `decompile-class <dbId> <class>` | Decompile a single class |
 | `source <dbId> [path]` | Browse decompiled source |
 | `search-source <query>` | Search decompiled source |
+| `get-paths <dbId>` | JAR + decomp paths for native grep |
+| `index-fts <dbId>` | Index mod source for BM25 search (no Ollama) |
+| `search-indexed <dbId> <query>` | Fast BM25 FTS over mod source |
+
+**Bytecode Analysis**
+
+| Command | Description |
+|---------|-------------|
 | `search-class <dbId> <query>` | Search for a class by name |
 | `members <dbId> <class>` | List methods and fields |
 | `bytecode <dbId> <class>` | Raw javap bytecode |
 | `refs <dbId> <target>` | Find references |
 | `inheritance <dbId> <class>` | Inheritance chain |
 | `diff <dbIdA> <dbIdB>` | Compare two mod versions |
+| `diff-detailed <dbIdA> <dbIdB>` | AST-level diff with breaking-change flags |
+| `cross-refs <target>` | Cross-mod references to a target |
+| `find-implementors <target>` | Classes implementing an interface |
+| `scan-registrations <dbId>` | Registry object registrations |
+| `annotated-by <annotation>` | Classes with a given annotation |
+| `event-listeners <event>` | Event listener registrations |
+| `optional-integrations <dbId>` | Soft dependency integrations |
+| `network-payloads <dbId>` | Network packet types |
+| `config-schema <dbId>` | Configuration class schemas |
+
+**Mixin Analysis**
+
+| Command | Description |
+|---------|-------------|
 | `mixin-targets <modId>` | MC classes this mod injects into |
 | `resolve-mixins <dbId>` | Parse `@Mixin` bytecode → update DB |
 | `mixin-conflicts <targetClass>` | Mods injecting into the same class |
 | `at-entries <dbId>` | Access Transformer entries |
 | `aw-entries <dbId>` | Access Widener entries |
+| `targets-in-package <pkg>` | Mods targeting classes in a package |
+| `at-conflicts` | AT/AW entries conflicting across mods |
+| `batch-resolve-mixins` | Resolve `@Mixin` targets for all mods |
+
+**Mixin Scan (cross-mod matrix)**
+
+| Command | Description |
+|---------|-------------|
+| `mixin-scan list` | List mods with mixins |
+| `mixin-scan conflict-matrix` | Full conflict matrix |
+| `mixin-scan class-detail <class>` | All mixins targeting one MC class |
+| `mixin-scan hotspots` | Most-targeted MC classes |
+| `mixin-scan batch-resolve` | Resolve targets for all mixin mods |
+
+**Platform**
+
+| Command | Description |
+|---------|-------------|
 | `sync-modrinth <dbId>` | Look up on Modrinth |
 | `sync-curseforge <dbId>` | Look up on CurseForge |
 | `check-updates <dbId>` | Check for newer versions |
 | `download-source <dbId>` | Download GitHub/GitLab source |
+
+**Versions**
+
+| Command | Description |
+|---------|-------------|
 | `mc-versions` | List Minecraft versions |
 | `neoforge-versions` | List NeoForge versions |
 | `fabric-api-versions` | List Fabric API versions |
-| `batch-resolve-mixins` | Resolve `@Mixin` targets for all mods |
 
-### Flags Reference
+**Vanilla MC Source**
 
-```
-list               --loader=neoforge  --mc-version=1.21  --has-mixins  --decompiled  --limit=50
-search             --loader=  --mc-version=  --limit=20
-deps               --recursive
-ingest             --skip-source  --skip-index
-ingest-neoforge    --skip-index
-ingest-fabric-api  --skip-index
-batch-ingest       --index
-reindex            --db-id=N
-search-source      --db-id=N  --regex  --limit=50
-mc-versions        --type=release|snapshot|all
-neoforge-versions  --mc-version=1.21.1  --limit=20
-fabric-api-versions  --mc-version=1.21.1  --limit=20
-```
+| Command | Description |
+|---------|-------------|
+| `mc-source search-class <ver> <q>` | Find a vanilla class by name |
+| `mc-source get-source <ver> <class>` | Read decompiled source |
+| `mc-source bytecode <ver> <class>` | Raw javap bytecode |
+| `mc-source class-members <ver> <c>` | Methods and fields |
+| `mc-source find-refs <ver> <target>` | References to a target |
+| `mc-source inheritance <ver> <c>` | Inheritance tree |
+| `mc-source diff <verA> <verB>` | High-level class diff |
+| `mc-source diff-detailed <A> <B>` | AST-level method/field diff |
+| `mc-source decompile <ver>` | Decompile MC JAR |
+| `mc-source decompile-status <ver>` | Poll decompilation progress |
+| `mc-source search-code <ver> <q>` | Full-text search over vanilla source |
+| `mc-source index <ver>` | Index vanilla source for BM25 |
+| `mc-source search-indexed <ver> <q>` | BM25 FTS over vanilla source |
+| `mc-source search-events <ver>` | Browse event classes |
+| `mc-source validate-aw <ver> <file>` | Validate an `.accesswidener` file |
+| `mc-source analyze-mixin <ver> <file>` | Analyze a mixin source file |
+| `mc-source search-semantic <ver> <q>` | Semantic search (requires Ollama) |
+| `mc-source get-paths <ver>` | On-disk jar/decomp/index paths |
+
+**Mappings**
+
+| Command | Description |
+|---------|-------------|
+| `mappings find <sym> <ver> <src> <tgt>` | Translate between namespaces |
+| `mappings remap <in> <out> <ver> <mapping>` | Remap a JAR |
+| `mappings parchment <class> <mcVer>` | Parchment parameter docs |
+| `mappings list-parchment <mcVer>` | Available Parchment versions |
+| `mappings parchment-summary <mcVer>` | Parchment coverage stats |
+
+**Documentation & Primers**
+
+| Command | Description |
+|---------|-------------|
+| `docs seed` | Seed built-in docs |
+| `docs get <query>` | Look up by title/class |
+| `docs search <query>` | Keyword search |
+| `docs list` | List all entries |
+| `docs delete <id>` | Delete by ID |
+| `docs semantic-search <query>` | Semantic search (requires Ollama) |
+| `primers seed` | Seed built-in primers |
+| `primers get <id>` | Get by ID |
+| `primers by-version <from> <to>` | Guides for a version range |
+| `primers search <query>` | Keyword search |
+| `primers list` | List all primers |
+| `primers delete <id>` | Delete by ID |
+| `primers semantic-search <query>` | Semantic search (requires Ollama) |
+
+**MC Registry / Data / Files**
+
+| Command | Description |
+|---------|-------------|
+| `mc-registry <action>` | blocks, commands, registries, sounds, item-components, registry-entries, mcmeta-versions |
+| `mc-data <action>` | tags, find-tags-for, recipes, get-recipe, biomes, enchantments, lang, model, structures, particles, entity-attributes, and more |
+| `mc-files <action>` | get-data, get-asset, list-files, diff, atlas, raw, compare, changelog |
+
+**Mod JAR & Mod Data**
+
+| Command | Description |
+|---------|-------------|
+| `mod-jar <action> <modId>` | list-files, get-file, lang, sounds, atlas, registry-entries, manifest, list-configs, get-config |
+| `mod-data <action> <modId>` | list, get, diff, trace-item — with type: recipe, loot_table, advancement, model, biome, data_tag, enchantment, and more |
+
+**Mod Tags, Gradle, Reports, Pack Tools**
+
+| Command | Description |
+|---------|-------------|
+| `mod-tags <action>` | index, index-all, namespaces, contributors, expand, mod-list, find-conflicts, search |
+| `gradle <action>` | get-files, search, compare-deps |
+| `report <type>` | mixin-conflicts, tag-conflicts, version-conflicts, mod-overview, gradle-deps, pack-compat, dep-graph, sidedness, mod-complexity, pack-changelog |
+| `pack-tools <action>` | asset-conflicts, vanilla-overrides, sidedness, pack-sidedness, complexity, pack-changelog, data-conflicts |
+
+**KubeJS & Modpacks**
+
+| Command | Description |
+|---------|-------------|
+| `kubejs index <dir>` | Index a kubejs/ scripts directory |
+| `kubejs search <dir> <query>` | Search indexed scripts |
+| `modpacks search <query>` | Search modpacks.ch packs |
+| `modpacks featured` | Featured packs |
+| `modpacks info <packId>` | Pack metadata |
+| `modpacks manifest <packId> <verId>` | Pack manifest |
+| `modpacks list-versions` | Pack version list |
+| `modpacks list-files` | Pack file list |
+| `modpacks ftb-mod-info <modId>` | FTB mod info |
+| `modpacks find-mod` | Find a mod across packs |
+
+**Diagnostics**
+
+| Command | Description |
+|---------|-------------|
+| `crash-log <logPath>` | Analyze a crash log file |
+| `missing-deps` | Find unsatisfied declared dependencies |
+| `compat-check <jarPath>` | Pre-flight compatibility check |
+
+**Semantic Search (requires Ollama)**
+
+| Command | Description |
+|---------|-------------|
+| `backfill-embeddings` | Embed docs + primers |
+| `backfill-embeddings --type=source --version=<ver>` | Embed MC source |
+| `backfill-embeddings --type=mod --db-id=<n>` | Embed mod source |
 
 ---
 
 ## MCP Tools Reference
 
-All 155 individual tools have been consolidated into **21 grouped tools** to stay within MCP client tool-count limits. Each tool takes a required `action` parameter that selects the operation, plus optional params specific to that action.
+All tool actions have been consolidated into **24 grouped tools** to stay within MCP client tool-count limits. Each tool takes a required `action` parameter that selects the operation, plus optional params specific to that action.
 
 ### Tool Index
 
 | # | Tool | Actions | Description |
 |---|------|---------|-------------|
-| 1 | `mod` | 16 | Mod DB, decompile, source |
-| 2 | `mod_bytecode` | 7 | Mod JAR class/bytecode analysis |
-| 3 | `mod_mixins` | 5 | Mixin targets, AT/AW entries |
+| 1 | `mod` | 22 | Mod DB, decompile, source, FTS/semantic search |
+| 2 | `mod_bytecode` | 16 | Mod JAR class/bytecode analysis |
+| 3 | `mod_mixins` | 7 | Mixin targets, AT/AW entries, package scan |
 | 4 | `platform` | 5 | Modrinth/CurseForge sync |
 | 5 | `mc_versions` | 5 | MC + loader version listing/ingest |
-| 6 | `mc_source` | 15 | Vanilla MC source, decompile, validate |
+| 6 | `mc_source` | 19 | Vanilla MC source, decompile, validate |
 | 7 | `mappings` | 5 | Name mappings + Parchment |
-| 8 | `docs` | 6 | Documentation CRUD |
-| 9 | `primers` | 7 | Version migration guides |
+| 8 | `docs` | 8 | Documentation CRUD + semantic search |
+| 9 | `primers` | 9 | Version migration guides + semantic search |
 | 10 | `mc_registry` | 7 | MC registries, blocks, commands, sounds |
 | 11 | `mc_data` | 23 | Vanilla data browser (tags, recipes, biomes, …) |
 | 12 | `mc_files` | 8 | MC file access via misode/mcmeta |
-| 13 | `mod_jar` | 6 | Mod JAR generic file + registry access |
-| 14 | `mod_data` | list+get × 11 types | Mod structured data (recipes, loot tables, …) |
-| 15 | `mod_tags` | 7 | Cross-mod tag indexing + conflict detection |
+| 13 | `mod_jar` | 9 | Mod JAR file browser, lang, sounds, configs |
+| 14 | `mod_data` | list+get × 22 types | Mod structured data (recipes, loot tables, …) |
+| 15 | `mod_tags` | 8 | Cross-mod tag indexing + conflict detection |
 | 16 | `mixin_scan` | 5 | Cross-mod mixin conflict analysis |
 | 17 | `gradle` | 3 | Gradle build file analysis |
 | 18 | `reports` | 10 report types | Markdown report generation |
 | 19 | `pack_tools` | 7 | Modpack asset/data conflict analysis |
-| 20 | `analyze_crash_log` | — | Triage crash logs against mod class index |
-| 21 | `find_missing_deps` | — | Find mods with missing declared dependencies |
-| 22 | `check_mod_compat` | — | Pre-flight compatibility check for a candidate JAR |
+| 20 | `kubejs` | 2 | KubeJS script indexing + search |
+| 21 | `modpacks_ch` | 12 | modpacks.ch / FTB / CurseForge pack browsing |
+| 22 | `analyze_crash_log` | — | Triage crash logs against mod class index |
+| 23 | `find_missing_deps` | — | Find mods with missing declared dependencies |
+| 24 | `check_mod_compat` | — | Pre-flight compatibility check for a candidate JAR |
 
 ---
 

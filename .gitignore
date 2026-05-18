@@ -10,6 +10,6 @@ tools/*.jar
 hs_err_pid*.log
 replay_pid*.log
 
-# Agent skill configuration (local only)
-docs/agents/
+# Agent skill configuration and local planning docs (local only)
+docs/
 .scratch/
