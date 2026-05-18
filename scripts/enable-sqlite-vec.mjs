@@ -114,6 +114,9 @@ try {
     CREATE VIRTUAL TABLE IF NOT EXISTS vec_mc_source
       USING vec0(embedding float[768]);
 
+    CREATE VIRTUAL TABLE IF NOT EXISTS vec_mod_source
+      USING vec0(embedding float[768]);
+
     CREATE VIRTUAL TABLE IF NOT EXISTS vec_doc_entries
       USING vec0(embedding float[768]);
 

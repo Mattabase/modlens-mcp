@@ -465,3 +465,168 @@ function cosineSimilarityBlob(a: Buffer, b: Buffer): number {
     const denom = Math.sqrt(normA) * Math.sqrt(normB);
     return denom === 0 ? 0 : dot / denom;
 }
+
+// ── Mod version diff ─────────────────────────────────────────────────────────
+
+export interface ModVersionDiffResult extends VersionDiffResult {
+    modA: { id: number; modId: string; version: string };
+    modB: { id: number; modId: string; version: string };
+}
+
+/**
+ * Produces a detailed AST-level diff between two ingested mod versions.
+ * Uses the same ClassDiff / breaking-change logic as diffMcVersionsDetailed.
+ * No DB caching — mod JARs index in seconds.
+ *
+ * @param dbIdA    DB id of the older mod version
+ * @param dbIdB    DB id of the newer mod version
+ * @param packages Optional slash-prefix filter (e.g. ["com/example/mymod"])
+ * @param maxClasses Cap on changed-class output (default 200)
+ * @param semantic Enrich with Ollama embedding similarity (requires mod index_semantic)
+ */
+export async function diffModVersionsDetailed(
+    dbIdA: number,
+    dbIdB: number,
+    packages?: string[],
+    maxClasses = 200,
+    semantic = false,
+): Promise<ModVersionDiffResult> {
+    const { findModById } = await import("../repositories/mod.js");
+    const [modA, modB] = await Promise.all([findModById(dbIdA), findModById(dbIdB)]);
+    if (!modA) throw new Error(`Mod #${dbIdA} not found`);
+    if (!modB) throw new Error(`Mod #${dbIdB} not found`);
+
+    const [indexA, indexB] = await Promise.all([
+        indexJar(modA.jarPath),
+        indexJar(modB.jarPath),
+    ]);
+
+    const setA = new Set(Object.keys(indexA.classes));
+    const setB = new Set(Object.keys(indexB.classes));
+
+    const inScope = (cls: string): boolean => {
+        if (!packages || packages.length === 0) return true;
+        return packages.some((pkg) => cls.startsWith(pkg));
+    };
+
+    const added   = [...setB].filter((c) => !setA.has(c) && inScope(c)).sort();
+    const removed = [...setA].filter((c) => !setB.has(c) && inScope(c)).sort();
+    const common  = [...setA].filter((c) =>  setB.has(c) && inScope(c));
+
+    const changed: ClassDiff[] = [];
+    let breakingCount = 0;
+
+    for (const cls of common) {
+        const diff = diffClassIndex(indexA.classes[cls], indexB.classes[cls]);
+        const isEmpty =
+            diff.methods.added.length === 0 &&
+            diff.methods.removed.length === 0 &&
+            diff.methods.signatureChanged.length === 0 &&
+            diff.fields.added.length === 0 &&
+            diff.fields.removed.length === 0 &&
+            diff.fields.typeChanged.length === 0 &&
+            !diff.superChanged &&
+            diff.interfaces.added.length === 0 &&
+            diff.interfaces.removed.length === 0;
+
+        if (!isEmpty) {
+            changed.push(diff);
+            if (diff.hasBreakingChange) breakingCount++;
+        }
+    }
+
+    const base: VersionDiffResult = {
+        versionA: modA.version,
+        versionB: modB.version,
+        packages: packages ?? null,
+        summary: {
+            classesAdded: added.length,
+            classesRemoved: removed.length,
+            classesChanged: changed.length,
+            breakingChanges: breakingCount,
+        },
+        added,
+        removed,
+        changed: changed.slice(0, maxClasses),
+    };
+
+    if (semantic && await isOllamaAvailable()) {
+        base.changed = await enrichModWithSemanticScores(base.changed, dbIdA, dbIdB);
+    }
+
+    return {
+        ...base,
+        modA: { id: dbIdA, modId: modA.modId, version: modA.version },
+        modB: { id: dbIdB, modId: modB.modId, version: modB.version },
+    };
+}
+
+/**
+ * Semantic similarity enrichment for mod source files.
+ * Uses mod_source_files embeddings (mod index_semantic must have been run first).
+ */
+async function enrichModWithSemanticScores(
+    diffs: ClassDiff[],
+    dbIdA: number,
+    dbIdB: number,
+): Promise<ClassDiff[]> {
+    const backend = detectBackend();
+    const embRepo = backend === "sqlite"
+        ? await import("../repositories/embeddings-sqlite.js")
+        : await import("../repositories/embeddings.js");
+
+    const enriched: ClassDiff[] = [];
+
+    for (const diff of diffs) {
+        const dotName = diff.className.replace(/\//g, ".");
+        let sim: number | null = null;
+        try {
+            const queryVec = await embed(dotName);
+            const [rowsA, rowsB] = await Promise.all([
+                embRepo.searchModSourceByVector(queryVec, dbIdA, 1),
+                embRepo.searchModSourceByVector(queryVec, dbIdB, 1),
+            ]);
+            const hitA = rowsA.find((r) => (r as any).class_name === diff.className || (r as any).class_name === dotName);
+            const hitB = rowsB.find((r) => (r as any).class_name === diff.className || (r as any).class_name === dotName);
+            if (hitA && hitB) {
+                sim = await crossModVersionSimilarity(hitA.id, hitB.id, backend);
+            }
+        } catch {
+            // Ollama or DB error — silently skip
+        }
+        enriched.push({ ...diff, semanticSimilarity: sim });
+    }
+
+    return enriched;
+}
+
+/**
+ * Compute cosine similarity between two mod_source_files rows' embeddings.
+ */
+async function crossModVersionSimilarity(
+    idA: number,
+    idB: number,
+    backend: string,
+): Promise<number | null> {
+    if (backend !== "sqlite") {
+        const db = await getDb();
+        const rows = await db.$queryRawUnsafe<Array<{ sim: number }>>(
+            `SELECT (1 - (a.embedding <=> b.embedding))::float AS sim
+             FROM mod_source_files a, mod_source_files b
+             WHERE a.id = $1 AND b.id = $2
+               AND a.embedding IS NOT NULL AND b.embedding IS NOT NULL`,
+            idA, idB,
+        );
+        return rows[0]?.sim ?? null;
+    } else {
+        const Database = (await import("better-sqlite3")).default;
+        const url = process.env.DATABASE_URL ?? "";
+        const path = url.replace(/^file:\/\//, "").replace(/^file:/, "");
+        const db = new Database(path);
+        const rowA = db.prepare(`SELECT embedding FROM mod_source_files WHERE id = ?`).get(idA) as { embedding: Buffer } | undefined;
+        const rowB = db.prepare(`SELECT embedding FROM mod_source_files WHERE id = ?`).get(idB) as { embedding: Buffer } | undefined;
+        db.close();
+        if (!rowA?.embedding || !rowB?.embedding) return null;
+        return cosineSimilarityBlob(rowA.embedding, rowB.embedding);
+    }
+}

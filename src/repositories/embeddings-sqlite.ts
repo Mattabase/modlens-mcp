@@ -113,3 +113,31 @@ export async function searchSourceByVector(
         return [];
     }
 }
+
+// ── mod_source_files ──────────────────────────────────────────────────────────
+
+export async function upsertModSourceEmbedding(id: number, vec: number[]): Promise<void> {
+    const db = await getVecDb();
+    const prisma = await import("../db.js").then((m) => m.getDb());
+    await (prisma as any).modSourceFile.update({ where: { id }, data: { embedding: float32Blob(vec) } });
+    try {
+        db.prepare(`INSERT OR REPLACE INTO vec_mod_source(rowid, embedding) VALUES (?, ?)`).run(id, float32Blob(vec));
+    } catch { /* vec0 unavailable */ }
+}
+
+export async function searchModSourceByVector(
+    vec: number[], modId: number, limit = 10,
+): Promise<Array<{ id: number; class_name: string; similarity: number }>> {
+    const db = await getVecDb();
+    try {
+        const rows = db.prepare(
+            `SELECT v.rowid AS id, s.class_name, v.distance FROM vec_mod_source v
+             JOIN mod_source_files s ON s.id = v.rowid
+             WHERE v.embedding MATCH ? AND v.k = ? AND s.mod_id = ?
+             ORDER BY v.distance`,
+        ).all(float32Blob(vec), limit, modId) as Array<{ id: number; class_name: string; distance: number }>;
+        return rows.map((r) => ({ id: r.id, class_name: r.class_name, similarity: 1 - r.distance }));
+    } catch {
+        return [];
+    }
+}

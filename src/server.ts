@@ -34,7 +34,7 @@ import {
     decompileMcVersion, decompileMcVersionStatus, searchMcCode,
     validateAccessWidener, analyzeMixin, searchEvents,
 } from "./tools/vanilla.js";
-import { diffMcVersionsDetailed } from "./tools/version-diff.js";
+import { diffMcVersionsDetailed, diffModVersionsDetailed } from "./tools/version-diff.js";
 import { indexMcVersion, searchMcIndexed, indexMcSourceSemantic, searchMcSourceSemantic, indexModSourceSemantic, searchModSourceSemantic } from "./tools/mc-fts.js";
 import { findMapping, remapModJar, getParchment, listParchmentVersions, getParchmentSummary } from "./tools/mappings.js";
 import { ingestDocumentation, getDocumentation, searchDocumentation, listDocumentation, deleteDocumentation, seedDefaultDocumentation, semanticSearchDocumentation, backfillDocEmbeddings } from "./tools/docs.js";
@@ -172,9 +172,9 @@ server.tool(
 
 server.tool(
     "mod_bytecode",
-    "Mod JAR bytecode and class analysis. action=search_class|class_members|bytecode|find_refs|cross_refs|inheritance|diff|find_implementors|scan_registrations|annotated_by|event_listeners|optional_integrations|network_payloads|config_schema.",
+    "Mod JAR bytecode and class analysis. action=search_class|class_members|bytecode|find_refs|cross_refs|inheritance|diff|diff_detailed|find_implementors|scan_registrations|annotated_by|event_listeners|optional_integrations|network_payloads|config_schema. diff_detailed gives AST-level method/field changes with breaking-change flags (add semantic=true for cosine similarity, requires mod index_semantic).",
     {
-        action:     z.enum(["search_class","class_members","bytecode","find_refs","cross_refs","inheritance","diff","find_implementors","scan_registrations","annotated_by","event_listeners","optional_integrations","network_payloads","config_schema"]),
+        action:     z.enum(["search_class","class_members","bytecode","find_refs","cross_refs","inheritance","diff","diff_detailed","find_implementors","scan_registrations","annotated_by","event_listeners","optional_integrations","network_payloads","config_schema"]),
         dbId:      z.number().optional().describe("DB id"),
         dbIdA:     z.number().optional().describe("older DB id"),
         dbIdB:     z.number().optional().describe("newer DB id"),
@@ -188,8 +188,10 @@ server.tool(
         mcVersion: z.string().optional(),
         loader:    z.string().optional(),
         limit:     z.number().optional(),
+        packages:  z.array(z.string()).optional().describe("Slash-prefix filter for diff_detailed"),
+        semantic:  z.boolean().optional().describe("Enrich diff_detailed with Ollama cosine similarity"),
     },
-    async ({ action, dbId, dbIdA, dbIdB, query, className, target, annotation, event, modId, transitive, mcVersion, loader, limit }) => {
+    async ({ action, dbId, dbIdA, dbIdB, query, className, target, annotation, event, modId, transitive, mcVersion, loader, limit, packages, semantic }) => {
         let result: unknown;
         switch (action) {
             case "search_class":     result = await searchModClass(dbId!, query!); break;
@@ -199,6 +201,7 @@ server.tool(
             case "cross_refs":       result = await crossModRefs(target!, mcVersion, loader, limit); break;
             case "inheritance":      result = await getModInheritance(dbId!, className!); break;
             case "diff":             result = await diffModVersions(dbIdA!, dbIdB!); break;
+            case "diff_detailed":    result = await diffModVersionsDetailed(dbIdA!, dbIdB!, packages, limit ?? 200, semantic ?? false); break;
             case "find_implementors":result = await findImplementors(target!, modId, limit, transitive); break;
             case "scan_registrations": result = await scanModRegistrations(dbId!); break;
             case "annotated_by":     result = await findAnnotatedClasses(annotation!, modId, limit); break;
