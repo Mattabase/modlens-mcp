@@ -351,7 +351,7 @@ All 155 individual tools have been consolidated into **21 grouped tools** to sta
 
 | action | Key params | Description |
 |--------|-----------|-------------|
-| `ingest` | jarPath, skipSource | Add a JAR to the database |
+| `ingest` | jarPath, skipSource | Add a JAR to the database. Accepts Windows paths (`C:\mods\foo.jar`) and WSL paths (`/mnt/c/mods/foo.jar`) |
 | `list` | loader, mcVersion, hasMixins, decompiled, limit | List mods |
 | `get` | modId | Full metadata for a mod |
 | `search` | query, loader, mcVersion, limit | Search by name/description |
@@ -367,6 +367,12 @@ All 155 individual tools have been consolidated into **21 grouped tools** to sta
 | `search_source` | query, dbId?, isRegex, limit | Text/regex search across decompiled source — omit `dbId` to search **all** decompiled mods (results include `modId` + `modVersion`) |
 | `reindex` | dbId? | Re-index class names |
 | `batch_ingest` | directory, skipSource, indexClasses, replace | Ingest all JARs in a directory. `replace=true` deletes any existing DB row for the same `modId` before inserting — keeps DB in sync with disk |
+| `batch_decompile` | — | Decompile all not-yet-decompiled mods with concurrency control |
+| `index_fts` | dbId | Index decompiled mod source into BM25/FTS. Works for all loaders — NeoForge, Fabric, Forge, Quilt. **No Ollama required.** |
+| `search_indexed` | dbId, query, limit? | Fast BM25-ranked FTS search over indexed mod source |
+| `index_semantic` | dbId, batchSize? | Embed decompiled source into pgvector (batched, resumable — requires Ollama). Also populates FTS index as a side-effect. |
+| `search_semantic` | dbId, query, limit? | Semantic source search using Ollama + pgvector (requires Ollama) |
+| `get_paths` | dbId | Return `jarPath`, `decompPath` (null if not yet decompiled), and `cacheRoot` so the agent can grep/search files natively |
 
 ### 2. `mod_bytecode` — Mod JAR Class Analysis
 
