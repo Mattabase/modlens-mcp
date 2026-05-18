@@ -34,6 +34,7 @@ import {
     decompileMcVersion, decompileMcVersionStatus, searchMcCode,
     validateAccessWidener, analyzeMixin, searchEvents,
 } from "./tools/vanilla.js";
+import { diffMcVersionsDetailed } from "./tools/version-diff.js";
 import { indexMcVersion, searchMcIndexed, indexMcSourceSemantic, searchMcSourceSemantic, indexModSourceSemantic, searchModSourceSemantic } from "./tools/mc-fts.js";
 import { findMapping, remapModJar, getParchment, listParchmentVersions, getParchmentSummary } from "./tools/mappings.js";
 import { ingestDocumentation, getDocumentation, searchDocumentation, listDocumentation, deleteDocumentation, seedDefaultDocumentation, semanticSearchDocumentation, backfillDocEmbeddings } from "./tools/docs.js";
@@ -397,9 +398,9 @@ server.tool(
 
 server.tool(
     "mc_source",
-    "Vanilla Minecraft source code, decompilation, and validation. action=search_class|get_source|bytecode|class_members|find_refs|inheritance|diff|decompile|decompile_status|search_code|index|search_indexed|search_events|validate_aw|analyze_mixin|index_semantic|search_semantic. index_semantic/search_semantic require Ollama running.",
+    "Vanilla Minecraft source code, decompilation, and validation. action=search_class|get_source|bytecode|class_members|find_refs|inheritance|diff|diff_detailed|decompile|decompile_status|search_code|index|search_indexed|search_events|validate_aw|analyze_mixin|index_semantic|search_semantic. diff_detailed gives AST-level method/field changes with breaking-change flags per class; add semantic=true for cosine similarity scoring (requires Ollama + index_semantic run first). index_semantic/search_semantic require Ollama running.",
     {
-        action:     z.enum(["search_class","get_source","bytecode","class_members","find_refs","inheritance","diff","decompile","decompile_status","search_code","index","search_indexed","search_events","validate_aw","analyze_mixin","index_semantic","search_semantic"]),
+        action:     z.enum(["search_class","get_source","bytecode","class_members","find_refs","inheritance","diff","diff_detailed","decompile","decompile_status","search_code","index","search_indexed","search_events","validate_aw","analyze_mixin","index_semantic","search_semantic"]),
         version:    z.string().optional(),
         versionA:   z.string().optional(),
         versionB:   z.string().optional(),
@@ -410,6 +411,8 @@ server.tool(
         searchType: z.enum(["class","method","field","content","all"]).optional(),
         isRegex:    z.boolean().optional(),
         force:      z.boolean().optional(),
+        packages:   z.array(z.string()).optional().describe("Slash-prefix filter for diff_detailed, e.g. ['net/minecraft/world/entity']"),
+        semantic:   z.boolean().optional().describe("Enrich diff_detailed with Ollama cosine similarity (requires Ollama + index_semantic)"),
         modloader:  z.enum(["minecraft","neoforge","fabric","fabric-api"]).optional(),
         content:    z.string().optional().describe("Full .accesswidener file text (validate_aw)"),
         source:     z.string().optional().describe("Full mixin Java source code (analyze_mixin)"),
@@ -418,7 +421,7 @@ server.tool(
         maxLines:   z.number().optional(),
         limit:      z.number().optional(),
     },
-    async ({ action, version, versionA, versionB, mcVersion, query, className, target, searchType, isRegex, force, modloader, content, source, startLine, endLine, maxLines, limit }) => {
+    async ({ action, version, versionA, versionB, mcVersion, query, className, target, searchType, isRegex, force, packages, semantic, modloader, content, source, startLine, endLine, maxLines, limit }) => {
         const v = version ?? mcVersion;
         let result: unknown;
         switch (action) {
@@ -429,6 +432,7 @@ server.tool(
             case "find_refs":       result = await findMcReferences(v!, target!); break;
             case "inheritance":     result = await getMcInheritance(v!, className!); break;
             case "diff":            result = await diffMcVersions(versionA!, versionB!); break;
+            case "diff_detailed":   result = await diffMcVersionsDetailed(versionA!, versionB!, packages, limit ?? 200, force ?? false, semantic ?? false); break;
             case "decompile":       result = await decompileMcVersion(v!, force ?? false); break;
             case "decompile_status":result = await decompileMcVersionStatus(v!); break;
             case "search_code":     result = await searchMcCode(v!, query!, searchType ?? "content", isRegex ?? false, limit ?? 50); break;
