@@ -701,6 +701,8 @@ node dist/cli.js check-updates 2
 
 ### Services & APIs
 - **[CreeperHost](https://www.creeperhost.net)** — for the free [modpacks.ch](https://www.modpacks.ch) public API powering modpack search, sync, and mod downloads.
+- **[Modrinth](https://modrinth.com)** — for the free [Modrinth API](https://docs.modrinth.com) powering mod search, metadata lookup, and version sync.
+- **[CurseForge](https://www.curseforge.com)** — for the [CurseForge API](https://docs.curseforge.com) powering mod and modpack browsing and sync.
 - **[misode](https://github.com/misode)** — for [mcmeta](https://github.com/misode/mcmeta), the version-controlled Minecraft data repository that powers the `mc_data`, `mc_files`, and `mc_registry` tools.
 - **[Mojang](https://www.minecraft.net)** — for publishing official Mojmap mappings and the Piston Meta API used for version discovery and JAR downloads.
 
@@ -716,6 +718,7 @@ node dist/cli.js check-updates 2
 
 ### Tooling & libraries
 - **[Vineflower](https://github.com/Vineflower/vineflower)** — the decompiler powering all Java source reconstruction.
+- **[SpongePowered Mixin](https://github.com/SpongePowered/Mixin)** — the Mixin framework whose annotation format the mixin-scan tool parses and analyses across mods.
 - **[Model Context Protocol SDK](https://github.com/modelcontextprotocol/typescript-sdk)** — the MCP server/client framework this tool is built on.
 - **[Prisma](https://www.prisma.io)** — ORM powering multi-backend database support (PostgreSQL, PGlite, SQLite).
 - **[pgvector](https://github.com/pgvector/pgvector)** — PostgreSQL vector extension enabling semantic search.
