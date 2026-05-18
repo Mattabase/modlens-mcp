@@ -141,3 +141,39 @@ export async function searchModSourceByVector(
         return [];
     }
 }
+
+// ── Class-name → ID lookups (for diff semantic enrichment) ───────────────────
+
+export async function findSourceIdsByClassNames(
+    classNames: string[], mcVersionId: number,
+): Promise<Map<string, number>> {
+    if (classNames.length === 0) return new Map();
+    const db = await getVecDb();
+    const placeholders = classNames.map(() => "?").join(",");
+    try {
+        const rows = db.prepare(
+            `SELECT id, class_name FROM mc_source_files
+             WHERE mc_version_id = ? AND class_name IN (${placeholders}) AND embedding IS NOT NULL`,
+        ).all(mcVersionId, ...classNames) as Array<{ id: number; class_name: string }>;
+        return new Map(rows.map((r) => [r.class_name, r.id]));
+    } catch {
+        return new Map();
+    }
+}
+
+export async function findModSourceIdsByClassNames(
+    classNames: string[], modId: number,
+): Promise<Map<string, number>> {
+    if (classNames.length === 0) return new Map();
+    const db = await getVecDb();
+    const placeholders = classNames.map(() => "?").join(",");
+    try {
+        const rows = db.prepare(
+            `SELECT id, class_name FROM mod_source_files
+             WHERE mod_id = ? AND class_name IN (${placeholders}) AND embedding IS NOT NULL`,
+        ).all(modId, ...classNames) as Array<{ id: number; class_name: string }>;
+        return new Map(rows.map((r) => [r.class_name, r.id]));
+    } catch {
+        return new Map();
+    }
+}

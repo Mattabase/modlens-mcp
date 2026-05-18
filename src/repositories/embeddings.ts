@@ -121,3 +121,31 @@ export async function searchModSourceByVector(
         vecLiteral(vec), limit, modId,
     );
 }
+
+// ── Class-name → ID lookups (for diff semantic enrichment) ───────────────────
+
+export async function findSourceIdsByClassNames(
+    classNames: string[], mcVersionId: number,
+): Promise<Map<string, number>> {
+    if (classNames.length === 0) return new Map();
+    const db = await getDb();
+    const rows = await db.$queryRawUnsafe<Array<{ id: number; class_name: string }>>(
+        `SELECT id, class_name FROM mc_source_files
+         WHERE mc_version_id = $1 AND class_name = ANY($2::text[]) AND embedding IS NOT NULL`,
+        mcVersionId, classNames,
+    );
+    return new Map(rows.map((r) => [r.class_name, r.id]));
+}
+
+export async function findModSourceIdsByClassNames(
+    classNames: string[], modId: number,
+): Promise<Map<string, number>> {
+    if (classNames.length === 0) return new Map();
+    const db = await getDb();
+    const rows = await db.$queryRawUnsafe<Array<{ id: number; class_name: string }>>(
+        `SELECT id, class_name FROM mod_source_files
+         WHERE mod_id = $1 AND class_name = ANY($2::text[]) AND embedding IS NOT NULL`,
+        modId, classNames,
+    );
+    return new Map(rows.map((r) => [r.class_name, r.id]));
+}

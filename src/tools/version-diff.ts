@@ -14,7 +14,7 @@ import { exists, ensureDir } from "../cache.js";
 import { validateVersion } from "../validate.js";
 import { getDb } from "../db.js";
 import { detectBackend } from "../db-backend.js";
-import { isOllamaAvailable, embed, batchEmbed } from "../embeddings.js";
+import { isOllamaAvailable } from "../embeddings.js";
 import { ensureMcVersion } from "../repositories/mcVersion.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -369,7 +369,7 @@ export async function diffMcVersionsDetailed(
         changed,  // full array stored in cache; sliced at return
     };
 
-    if (semantic && await isOllamaAvailable()) {
+    if (semantic) {
         result.changed = await enrichWithSemanticScores(result.changed, versionA, versionB);
     }
 
@@ -401,41 +401,28 @@ async function enrichWithSemanticScores(
         ? await import("../repositories/embeddings-sqlite.js")
         : await import("../repositories/embeddings.js");
 
-    // Pass 1: batch-embed all class names in one Ollama request, then find matching rows
-    const dotNames = diffs.map((d) => d.className.replace(/\//g, "."));
-    let embeddings: number[][] = [];
-    try {
-        embeddings = await batchEmbed(dotNames);
-    } catch {
-        // Ollama error — return diffs unchanged
-        return diffs.map((d) => ({ ...d, semanticSimilarity: null }));
-    }
+    // Build lookup keys in both slash-notation (JarIndex native) and dot-notation
+    const slashNames = diffs.map((d) => d.className);
+    const dotNames   = diffs.map((d) => d.className.replace(/\//g, "."));
+    const allNames   = [...new Set([...slashNames, ...dotNames])];
 
-    // Pass 1: fire all 2×N vector lookups in parallel, then collect pairs
-    const lookups = await Promise.all(
-        embeddings.map((queryVec, i) => queryVec
-            ? Promise.all([
-                embRepo.searchSourceByVector(queryVec, idA, 1).catch(() => [] as any[]),
-                embRepo.searchSourceByVector(queryVec, idB, 1).catch(() => [] as any[]),
-            ])
-            : Promise.resolve([[] as any[], [] as any[]])
-        )
-    );
+    // Direct SQL lookup — embeddings are already stored; we just need the row IDs
+    const [mapA, mapB] = await Promise.all([
+        embRepo.findSourceIdsByClassNames(allNames, idA),
+        embRepo.findSourceIdsByClassNames(allNames, idB),
+    ]);
 
     const pairs: Array<{ diffIdx: number; aId: number; bId: number }> = [];
     for (let i = 0; i < diffs.length; i++) {
-        const diff = diffs[i];
-        const dotName = dotNames[i];
-        const [rowsA, rowsB] = lookups[i] as [any[], any[]];
-        const hitA = rowsA.find((r) => r.class_name === diff.className || r.class_name === dotName);
-        const hitB = rowsB.find((r) => r.class_name === diff.className || r.class_name === dotName);
-        if (hitA && hitB) pairs.push({ diffIdx: i, aId: hitA.id, bId: hitB.id });
+        const aId = mapA.get(slashNames[i]) ?? mapA.get(dotNames[i]);
+        const bId = mapB.get(slashNames[i]) ?? mapB.get(dotNames[i]);
+        if (aId !== undefined && bId !== undefined) pairs.push({ diffIdx: i, aId, bId });
     }
 
-    // Pass 2: batch all similarity computations in one DB round-trip
+    // Batch all similarity computations in one DB round-trip
     const simMap = await batchSimilarities(pairs, backend, "mc_source_files");
 
-    // Pass 3: assign scores back
+    // Assign scores back
     const enriched = diffs.map((d) => ({ ...d, semanticSimilarity: null as number | null }));
     for (const { diffIdx, aId, bId } of pairs) {
         enriched[diffIdx].semanticSimilarity = simMap.get(`${aId}:${bId}`) ?? null;
@@ -640,7 +627,7 @@ export async function diffModVersionsDetailed(
         modB: { id: dbIdB, modId: modB.modId, version: modB.version },
     };
 
-    if (semantic && await isOllamaAvailable()) {
+    if (semantic) {
         result.changed = await enrichModWithSemanticScores(result.changed, dbIdA, dbIdB);
     }
 
@@ -665,40 +652,24 @@ async function enrichModWithSemanticScores(
         ? await import("../repositories/embeddings-sqlite.js")
         : await import("../repositories/embeddings.js");
 
-    // Pass 1: batch-embed all class names in one Ollama request, then find matching rows
-    const dotNames = diffs.map((d) => d.className.replace(/\//g, "."));
-    let embeddings: number[][] = [];
-    try {
-        embeddings = await batchEmbed(dotNames);
-    } catch {
-        return diffs.map((d) => ({ ...d, semanticSimilarity: null }));
-    }
+    const slashNames = diffs.map((d) => d.className);
+    const dotNames   = diffs.map((d) => d.className.replace(/\//g, "."));
+    const allNames   = [...new Set([...slashNames, ...dotNames])];
 
-    // Pass 1: fire all 2×N vector lookups in parallel, then collect pairs
-    const lookups = await Promise.all(
-        embeddings.map((queryVec, i) => queryVec
-            ? Promise.all([
-                embRepo.searchModSourceByVector(queryVec, dbIdA, 1).catch(() => [] as any[]),
-                embRepo.searchModSourceByVector(queryVec, dbIdB, 1).catch(() => [] as any[]),
-            ])
-            : Promise.resolve([[] as any[], [] as any[]])
-        )
-    );
+    const [mapA, mapB] = await Promise.all([
+        embRepo.findModSourceIdsByClassNames(allNames, dbIdA),
+        embRepo.findModSourceIdsByClassNames(allNames, dbIdB),
+    ]);
 
     const pairs: Array<{ diffIdx: number; aId: number; bId: number }> = [];
     for (let i = 0; i < diffs.length; i++) {
-        const diff = diffs[i];
-        const dotName = dotNames[i];
-        const [rowsA, rowsB] = lookups[i] as [any[], any[]];
-        const hitA = rowsA.find((r) => r.class_name === diff.className || r.class_name === dotName);
-        const hitB = rowsB.find((r) => r.class_name === diff.className || r.class_name === dotName);
-        if (hitA && hitB) pairs.push({ diffIdx: i, aId: hitA.id, bId: hitB.id });
+        const aId = mapA.get(slashNames[i]) ?? mapA.get(dotNames[i]);
+        const bId = mapB.get(slashNames[i]) ?? mapB.get(dotNames[i]);
+        if (aId !== undefined && bId !== undefined) pairs.push({ diffIdx: i, aId, bId });
     }
 
-    // Pass 2: batch all similarity computations in one DB round-trip
     const simMap = await batchSimilarities(pairs, backend, "mod_source_files");
 
-    // Pass 3: assign scores back
     const enriched = diffs.map((d) => ({ ...d, semanticSimilarity: null as number | null }));
     for (const { diffIdx, aId, bId } of pairs) {
         enriched[diffIdx].semanticSimilarity = simMap.get(`${aId}:${bId}`) ?? null;
