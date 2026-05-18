@@ -707,9 +707,11 @@ node dist/cli.js check-updates 2
 ### Modloader teams
 - **[NeoForged team](https://github.com/neoforged/NeoForge)** — for NeoForge, the [NeoForge documentation](https://docs.neoforged.net) seeded into the docs database, and the migration changelogs seeded into the primers database.
 - **[FabricMC team](https://github.com/FabricMC)** — for the [Fabric Wiki](https://fabricmc.net/wiki) and [Yarn mappings](https://github.com/FabricMC/yarn) seeded into the docs database, Intermediary mappings used by the `mappings` tool, and [mcsrc.dev](https://mcsrc.dev) whose source browsing and class analysis features inspired our `mc_source` tool.
+- **[MinecraftForge team](https://github.com/MinecraftForge)** — for the pre-fork Forge migration changelogs (1.18.2 → 1.20.1) seeded into the primers database.
 
 ### Community contributors
 - **[ApexModder](https://github.com/ApexModder)** — for NeoForge update primers and migration guides included in the default primers database.
+- **[TheIllusiveC4](https://github.com/TheIllusiveC4)** — for [Curios API](https://github.com/TheIllusiveC4/Curios), whose wiki is seeded into the docs database as a default mod API reference.
 - **[ParchmentMC](https://parchmentmc.org)** — for [Parchment](https://github.com/ParchmentMC/Parchment), the community-maintained parameter names and javadocs layered on top of Mojmap used by the `mappings` tool.
 
 ### Tooling & libraries
