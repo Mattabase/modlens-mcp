@@ -729,3 +729,7 @@ node dist/cli.js check-updates 2
 - **[clack](https://github.com/bombshell-dev/clack)** — the interactive setup wizard TUI.
 - **[adm-zip](https://github.com/cthackers/adm-zip)** — JAR/ZIP extraction used throughout the ingestion pipeline.
 
+### Special thanks
+
+A heartfelt thank you to all the members of the **ForgeCraft Discord and Minecraft server** for being a genuinely great community, for your feedback, and for supporting my development endeavours over the years. This project wouldn't be what it is without you.
+
