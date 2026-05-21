@@ -14,8 +14,13 @@ const VERSIONS_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2
 
 /** Versions with SRG/MCP mappings that we explicitly support even before 1.14 */
 const LEGACY_SRG_VERSIONS = new Set([
-    "1.7.10", "1.8", "1.8.8", "1.8.9", "1.9", "1.9.4",
-    "1.10.2", "1.11", "1.11.2", "1.12", "1.12.1", "1.12.2",
+    "1.7.10",
+    "1.8", "1.8.8", "1.8.9",
+    "1.9", "1.9.2", "1.9.4",
+    "1.10", "1.10.2",
+    "1.11", "1.11.1", "1.11.2",
+    "1.12", "1.12.1", "1.12.2",
+    "1.13", "1.13.1", "1.13.2",
 ]);
 
 export interface McVersionEntry {

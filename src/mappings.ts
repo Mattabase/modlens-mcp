@@ -286,25 +286,50 @@ export function lookupInIndex(idx: TinyV2Index, symbol: string, reverse: boolean
     return notFound;
 }
 
-// ── SRG/MCP mappings (legacy Forge 1.7.10–1.12.2) ────────────────────────────
+// ── SRG/MCP mappings (legacy Forge 1.7.10–1.15) ──────────────────────────────
 
 /**
  * Known stable MCP channels per MC version.
  * Format: "stable_{num}-{mcVersion}" or "snapshot_{date}-{mcVersion}"
+ * Source: https://maven.minecraftforge.net/de/oceanlabs/mcp/mcp_stable/maven-metadata.xml
+ *
+ * Versions without a dedicated stable channel fall back to the nearest
+ * available channel for the same major.minor series.
  */
 const MCP_CHANNELS: Record<string, string> = {
+    // 1.7
     "1.7.10": "stable_12-1.7.10",
+    // 1.8
     "1.8":    "stable_18-1.8",
     "1.8.8":  "stable_20-1.8.8",
     "1.8.9":  "stable_22-1.8.9",
+    // 1.9
     "1.9":    "stable_24-1.9",
+    "1.9.2":  "stable_24-1.9",       // no dedicated stable; use 1.9's
     "1.9.4":  "stable_26-1.9.4",
+    // 1.10
+    "1.10":   "stable_29-1.10.2",    // no dedicated stable; use 1.10.2's
     "1.10.2": "stable_29-1.10.2",
-    "1.11":   "stable_31-1.11",
-    "1.11.2": "stable_32-1.11.2",
+    // 1.11
+    "1.11":   "stable_32-1.11",
+    "1.11.1": "stable_32-1.11",      // no dedicated stable; use 1.11's
+    "1.11.2": "stable_32-1.11",
+    // 1.12
     "1.12":   "stable_39-1.12",
     "1.12.1": "stable_39-1.12",
     "1.12.2": "stable_39-1.12",
+    // 1.13 (TSRG era starts — getSrgIndex falls back to mcp_config)
+    "1.13":   "stable_43-1.13",
+    "1.13.1": "stable_45-1.13.1",
+    "1.13.2": "stable_47-1.13.2",
+    // 1.14
+    "1.14":   "stable_49-1.14",
+    "1.14.1": "stable_51-1.14.1",
+    "1.14.2": "stable_53-1.14.2",
+    "1.14.3": "stable_56-1.14.3",
+    "1.14.4": "stable_58-1.14.4",
+    // 1.15
+    "1.15":   "stable_60-1.15",
 };
 
 interface SrgIndex {
@@ -872,10 +897,10 @@ function remapDescriptor(desc: string, classMap: Map<string, string>): string {
 }
 
 /**
- * Versions that have SRG+MCP mappings available (legacy Forge era).
+ * Versions that have SRG+MCP mappings available (legacy Forge era 1.7.10–1.15).
  */
 export function hasSrgMappings(version: string): boolean {
-    return /^1\.(7\.10|8(\.[89])?|9(\.4)?|10\.2|11(\.2)?|12(\.[12])?)$/.test(version);
+    return version in MCP_CHANNELS;
 }
 
 /**

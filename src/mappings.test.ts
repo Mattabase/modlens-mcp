@@ -131,10 +131,16 @@ describe("hasSrgMappings", () => {
         expect(hasSrgMappings("1.8.9")).toBe(true);
         expect(hasSrgMappings("1.12.2")).toBe(true);
         expect(hasSrgMappings("1.10.2")).toBe(true);
+        expect(hasSrgMappings("1.9.2")).toBe(true);
+        expect(hasSrgMappings("1.10")).toBe(true);
+        expect(hasSrgMappings("1.11.1")).toBe(true);
+        expect(hasSrgMappings("1.13")).toBe(true);
+        expect(hasSrgMappings("1.14.4")).toBe(true);
+        expect(hasSrgMappings("1.15")).toBe(true);
     });
 
-    it("returns false for mojmap-era and newer versions", () => {
-        expect(hasSrgMappings("1.14")).toBe(false);
+    it("returns false for post-MCP and newer versions", () => {
+        expect(hasSrgMappings("1.15.1")).toBe(false);
         expect(hasSrgMappings("1.16.5")).toBe(false);
         expect(hasSrgMappings("1.20.1")).toBe(false);
         expect(hasSrgMappings("26.1.2")).toBe(false);
@@ -142,6 +148,6 @@ describe("hasSrgMappings", () => {
 
     it("returns false for versions without SRG", () => {
         expect(hasSrgMappings("1.6.4")).toBe(false);
-        expect(hasSrgMappings("1.13")).toBe(false);
+        expect(hasSrgMappings("1.5.2")).toBe(false);
     });
 });
