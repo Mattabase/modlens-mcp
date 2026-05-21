@@ -475,6 +475,7 @@ export async function getModManifest(modId: string | number): Promise<object> {
         { path: "META-INF/mods.toml",          format: "toml" },
         { path: "fabric.mod.json",              format: "json" },
         { path: "quilt.mod.json",               format: "json" },
+        { path: "mcmod.info",                   format: "json" },
     ];
 
     for (const { path, format } of candidates) {
@@ -492,7 +493,7 @@ export async function getModManifest(modId: string | number): Promise<object> {
         return { mod: mod.modId, manifestPath: path, format, raw };
     }
 
-    return { mod: mod.modId, error: "No manifest file found (neoforge.mods.toml, mods.toml, fabric.mod.json, quilt.mod.json)" };
+    return { mod: mod.modId, error: "No manifest file found (neoforge.mods.toml, mods.toml, fabric.mod.json, quilt.mod.json, mcmod.info)" };
 }
 
 // ── Config file browser ───────────────────────────────────────────────────────

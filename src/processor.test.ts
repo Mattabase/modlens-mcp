@@ -229,6 +229,109 @@ mandatory = false
 
 // ── Murmur2 hash ───────────────────────────────────────────────────────────
 
+// ── mcmod.info (legacy Forge) parsing ──────────────────────────────────────
+
+describe("parseJar — mcmod.info (legacy Forge)", () => {
+    it("parses modId, name, version, mcversion from array format", async () => {
+        const zip = new AdmZip();
+        const mcmodInfo = JSON.stringify([{
+            modid: "StevesCarts",
+            name: "Steve's Carts 2",
+            version: "2.0.0.b18",
+            mcversion: "1.7.10",
+            description: "A carttastic mod",
+            authorList: ["Vswe"],
+            dependencies: [],
+        }]);
+        zip.addFile("mcmod.info", Buffer.from(mcmodInfo, "utf8"));
+        const tmpPath = join(tmpdir(), `test-mcmod-array-${Date.now()}.jar`);
+        zip.writeZip(tmpPath);
+        try {
+            const m = await parseJar(tmpPath);
+            expect(m.modId).toBe("StevesCarts");
+            expect(m.displayName).toBe("Steve's Carts 2");
+            expect(m.version).toBe("2.0.0.b18");
+            expect(m.mcVersion).toBe("1.7.10");
+            expect(m.loader).toBe("forge");
+            expect(m.description).toBe("A carttastic mod");
+        } finally {
+            await unlink(tmpPath);
+        }
+    });
+
+    it("parses mcmod.info modList wrapper format", async () => {
+        const zip = new AdmZip();
+        const mcmodInfo = JSON.stringify({ modList: [{
+            modid: "TestMod",
+            name: "Test Mod",
+            version: "1.0.0",
+            mcversion: "1.12.2",
+        }]});
+        zip.addFile("mcmod.info", Buffer.from(mcmodInfo, "utf8"));
+        const tmpPath = join(tmpdir(), `test-mcmod-modlist-${Date.now()}.jar`);
+        zip.writeZip(tmpPath);
+        try {
+            const m = await parseJar(tmpPath);
+            expect(m.modId).toBe("TestMod");
+            expect(m.displayName).toBe("Test Mod");
+            expect(m.version).toBe("1.0.0");
+            expect(m.mcVersion).toBe("1.12.2");
+            expect(m.loader).toBe("forge");
+        } finally {
+            await unlink(tmpPath);
+        }
+    });
+
+    it("falls through to unknownMod when mcmod.info is malformed", async () => {
+        const zip = new AdmZip();
+        zip.addFile("mcmod.info", Buffer.from("not json at all", "utf8"));
+        const tmpPath = join(tmpdir(), `test-mcmod-bad-${Date.now()}.jar`);
+        zip.writeZip(tmpPath);
+        try {
+            const m = await parseJar(tmpPath);
+            expect(m.loader).toBe("unknown");
+        } finally {
+            await unlink(tmpPath);
+        }
+    });
+
+    it("filters out Forge/FML pseudo-dependencies", async () => {
+        const zip = new AdmZip();
+        const mcmodInfo = JSON.stringify([{
+            modid: "mymod",
+            name: "My Mod",
+            version: "1.0.0",
+            mcversion: "1.7.10",
+            dependencies: ["Forge", "FML", "SomeMod"],
+        }]);
+        zip.addFile("mcmod.info", Buffer.from(mcmodInfo, "utf8"));
+        const tmpPath = join(tmpdir(), `test-mcmod-deps-${Date.now()}.jar`);
+        zip.writeZip(tmpPath);
+        try {
+            const m = await parseJar(tmpPath);
+            expect(m.dependencies).toHaveLength(1);
+            expect(m.dependencies[0].id).toBe("SomeMod");
+        } finally {
+            await unlink(tmpPath);
+        }
+    });
+
+    it("detects AT from META-INF/accesstransformer.cfg in legacy jar", async () => {
+        const zip = new AdmZip();
+        zip.addFile("mcmod.info", Buffer.from(JSON.stringify([{ modid: "mymod", version: "1.0" }]), "utf8"));
+        zip.addFile("META-INF/accesstransformer.cfg", Buffer.from("# at\naccessible field net/minecraft/A f I", "utf8"));
+        const tmpPath = join(tmpdir(), `test-mcmod-at-${Date.now()}.jar`);
+        zip.writeZip(tmpPath);
+        try {
+            const m = await parseJar(tmpPath);
+            expect(m.hasAt).toBe(true);
+            expect(m.atEntries).toContain("accessible field net/minecraft/A f I");
+        } finally {
+            await unlink(tmpPath);
+        }
+    });
+});
+
 describe("computeMurmur2", () => {
     it("returns a number and does not throw for empty buffer", () => {
         const result = computeMurmur2(Buffer.alloc(0));

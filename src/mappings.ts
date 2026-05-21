@@ -26,7 +26,7 @@ export const TINY_REMAPPER_PATH = join(TOOLS_DIR, "tiny-remapper.jar");
 const TINY_REMAPPER_URL = `https://maven.fabricmc.net/net/fabricmc/tiny-remapper/${TINY_REMAPPER_VERSION}/tiny-remapper-${TINY_REMAPPER_VERSION}-fat.jar`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-export type MappingNs = "official" | "intermediary" | "yarn" | "mojmap";
+export type MappingNs = "official" | "intermediary" | "yarn" | "mojmap" | "srg" | "mcp";
 
 interface TinyV2Index {
     ns: [string, string];
@@ -282,6 +282,227 @@ export function lookupInIndex(idx: TinyV2Index, symbol: string, reverse: boolean
     return notFound;
 }
 
+// ── SRG/MCP mappings (legacy Forge 1.7.10–1.12.2) ────────────────────────────
+
+/**
+ * Known stable MCP channels per MC version.
+ * Format: "stable_{num}-{mcVersion}" or "snapshot_{date}-{mcVersion}"
+ */
+const MCP_CHANNELS: Record<string, string> = {
+    "1.7.10": "stable_12-1.7.10",
+    "1.8":    "stable_18-1.8",
+    "1.8.8":  "stable_20-1.8.8",
+    "1.8.9":  "stable_22-1.8.9",
+    "1.9":    "stable_24-1.9",
+    "1.9.4":  "stable_26-1.9.4",
+    "1.10.2": "stable_29-1.10.2",
+    "1.11":   "stable_31-1.11",
+    "1.11.2": "stable_32-1.11.2",
+    "1.12":   "stable_39-1.12",
+    "1.12.1": "stable_39-1.12",
+    "1.12.2": "stable_39-1.12",
+};
+
+interface SrgIndex {
+    classes: Map<string, string>;   // notch → srg class name
+    methods: Map<string, string>;   // "notch_class/notch_method notch_desc" → "srg_class/srg_method"
+    fields: Map<string, string>;    // "notch_class/notch_field" → "srg_class/srg_field"
+}
+
+interface McpNames {
+    methods: Map<string, string>;   // func_12345_a → humanReadableName
+    fields: Map<string, string>;    // field_12345_b → humanReadableName
+}
+
+const srgCache = new Map<string, SrgIndex | null>();
+const mcpCache = new Map<string, McpNames | null>();
+
+function parseSrg(content: string): SrgIndex {
+    const classes = new Map<string, string>();
+    const methods = new Map<string, string>();
+    const fields = new Map<string, string>();
+    for (const line of content.split("\n")) {
+        const parts = line.trim().split(" ");
+        if (parts[0] === "CL:") {
+            classes.set(parts[1], parts[2]);
+        } else if (parts[0] === "FD:") {
+            fields.set(parts[1], parts[2]);
+        } else if (parts[0] === "MD:") {
+            methods.set(parts[1] + " " + parts[2], parts[3]);
+        }
+    }
+    return { classes, methods, fields };
+}
+
+function parseTsrg(content: string): SrgIndex {
+    const classes = new Map<string, string>();
+    const methods = new Map<string, string>();
+    const fields = new Map<string, string>();
+    let curObf = "";
+    let curSrg = "";
+    for (const line of content.split("\n")) {
+        if (!line || line.startsWith("#")) continue;
+        if (!line.startsWith("\t")) {
+            const [obf, srg] = line.trim().split(" ");
+            if (obf && srg) { curObf = obf; curSrg = srg; classes.set(obf, srg); }
+        } else {
+            const parts = line.trim().split(" ");
+            if (parts.length === 3) {
+                // method: obfName obfDesc srgName
+                methods.set(curObf + "/" + parts[0] + " " + parts[1], curSrg + "/" + parts[2]);
+            } else if (parts.length === 2) {
+                // field: obfName srgName
+                fields.set(curObf + "/" + parts[0], curSrg + "/" + parts[1]);
+            }
+        }
+    }
+    return { classes, methods, fields };
+}
+
+function parseMcpCsv(csv: string): Map<string, string> {
+    const map = new Map<string, string>();
+    const lines = csv.split("\n");
+    // Skip header: searge,name,side,desc
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const comma1 = line.indexOf(",");
+        const comma2 = line.indexOf(",", comma1 + 1);
+        if (comma1 < 0 || comma2 < 0) continue;
+        const searge = line.substring(0, comma1);
+        const name = line.substring(comma1 + 1, comma2);
+        if (searge && name) map.set(searge, name);
+    }
+    return map;
+}
+
+async function getSrgIndex(version: string): Promise<SrgIndex | null> {
+    const key = `srg-${version}`;
+    if (srgCache.has(key)) return srgCache.get(key) ?? null;
+
+    const srgPath = join(MAPPINGS_DIR, `srg-${version}.srg`);
+    if (!(await exists(srgPath))) {
+        // Try joined.srg format first (1.7.10–1.12.2)
+        const srgZipPath = join(MAPPINGS_DIR, `mcp-${version}-srg.zip`);
+        const srgUrl = `https://maven.minecraftforge.net/de/oceanlabs/mcp/mcp/${version}/mcp-${version}-srg.zip`;
+        try {
+            await downloadToFile(srgUrl, srgZipPath);
+            const zip = new AdmZip(srgZipPath);
+            const entry = zip.getEntry("joined.srg");
+            if (entry) {
+                await ensureDir(srgPath);
+                await writeFile(srgPath, entry.getData());
+            } else {
+                srgCache.set(key, null);
+                return null;
+            }
+        } catch {
+            // Try MCPConfig TSRG format (1.13+)
+            const tsrgZipPath = join(MAPPINGS_DIR, `mcp_config-${version}.zip`);
+            const tsrgUrl = `https://maven.minecraftforge.net/de/oceanlabs/mcp/mcp_config/${version}/mcp_config-${version}.zip`;
+            try {
+                await downloadToFile(tsrgUrl, tsrgZipPath);
+                const zip = new AdmZip(tsrgZipPath);
+                const entry = zip.getEntry("config/joined.tsrg");
+                if (entry) {
+                    const content = entry.getData().toString("utf8");
+                    const idx = parseTsrg(content);
+                    srgCache.set(key, idx);
+                    return idx;
+                }
+            } catch { /* fall through */ }
+            srgCache.set(key, null);
+            return null;
+        }
+    }
+    try {
+        const content = await readFile(srgPath, "utf8");
+        const idx = parseSrg(content);
+        srgCache.set(key, idx);
+        return idx;
+    } catch { srgCache.set(key, null); return null; }
+}
+
+async function getMcpNames(version: string): Promise<McpNames | null> {
+    const key = `mcp-${version}`;
+    if (mcpCache.has(key)) return mcpCache.get(key) ?? null;
+
+    const channel = MCP_CHANNELS[version];
+    if (!channel) { mcpCache.set(key, null); return null; }
+
+    const cachedMethods = join(MAPPINGS_DIR, `mcp-methods-${version}.csv`);
+    const cachedFields = join(MAPPINGS_DIR, `mcp-fields-${version}.csv`);
+
+    if (!(await exists(cachedMethods)) || !(await exists(cachedFields))) {
+        const zipPath = join(MAPPINGS_DIR, `mcp_${channel}.zip`);
+        const url = `https://maven.minecraftforge.net/de/oceanlabs/mcp/mcp_stable/${channel}/mcp_stable-${channel}.zip`;
+        try {
+            await downloadToFile(url, zipPath);
+            const zip = new AdmZip(zipPath);
+            const methodsEntry = zip.getEntry("methods.csv");
+            const fieldsEntry = zip.getEntry("fields.csv");
+            if (!methodsEntry || !fieldsEntry) { mcpCache.set(key, null); return null; }
+            await ensureDir(cachedMethods);
+            await writeFile(cachedMethods, methodsEntry.getData());
+            await ensureDir(cachedFields);
+            await writeFile(cachedFields, fieldsEntry.getData());
+        } catch { mcpCache.set(key, null); return null; }
+    }
+
+    try {
+        const methodsCsv = await readFile(cachedMethods, "utf8");
+        const fieldsCsv = await readFile(cachedFields, "utf8");
+        const names: McpNames = {
+            methods: parseMcpCsv(methodsCsv),
+            fields: parseMcpCsv(fieldsCsv),
+        };
+        mcpCache.set(key, names);
+        return names;
+    } catch { mcpCache.set(key, null); return null; }
+}
+
+/**
+ * Translate a SRG name (func_12345_a / field_12345_b) to its MCP human-readable name.
+ */
+function translateSrgToMcp(symbol: string, mcpNames: McpNames): TranslateResult {
+    const notFound: TranslateResult = { found: false, source: symbol, type: "unknown" };
+
+    // Method: func_12345_a
+    if (symbol.startsWith("func_")) {
+        const target = mcpNames.methods.get(symbol);
+        return target ? { found: true, source: symbol, target, type: "method" } : notFound;
+    }
+
+    // Field: field_12345_b
+    if (symbol.startsWith("field_")) {
+        const target = mcpNames.fields.get(symbol);
+        return target ? { found: true, source: symbol, target, type: "field" } : notFound;
+    }
+
+    // Try both maps as a fallback
+    const mTarget = mcpNames.methods.get(symbol);
+    if (mTarget) return { found: true, source: symbol, target: mTarget, type: "method" };
+    const fTarget = mcpNames.fields.get(symbol);
+    if (fTarget) return { found: true, source: symbol, target: fTarget, type: "field" };
+
+    return notFound;
+}
+
+/**
+ * Reverse-translate an MCP name back to its SRG name.
+ */
+function translateMcpToSrg(symbol: string, mcpNames: McpNames): TranslateResult {
+    const notFound: TranslateResult = { found: false, source: symbol, type: "unknown" };
+
+    for (const [srg, mcp] of mcpNames.methods) {
+        if (mcp === symbol) return { found: true, source: symbol, target: srg, type: "method" };
+    }
+    for (const [srg, mcp] of mcpNames.fields) {
+        if (mcp === symbol) return { found: true, source: symbol, target: srg, type: "field" };
+    }
+    return notFound;
+}
+
 // ── Detect unobfuscated versions (MC 26.1+ ships without obfuscation) ─────────
 function isUnobfuscated(version: string): boolean {
     // 26.1+ versioning uses the new unobfuscated scheme
@@ -345,6 +566,35 @@ export async function translateSymbol(
             return notFound;
         }
 
+        // SRG/MCP direct routes (legacy Forge)
+        if (from === "srg" && to === "mcp") {
+            const names = await getMcpNames(version);
+            if (!names) return { ...notFound, note: `MCP names not available for ${version}. Known versions: ${Object.keys(MCP_CHANNELS).join(", ")}` };
+            return translateSrgToMcp(symbol, names);
+        }
+        if (from === "mcp" && to === "srg") {
+            const names = await getMcpNames(version);
+            if (!names) return { ...notFound, note: `MCP names not available for ${version}` };
+            return translateMcpToSrg(symbol, names);
+        }
+        if (from === "official" && to === "srg") {
+            const idx = await getSrgIndex(version);
+            if (!idx) return { ...notFound, note: `SRG mappings not available for ${version}` };
+            const cls = idx.classes.get(normalized);
+            if (cls) return { found: true, source: symbol, target: cls, type: "class" };
+            for (const [from, to] of idx.fields) if (from.endsWith("/" + normalized)) return { found: true, source: symbol, target: to.split("/").pop()!, type: "field" };
+            for (const [from, to] of idx.methods) if (from.startsWith(normalized) || from.includes("/" + normalized + " ")) return { found: true, source: symbol, target: to.split("/").pop()!, type: "method" };
+            return notFound;
+        }
+        if (from === "srg" && to === "official") {
+            const idx = await getSrgIndex(version);
+            if (!idx) return { ...notFound, note: `SRG mappings not available for ${version}` };
+            for (const [obf, srg] of idx.classes) if (srg === normalized) return { found: true, source: symbol, target: obf, type: "class" };
+            for (const [obf, srg] of idx.fields) if (srg.endsWith("/" + symbol)) return { found: true, source: symbol, target: obf.split("/").pop()!, type: "field" };
+            for (const [obf, srg] of idx.methods) if (srg.endsWith("/" + symbol)) return { found: true, source: symbol, target: obf.split("/")[0]?.split(" ")[0]?.split("/").pop()!, type: "method" };
+            return notFound;
+        }
+
         // Chained routes via intermediary hub
         const chain = async (steps: Array<[MappingNs, MappingNs]>): Promise<TranslateResult> => {
             let current = normalized;
@@ -363,6 +613,10 @@ export async function translateSymbol(
         if (from === "intermediary"  && to === "mojmap")        return chain([["intermediary","official"],["official","mojmap"]]);
         if (from === "yarn"          && to === "mojmap")        return chain([["yarn","official"],["official","mojmap"]]);
         if (from === "mojmap"        && to === "yarn")          return chain([["mojmap","official"],["official","yarn"]]);
+
+        // Chained routes involving SRG/MCP
+        if (from === "official"      && to === "mcp")          return chain([["official","srg"],["srg","mcp"]]);
+        if (from === "mcp"           && to === "official")     return chain([["mcp","srg"],["srg","official"]]);
 
         return { ...notFound, note: `Unsupported translation: ${from} → ${to}` };
     } catch (err) {

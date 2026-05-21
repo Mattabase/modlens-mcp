@@ -31,6 +31,14 @@ describe("validatePath", () => {
     it("throws on absolute path that escapes base", () => {
         expect(() => validatePath("/etc/passwd", base)).toThrow("Path traversal");
     });
+
+    it("allows empty string (resolves to base)", () => {
+        expect(() => validatePath("", base)).not.toThrow();
+    });
+
+    it("allows '.' (resolves to base)", () => {
+        expect(() => validatePath(".", base)).not.toThrow();
+    });
 });
 
 // ── safeRegex ─────────────────────────────────────────────────────────────────

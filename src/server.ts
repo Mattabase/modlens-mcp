@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { startupEmbedScan } from "./embed-queue.js";
 
-import { ingestMod, decompileMod, decompileModStatus, reindexClasses, batchIngest, batchDecompileMods } from "./tools/ingest.js";
+import { ingestMod, decompileMod, decompileModStatus, reindexClasses, batchIngest, batchDecompileMods, deleteModFull } from "./tools/ingest.js";
 import { listMods, getModDetails, searchMods, getDbStats, getDependencies, findVersionConflicts, getDependencyGraph, listModSourceUrls, listModRegistryEntries } from "./tools/catalog.js";
 import {
     listModJarFiles, getModJarFile,
@@ -113,17 +113,29 @@ function out(result: unknown): { content: Array<{ type: "text"; text: string }> 
     return { content: [{ type: "text", text }] };
 }
 
+/** Wrap tool handler so thrown errors return an MCP error response instead of hanging. */
+function safe<A extends unknown[]>(fn: (...args: A) => Promise<ReturnType<typeof out>>): (...args: A) => Promise<ReturnType<typeof out>> {
+    return async (...args) => {
+        try {
+            return await fn(...args);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return { content: [{ type: "text" as const, text: msg }], isError: true } as ReturnType<typeof out>;
+        }
+    };
+}
+
 // ── 1. mod ────────────────────────────────────────────────────────────────────
 
 server.tool(
     "mod",
-    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_fts|search_indexed|index_semantic|search_semantic|get_paths. index_fts/search_indexed: BM25-ranked FTS over source code (vanilla, fabric, neoforge, forge, quilt). No Ollama required. index_semantic/search_semantic: vector search (requires Ollama). get_paths returns jarPath/decompPath for native grep. Omit dbId on search_source to grep all decompiled mods. batch_ingest replace=true removes old modId row first. batch_decompile decompiles all not-yet-decompiled mods with concurrency control.",
+    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_fts|search_indexed|index_semantic|search_semantic|get_paths|delete. index_fts/search_indexed: BM25-ranked FTS over source code (vanilla, fabric, neoforge, forge, quilt). No Ollama required. index_semantic/search_semantic: vector search (requires Ollama). get_paths returns jarPath/decompPath for native grep. Omit dbId on search_source to grep all decompiled mods. batch_ingest replace=true removes old modId row first. batch_decompile decompiles all not-yet-decompiled mods with concurrency control. delete removes a mod and all related data (classes, tags, source files, diffs, decompiled dir).",
     {
         action: z.enum([
             "ingest","list","get","search","stats","dependencies","dep_graph",
             "version_conflicts","source_urls","decompile","decompile_status",
             "decompile_class","source","search_source","reindex","batch_ingest",
-            "batch_decompile","index_fts","search_indexed","index_semantic","search_semantic","get_paths",
+            "batch_decompile","index_fts","search_indexed","index_semantic","search_semantic","get_paths","delete",
         ]),
         jarPath:      z.string().optional(),
         modId:        z.union([z.string(), z.number()]).optional().describe("mod ID or DB id"),
@@ -144,7 +156,7 @@ server.tool(
         indexClasses: z.boolean().optional(),
         replace:      z.boolean().optional().describe("Replace existing mod with same modId (batch_ingest, ingest)"),
     },
-    async ({ action, jarPath, modId, dbId, query, path, className, loader, mcVersion, hasMixins, decompiled, recursive, skipSource, isRegex, force, limit, directory, indexClasses, replace }) => {
+    safe(async ({ action, jarPath, modId, dbId, query, path, className, loader, mcVersion, hasMixins, decompiled, recursive, skipSource, isRegex, force, limit, directory, indexClasses, replace }) => {
         let result: unknown;
         switch (action) {
             case "ingest":           result = await ingestMod(jarPath!, skipSource ?? false, replace ?? false); break;
@@ -181,9 +193,10 @@ server.tool(
                 };
                 break;
             }
+            case "delete":           result = await deleteModFull(dbId!); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 2. mod_bytecode ───────────────────────────────────────────────────────────
@@ -211,7 +224,7 @@ server.tool(
         cache:     z.boolean().optional().describe("Read from / write to DB cache for diff_detailed"),
         force:     z.boolean().optional().describe("Recompute and overwrite DB cache (implies cache=true) for diff_detailed / cache_diff"),
     },
-    async ({ action, dbId, dbIdA, dbIdB, query, className, target, annotation, event, modId, transitive, mcVersion, loader, limit, packages, semantic, cache, force }) => {
+    safe(async ({ action, dbId, dbIdA, dbIdB, query, className, target, annotation, event, modId, transitive, mcVersion, loader, limit, packages, semantic, cache, force }) => {
         let result: unknown;
         const autoCache = !!(process.env.AUTO_CACHE_MOD_DIFFS);
         switch (action) {
@@ -233,7 +246,7 @@ server.tool(
             case "config_schema":    result = await extractConfigSchema(dbId!); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 3. mod_mixins ─────────────────────────────────────────────────────────────
@@ -250,7 +263,7 @@ server.tool(
         mcVersion:     z.string().optional(),
         loader:        z.string().optional(),
     },
-    async ({ action, modId, dbId, targetClass, packagePrefix, mcVersion, loader }) => {
+    safe(async ({ action, modId, dbId, targetClass, packagePrefix, mcVersion, loader }) => {
         let result: unknown;
         switch (action) {
             case "targets":            result = await getMixinTargets(modId!); break;
@@ -262,7 +275,7 @@ server.tool(
             case "aw_entries":         result = await getAwEntries(dbId!); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 4. platform ───────────────────────────────────────────────────────────────
@@ -279,7 +292,7 @@ server.tool(
         modIdFilter:     z.string().optional(),
         limit:           z.number().optional(),
     },
-    async ({ action, dbId, syncModrinth: sm, syncCurseforge: sc, downloadSources, modIdFilter, limit }) => {
+    safe(async ({ action, dbId, syncModrinth: sm, syncCurseforge: sc, downloadSources, modIdFilter, limit }) => {
         let result: unknown;
         switch (action) {
             case "sync_modrinth":   result = await syncModrinth(dbId!); break;
@@ -289,7 +302,7 @@ server.tool(
             case "download_source": { const dir = await downloadSource(dbId!); result = `Source downloaded to: ${dir}`; break; }
         }
         return out(result);
-    }
+    })
 );
 
 // ── 5. modpacks_ch ───────────────────────────────────────────────────────────
@@ -321,7 +334,7 @@ server.tool(
         skipOptional:     z.boolean().optional().describe("Skip optional files (default: false)"),
         concurrency:      z.number().optional().describe("Parallel downloads for sync_pack_mods (default: 3)"),
     },
-    async ({ action, namespace, packId, versionId, packVersionDbId, query, modId, fileId, loader, mcVersionFilter, force, modDbId, cfProject, fileType, limit, fileTypes, skipServer, skipOptional, concurrency }) => {
+    safe(async ({ action, namespace, packId, versionId, packVersionDbId, query, modId, fileId, loader, mcVersionFilter, force, modDbId, cfProject, fileType, limit, fileTypes, skipServer, skipOptional, concurrency }) => {
         const ns = namespace ?? "ftb";
         let result: unknown;
         switch (action) {
@@ -376,7 +389,7 @@ server.tool(
                 break;
         }
         return out(result);
-    },
+    }),
 );
 
 // ── 6. mc_versions ────────────────────────────────────────────────────────────
@@ -392,7 +405,7 @@ server.tool(
         skipIndex: z.boolean().optional(),
         limit:     z.number().optional(),
     },
-    async ({ action, type, mcVersion, version, skipIndex, limit }) => {
+    safe(async ({ action, type, mcVersion, version, skipIndex, limit }) => {
         let result: unknown;
         switch (action) {
             case "list_mc":      result = await listMcVersions(type ?? "release"); break;
@@ -416,7 +429,7 @@ server.tool(
             }
         }
         return out(result);
-    }
+    })
 );
 
 // ── 6. mc_source ─────────────────────────────────────────────────────────────
@@ -447,7 +460,7 @@ server.tool(
         maxLines:   z.number().optional(),
         limit:      z.number().optional(),
     },
-    async ({ action, version, versionA, versionB, mcVersion, query, className, target, searchType, isRegex, force, packages, semantic, cache, modloader, content, source, startLine, endLine, maxLines, limit }) => {
+    safe(async ({ action, version, versionA, versionB, mcVersion, query, className, target, searchType, isRegex, force, packages, semantic, cache, modloader, content, source, startLine, endLine, maxLines, limit }) => {
         const v = version ?? mcVersion;
         let result: unknown;
         switch (action) {
@@ -482,7 +495,7 @@ server.tool(
             }
         }
         return out(result);
-    }
+    })
 );
 
 // ── 7. mappings ───────────────────────────────────────────────────────────────
@@ -494,15 +507,15 @@ server.tool(
         action:    z.enum(["find","remap","parchment","list_parchment","parchment_summary"]),
         symbol:    z.string().optional().describe("symbol to translate"),
         version:   z.string().optional(),
-        sourceNs:  z.enum(["official","intermediary","yarn","mojmap"]).optional(),
-        targetNs:  z.enum(["official","intermediary","yarn","mojmap"]).optional(),
+        sourceNs:  z.enum(["official","intermediary","yarn","mojmap","srg","mcp"]).optional().describe("Allowed: official, intermediary, yarn, mojmap, srg, mcp"),
+        targetNs:  z.enum(["official","intermediary","yarn","mojmap","srg","mcp"]).optional().describe("Allowed: official, intermediary, yarn, mojmap, srg, mcp"),
         inputJar:  z.string().optional(),
         outputJar: z.string().optional(),
         toMapping: z.enum(["yarn","mojmap"]).optional(),
         className: z.string().optional(),
         mcVersion: z.string().optional(),
     },
-    async ({ action, symbol, version, sourceNs, targetNs, inputJar, outputJar, toMapping, className, mcVersion }) => {
+    safe(async ({ action, symbol, version, sourceNs, targetNs, inputJar, outputJar, toMapping, className, mcVersion }) => {
         const v = version ?? mcVersion;
         const mv = mcVersion ?? version;
         let result: unknown;
@@ -514,7 +527,7 @@ server.tool(
             case "parchment_summary": result = await getParchmentSummary(mv!); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 8. docs ───────────────────────────────────────────────────────────────────
@@ -541,7 +554,7 @@ server.tool(
         id:        z.number().optional(),
         limit:     z.number().optional(),
     },
-    async ({ action, entries, query, category, namespace, tag, id, limit }) => {
+    safe(async ({ action, entries, query, category, namespace, tag, id, limit }) => {
         let result: unknown;
         switch (action) {
             case "ingest": result = await ingestDocumentation(entries!); break;
@@ -554,7 +567,7 @@ server.tool(
             case "backfill_embeddings": result = await backfillDocEmbeddings(); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 9. primers ────────────────────────────────────────────────────────────────
@@ -583,7 +596,7 @@ server.tool(
         query:       z.string().optional(),
         limit:       z.number().optional(),
     },
-    async ({ action, entries, id, fromVersion, toVersion, modloader, query, limit }) => {
+    safe(async ({ action, entries, id, fromVersion, toVersion, modloader, query, limit }) => {
         let result: unknown;
         switch (action) {
             case "ingest":     result = await ingestPrimer(entries!); break;
@@ -597,7 +610,7 @@ server.tool(
             case "backfill_embeddings": result = await backfillPrimerEmbeddings(); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 10. mc_registry ───────────────────────────────────────────────────────────
@@ -611,7 +624,7 @@ server.tool(
         registry: z.string().optional().describe("registry key e.g. 'block','item','entity_type'"),
         filter:   z.enum(["release","snapshot","all"]).optional().describe("Version filter for mcmeta_versions (default all)"),
     },
-    async ({ action, version, registry, filter }) => {
+    safe(async ({ action, version, registry, filter }) => {
         let result: unknown;
         switch (action) {
             case "blocks":           result = await getMcBlocks(version); break;
@@ -623,7 +636,7 @@ server.tool(
             case "mcmeta_versions":  result = await getMcmetaVersions(filter ?? "all"); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 11. mc_data ───────────────────────────────────────────────────────────────
@@ -660,7 +673,7 @@ server.tool(
         modId:          z.union([z.string(), z.number()]).optional().describe("mod ID or DB id"),
         limit:          z.number().optional().describe("Max results (lang)"),
     },
-    async ({ action, version, registry, tagId, namespace, entry, type, outputItem, recipeId, item, category, path, filter, block, modelPath, resolveParents, biomeId, id, entity, modId, limit }) => {
+    safe(async ({ action, version, registry, tagId, namespace, entry, type, outputItem, recipeId, item, category, path, filter, block, modelPath, resolveParents, biomeId, id, entity, modId, limit }) => {
         let result: unknown;
         switch (action) {
             case "tags":             result = await getMcTags(version, registry, tagId, namespace); break;
@@ -688,7 +701,7 @@ server.tool(
             case "entity_attributes":result = await getEntityAttributes(entity, version, modId); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 12. mc_files ─────────────────────────────────────────────────────────────
@@ -708,7 +721,7 @@ server.tool(
         atlas:    z.string().optional().describe("atlas name e.g. 'blocks'"),
         ref:      z.string().optional().describe("git ref e.g. '26.1.2-data'"),
     },
-    async ({ action, filePath, version, versionA, versionB, branch, dirPath, jsonOnly, atlas, ref }) => {
+    safe(async ({ action, filePath, version, versionA, versionB, branch, dirPath, jsonOnly, atlas, ref }) => {
         let result: unknown;
         switch (action) {
             case "get_data":   result = await getMcDataFile(filePath!, version, jsonOnly ?? false); break;
@@ -721,7 +734,7 @@ server.tool(
             case "changelog":  result = await getVersionChangelog(version!, branch); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 13. mod_jar ───────────────────────────────────────────────────────────────
@@ -740,7 +753,7 @@ server.tool(
         type:      z.enum(["item","block","entity_type","enchantment","effect","biome","container","sound","potion","banner_pattern","painting","attribute","trim_material","trim_pattern","creative_tab","jukebox_song","death_message","fluid","all"]).optional().describe("Registry type filter (registry_entries, default all)"),
         limit:     z.number().optional(),
     },
-    async ({ action, modId, prefix, path, filter, namespace, atlas, type, limit }) => {
+    safe(async ({ action, modId, prefix, path, filter, namespace, atlas, type, limit }) => {
         let result: unknown;
         switch (action) {
             case "list_files":       result = await listModJarFiles(modId, prefix); break;
@@ -754,7 +767,7 @@ server.tool(
             case "get_config":       result = await getModConfig(modId, path!); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 14. mod_data ─────────────────────────────────────────────────────────────
@@ -777,7 +790,7 @@ server.tool(
         registry:  z.string().optional().describe("tag registry e.g. item|block|entity_type"),
         dataType:  z.string().optional(),
     },
-    async ({ action, type, modId, dbIdA, dbIdB, itemId, maxDepth, id, modelPath, namespace, filter, registry, dataType }) => {
+    safe(async ({ action, type, modId, dbIdA, dbIdB, itemId, maxDepth, id, modelPath, namespace, filter, registry, dataType }) => {
         let result: unknown;
         if (action === "diff") {
             result = await diffModData(dbIdA!, dbIdB!, dataType);
@@ -796,7 +809,7 @@ server.tool(
             }
         }
         return out(result);
-    }
+    })
 );
 
 // ── 15. mod_tags ──────────────────────────────────────────────────────────────
@@ -813,7 +826,7 @@ server.tool(
         maxDepth: z.number().optional(),
         limit:    z.number().optional().describe("Max results (search, default 50)"),
     },
-    async ({ action, modId, tagPath, registry, query, maxDepth, limit }) => {
+    safe(async ({ action, modId, tagPath, registry, query, maxDepth, limit }) => {
         let result: unknown;
         switch (action) {
             case "index":          result = await indexModTags(modId!); break;
@@ -826,7 +839,7 @@ server.tool(
             case "search":         result = await searchModTags(query!, registry, limit); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 16. mixin_scan ────────────────────────────────────────────────────────────
@@ -842,7 +855,7 @@ server.tool(
         targetClass:  z.string().optional().describe("slash/dot class name"),
         top:          z.number().optional(),
     },
-    async ({ action, loader, mcVersion, minConflicts, targetClass, top }) => {
+    safe(async ({ action, loader, mcVersion, minConflicts, targetClass, top }) => {
         let result: unknown;
         switch (action) {
             case "list_mods":       result = await listModsWithMixins(loader, mcVersion); break;
@@ -852,7 +865,7 @@ server.tool(
             case "batch_resolve":   result = await batchResolveMixins(loader, mcVersion); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 17. gradle ────────────────────────────────────────────────────────────────
@@ -868,7 +881,7 @@ server.tool(
         groupFilter: z.string().optional().describe("group:artifact substring"),
         limit:       z.number().optional().describe("Max results (search, default 20)"),
     },
-    async ({ action, modId, query, modIdFilter, groupFilter, limit }) => {
+    safe(async ({ action, modId, query, modIdFilter, groupFilter, limit }) => {
         let result: unknown;
         switch (action) {
             case "get_files":    result = await getModGradleFiles(modId!); break;
@@ -876,7 +889,7 @@ server.tool(
             case "compare_deps": result = await compareGradleDeps(groupFilter, modIdFilter); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 18. reports ───────────────────────────────────────────────────────────────
@@ -898,10 +911,10 @@ server.tool(
         oldIds:       z.array(z.number()).optional(),
         newIds:       z.array(z.number()).optional(),
     },
-    async ({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds, oldIds, newIds }) => {
+    safe(async ({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds, oldIds, newIds }) => {
         const result = await generateReport({ report, savePath, modId, loader, mcVersion, registry, minConflicts, groupFilter, modIdFilter, dbIds, oldIds, newIds });
         return out(result.savedTo ? `Saved to: ${result.savedTo}\n\n${result.markdown}` : result.markdown);
-    }
+    })
 );
 
 // ── 20. pack_tools ────────────────────────────────────────────────────────────
@@ -929,7 +942,7 @@ server.tool(
         newIds:      z.array(z.number()).optional(),
         limit:       z.number().optional(),
     },
-    async ({ action, modId, assetType, dataType, overrideType, dataSubtype, mcVersion, loader, oldIds, newIds, limit }) => {
+    safe(async ({ action, modId, assetType, dataType, overrideType, dataSubtype, mcVersion, loader, oldIds, newIds, limit }) => {
         let result: unknown;
         switch (action) {
             case "asset_conflicts":   result = await findAssetConflicts(assetType, mcVersion, loader, limit); break;
@@ -941,7 +954,7 @@ server.tool(
             case "data_conflicts":    result = await findDataConflicts(dataType, mcVersion, loader, limit); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 21. kubejs ────────────────────────────────────────────────────────────────
@@ -955,14 +968,14 @@ server.tool(
         query:      z.string().optional(),
         limit:      z.number().optional(),
     },
-    async ({ action, scriptsDir, query, limit }) => {
+    safe(async ({ action, scriptsDir, query, limit }) => {
         let result: unknown;
         switch (action) {
             case "index":  result = await indexKubeJsScripts(scriptsDir); break;
             case "search": result = await searchKubeJsScripts(scriptsDir, query!, limit); break;
         }
         return out(result);
-    }
+    })
 );
 
 // ── 22. analyze_crash_log ────────────────────────────────────────────────────
@@ -973,10 +986,10 @@ server.tool(
     {
         logText: z.string().describe("full crash log text"),
     },
-    async ({ logText }) => {
+    safe(async ({ logText }) => {
         const result = await analyzeCrashLog(logText);
         return out(result);
-    }
+    })
 );
 
 // ── 23. find_missing_deps ────────────────────────────────────────────────────
@@ -988,10 +1001,10 @@ server.tool(
         mcVersion: z.string().optional(),
         loader:    z.string().optional().describe("neoforge|forge|fabric|quilt"),
     },
-    async ({ mcVersion, loader }) => {
+    safe(async ({ mcVersion, loader }) => {
         const result = await findMissingDeps(mcVersion, loader);
         return out(result);
-    }
+    })
 );
 
 // ── 24. check_mod_compat ──────────────────────────────────────────────────────
@@ -1004,10 +1017,10 @@ server.tool(
         mcVersion: z.string().optional(),
         loader:    z.string().optional().describe("neoforge|forge|fabric|quilt"),
     },
-    async ({ jarPath, mcVersion, loader }) => {
+    safe(async ({ jarPath, mcVersion, loader }) => {
         const result = await checkModCompat(jarPath, mcVersion, loader);
         return out(result);
-    }
+    })
 );
 
 // ── Start ─────────────────────────────────────────────────────────────────────

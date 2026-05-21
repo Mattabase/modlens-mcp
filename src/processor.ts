@@ -47,7 +47,13 @@ export async function parseJar(jarPath: string): Promise<ParsedManifest> {
     } else if (forgeToml) {
         manifest = parseForge(forgeToml, entries);
     } else {
-        manifest = unknownMod(jarPath);
+        // Legacy Forge (1.7.10–1.12.2) uses mcmod.info at the JAR root
+        const mcmodInfoRaw = readEntry("mcmod.info");
+        if (mcmodInfoRaw) {
+            manifest = parseMcModInfo(mcmodInfoRaw, entries);
+        } else {
+            manifest = unknownMod(jarPath);
+        }
     }
 
     // AT entries
@@ -214,6 +220,54 @@ function parseForgeToml(raw: string, loader: "neoforge" | "forge", entries: stri
         loader,
         description,
         sourceUrl,
+        dependencies,
+        mixinConfigs,
+        hasMixins: mixinConfigs.length > 0,
+        hasAt: entries.includes("META-INF/accesstransformer.cfg"),
+        hasAw: false,
+        atEntries: [],
+        awEntries: [],
+        mixinTargets: [],
+    };
+}
+
+function parseMcModInfo(raw: string, entries: string[]): ParsedManifest {
+    let modList: Record<string, unknown>[];
+    try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            modList = parsed;
+        } else if (parsed?.modList && Array.isArray(parsed.modList)) {
+            modList = parsed.modList;
+        } else {
+            modList = [];
+        }
+    } catch {
+        return unknownMod("mcmod.info");
+    }
+
+    const mod = modList[0];
+    if (!mod) return unknownMod("mcmod.info");
+
+    const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
+    const modId = str(mod.modid, "unknown");
+
+    const mixinConfigs = entries.filter((e) => e.endsWith(".mixins.json"));
+
+    const rawDeps = Array.isArray(mod.dependencies) ? mod.dependencies : [];
+    const dependencies: ParsedManifest["dependencies"] = rawDeps
+        .filter((d): d is string => typeof d === "string")
+        .filter((d) => d !== "Forge" && d !== "forge" && d !== "FML")
+        .map((d) => ({ id: d, version: "*", required: true }));
+
+    return {
+        modId,
+        displayName: str(mod.name, modId),
+        version: str(mod.version, "0.0.0"),
+        mcVersion: str(mod.mcversion),
+        loader: "forge",
+        description: str(mod.description),
+        sourceUrl: str(mod.url) || null,
         dependencies,
         mixinConfigs,
         hasMixins: mixinConfigs.length > 0,

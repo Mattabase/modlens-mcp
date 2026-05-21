@@ -6,6 +6,7 @@ import { decompileJar, decompileJarJiJ, isDecompileDone } from "../java-tools.js
 import { indexJar } from "../java-tools.js";
 import { paths, ensureDir } from "../cache.js";
 import { join } from "path";
+import { rm } from "fs/promises";
 import { normalizeJarPath } from "../security.js";
 import { isOllamaAvailable } from "../embeddings.js";
 import { enqueueModEmbed } from "../embed-queue.js";
@@ -294,6 +295,40 @@ export async function decompileModStatus(dbId: number): Promise<{ status: string
         return { status: "running", outDir, message: "Still decompiling..." };
     }
     return { status: "not_started", outDir, message: "No decompile job found. Call decompile_mod first." };
+}
+
+// ── Delete mod ────────────────────────────────────────────────────────────────
+
+export async function deleteModFull(dbId: number): Promise<{ deleted: boolean; modId: string; cleaned: string[] }> {
+    const mod = await findModById(dbId);
+    if (!mod) throw new Error(`Mod #${dbId} not found`);
+
+    const cleaned: string[] = [];
+
+    // Remove decompiled source directory
+    if (mod.decompPath) {
+        try {
+            await rm(mod.decompPath, { recursive: true, force: true });
+            cleaned.push(`decompiled: ${mod.decompPath}`);
+        } catch { /* already gone */ }
+    }
+
+    // Remove cached version-diff rows referencing this mod
+    const db = await (await import("../db.js")).getDb();
+    const diffCount = await db.modVersionDiff.deleteMany({
+        where: { OR: [{ modDbIdA: dbId }, { modDbIdB: dbId }] },
+    });
+    if (diffCount.count > 0) cleaned.push(`version_diffs: ${diffCount.count}`);
+
+    // Remove source files (FTS/semantic index)
+    const srcCount = await db.modSourceFile.deleteMany({ where: { modId: dbId } });
+    if (srcCount.count > 0) cleaned.push(`source_files: ${srcCount.count}`);
+
+    // deleteModById handles ModTag, ModClass, and Mod rows
+    await deleteModById(dbId);
+    cleaned.push("db_rows: mod, classes, tags");
+
+    return { deleted: true, modId: mod.modId, cleaned };
 }
 
 // ── Batch decompile ───────────────────────────────────────────────────────────
