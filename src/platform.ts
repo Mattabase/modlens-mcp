@@ -2,6 +2,7 @@ import { createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
 import { join } from "path";
 import { CACHE_ROOT, ensureDir, exists } from "./cache.js";
+import { LEGACY_SRG_VERSIONS, LEGACY_RETROMCP_VERSIONS } from "./minecraft.js";
 
 const PISTON_META = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 const NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge";
@@ -34,7 +35,7 @@ export async function listMcVersions(type?: "release" | "snapshot" | "all"): Pro
         const data = await res.json() as { versions: MCVersion[]; };
         mcCache = data.versions.filter(
             (v) => v.type !== "old_beta" && v.type !== "old_alpha" &&
-                new Date(v.releaseTime) >= new Date("2019-04-23")
+                (new Date(v.releaseTime) >= new Date("2019-04-23") || LEGACY_SRG_VERSIONS.has(v.id) || LEGACY_RETROMCP_VERSIONS.has(v.id))
         );
     }
     if (!type || type === "all") return mcCache;

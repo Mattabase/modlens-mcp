@@ -903,6 +903,123 @@ export function hasSrgMappings(version: string): boolean {
     return version in MCP_CHANNELS;
 }
 
+// ── RetroMCP (pre-1.7.10 Tiny v2 mappings from MCPHackers) ──────────────────
+
+/**
+ * Base URL for RetroMCP resource ZIPs.
+ * Override with RETROMCP_BASE_URL env var when hosting on a private Maven.
+ */
+const RETROMCP_BASE_URL = process.env.RETROMCP_BASE_URL ?? "https://mcphackers.org/versionsV2";
+
+/**
+ * Known versions with RetroMCP mappings (Tiny v2 format, "official" → "named").
+ * Maps version ID → resource ZIP filename (appended to RETROMCP_BASE_URL).
+ * Source: https://mcphackers.org/versionsV3/versions.json
+ *
+ * Note: Multiple sub-versions may share the same resource ZIP.
+ */
+const RETROMCP_VERSIONS: Record<string, string> = {
+    // Releases
+    "1.5.2":   "1.5.2.zip",
+    "1.2.5":   "1.2.5.zip",
+    "1.2.4":   "1.2.4.zip",
+    "1.2.3":   "1.2.3.zip",
+    "1.1":     "1.1.zip",
+    "1.0":     "1.0.0.zip",
+    // Beta
+    "b1.8.1":  "b1.8.zip",
+    "b1.8":    "b1.8.zip",
+    "b1.7.3":  "b1.7.zip",
+    "b1.7.2":  "b1.7.zip",
+    "b1.7":    "b1.7.zip",
+    "b1.6.6":  "b1.6.zip",
+    "b1.6.5":  "b1.6.zip",
+    "b1.6.4":  "b1.6.zip",
+    "b1.6.3":  "b1.6.zip",
+    "b1.6.2":  "b1.6.zip",
+    "b1.6.1":  "b1.6.zip",
+    "b1.6":    "b1.6.zip",
+    "b1.5_01": "b1.5_01.zip",
+    "b1.4_01": "b1.4_01.zip",
+    "b1.3_01": "b1.3_01.zip",
+    "b1.2_02": "b1.2.zip",
+    "b1.2_01": "b1.2.zip",
+    "b1.2":    "b1.2.zip",
+    "b1.1_02": "b1.1.zip",
+    "b1.1_01": "b1.1.zip",
+    // Alpha
+    "a1.2.6":  "a1.2.6.zip",
+    "a1.2.5":  "a1.2.5.zip",
+    "a1.2.3_04": "a1.2.3.zip",
+    "a1.2.3_02": "a1.2.3.zip",
+    "a1.2.3":  "a1.2.3.zip",
+    "a1.1.2_01": "a1.1.2_01.zip",
+    "a1.1.2":  "a1.1.1.zip",
+    "a1.1.1":  "a1.1.1.zip",
+    "a1.0.17_04": "a1.0.17.zip",
+    "a1.0.17_02": "a1.0.17.zip",
+    "a1.0.16_02": "a1.0.16_02.zip",
+    "a1.0.16_01": "a1.0.16.zip",
+    "a1.0.16": "a1.0.16.zip",
+    "a1.0.15": "a1.0.15.zip",
+    "a1.0.14-1659": "a1.0.14.zip",
+    "a1.0.11": "a1.0.11.zip",
+    "a1.0.5_01": "a1.0.5_01.zip",
+    "a1.0.4":  "a1.0.4.zip",
+};
+
+/**
+ * Check whether a version has RetroMCP Tiny v2 mappings available (pre-1.7.10).
+ */
+export function hasRetroMcpMappings(version: string): boolean {
+    return version in RETROMCP_VERSIONS;
+}
+
+/**
+ * Download the RetroMCP resource ZIP and extract conf/mappings.tiny.
+ * Returns path to the extracted .tiny file or null on failure.
+ */
+async function getRetroMcpTinyPath(version: string): Promise<string | null> {
+    const zipName = RETROMCP_VERSIONS[version];
+    if (!zipName) return null;
+
+    const tinyPath = join(MAPPINGS_DIR, `retromcp-${version}.tiny`);
+    if (await exists(tinyPath)) return tinyPath;
+
+    const zipPath = join(MAPPINGS_DIR, `retromcp-${zipName}`);
+    const url = `${RETROMCP_BASE_URL}/${zipName}`;
+    try {
+        if (!(await exists(zipPath))) {
+            await downloadToFile(url, zipPath);
+        }
+        const zip = new AdmZip(zipPath);
+        // RetroMCP ZIPs may store mappings at root or under conf/
+        const entry = zip.getEntry("mappings.tiny") ?? zip.getEntry("conf/mappings.tiny");
+        if (!entry) return null;
+        await ensureDir(tinyPath);
+        await writeFile(tinyPath, entry.getData());
+        return tinyPath;
+    } catch { return null; }
+}
+
+/**
+ * Remap a vanilla MC JAR from obfuscated → named using TinyRemapper + RetroMCP mappings.
+ * Returns the path to the remapped JAR, or null if mappings aren't available.
+ */
+export async function remapMcJarTiny(jarPath: string, version: string): Promise<string | null> {
+    const remappedPath = jarPath.replace(/\.jar$/, "-mapped.jar");
+    if (await exists(remappedPath)) return remappedPath;
+
+    const tinyPath = await getRetroMcpTinyPath(version);
+    if (!tinyPath) return null;
+
+    const trJar = await ensureTinyRemapper();
+    // RetroMCP Tiny v2 namespaces: named (human-readable), client (obfuscated), server (obfuscated)
+    // MC client JAR uses "client" obfuscation, so remap client → named
+    await runJava(["-jar", trJar, jarPath, remappedPath, tinyPath, "client", "named"]);
+    return remappedPath;
+}
+
 /**
  * Remap a vanilla MC JAR from obfuscated → SRG+MCP names using SpecialSource.
  * Returns the path to the remapped JAR.

@@ -19,7 +19,7 @@ import { formatClassMembers } from "../access-flags.js";
 import { ensureMcVersion, updateMcVersion } from "../repositories/mcVersion.js";
 import { findModByModIdLike } from "../repositories/mod.js";
 import { searchSource } from "./source.js";
-import { hasSrgMappings, remapMcJar, applyMcpNamesToSource } from "../mappings.js";
+import { hasSrgMappings, remapMcJar, applyMcpNamesToSource, hasRetroMcpMappings, remapMcJarTiny } from "../mappings.js";
 
 // ── Index cache (disk-backed per version, mirroring mcsrc's index-manager) ───
 
@@ -203,11 +203,20 @@ export async function decompileMcVersion(version: string, force = false) {
     // For legacy versions with SRG mappings, remap the JAR before decompiling
     let decompileJarPath = jarPath;
     let remapped = false;
+    let remapType: "srg" | "retromcp" | "none" = "none";
     if (hasSrgMappings(version)) {
         const mapped = await remapMcJar(jarPath, version);
         if (mapped) {
             decompileJarPath = mapped;
             remapped = true;
+            remapType = "srg";
+        }
+    } else if (hasRetroMcpMappings(version)) {
+        const mapped = await remapMcJarTiny(jarPath, version);
+        if (mapped) {
+            decompileJarPath = mapped;
+            remapped = true;
+            remapType = "retromcp";
         }
     }
 
@@ -215,7 +224,8 @@ export async function decompileMcVersion(version: string, force = false) {
     await updateMcVersion(dbId, { decompPath: outDir, jarPath });
 
     // For SRG versions, apply MCP human-readable names post-decompile
-    if (remapped) {
+    // (RetroMCP versions already have final names baked in via Tiny v2)
+    if (remapped && remapType === "srg") {
         // Wait for decompile to finish before applying MCP names
         // We schedule a background watcher that applies names when decompile completes
         (async () => {

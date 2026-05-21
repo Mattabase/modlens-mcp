@@ -8,12 +8,10 @@ import { join } from "path";
 import { CACHE_ROOT, ensureDir, exists } from "./cache.js";
 import { fetchWithRetry, DOWNLOAD_OPTS } from "./fetch-utils.js";
 
-import { hasSrgMappings } from "./mappings.js";
-
 const VERSIONS_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
 /** Versions with SRG/MCP mappings that we explicitly support even before 1.14 */
-const LEGACY_SRG_VERSIONS = new Set([
+export const LEGACY_SRG_VERSIONS = new Set([
     "1.7.10",
     "1.8", "1.8.8", "1.8.9",
     "1.9", "1.9.2", "1.9.4",
@@ -21,6 +19,14 @@ const LEGACY_SRG_VERSIONS = new Set([
     "1.11", "1.11.1", "1.11.2",
     "1.12", "1.12.1", "1.12.2",
     "1.13", "1.13.1", "1.13.2",
+]);
+
+/** Pre-1.7.10 release versions with RetroMCP Tiny v2 mappings */
+export const LEGACY_RETROMCP_VERSIONS = new Set([
+    "1.5.2",
+    "1.2.5", "1.2.4", "1.2.3",
+    "1.1",
+    "1.0",
 ]);
 
 export interface McVersionEntry {
@@ -37,10 +43,10 @@ export async function fetchMcVersionList(includeSnapshots = false): Promise<McVe
         const res = await fetchWithRetry(VERSIONS_URL);
         if (!res.ok) throw new Error(`Failed to fetch MC version manifest: ${res.status}`);
         const data = await res.json() as { versions: McVersionEntry[] };
-        // Filter to 1.14+ (mojmap era) plus legacy SRG versions (1.7.10–1.12.2)
+        // Filter to 1.14+ (mojmap era) plus legacy SRG versions (1.7.10–1.12.2) plus RetroMCP versions
         manifestCache = data.versions.filter(
             (v) => v.type !== "old_beta" && v.type !== "old_alpha" &&
-                (new Date(v.releaseTime) >= new Date("2019-04-23") || LEGACY_SRG_VERSIONS.has(v.id))
+                (new Date(v.releaseTime) >= new Date("2019-04-23") || LEGACY_SRG_VERSIONS.has(v.id) || LEGACY_RETROMCP_VERSIONS.has(v.id))
         );
     }
     return includeSnapshots

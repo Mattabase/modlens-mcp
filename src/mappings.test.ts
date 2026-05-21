@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { parseTinyV2, lookupInIndex, hasSrgMappings } from "./mappings.js";
+import { parseTinyV2, lookupInIndex, hasSrgMappings, hasRetroMcpMappings } from "./mappings.js";
 
 const FIXTURE_TINY = [
     "tiny\t2\t0\tofficial\tintermediary",
@@ -149,5 +149,42 @@ describe("hasSrgMappings", () => {
     it("returns false for versions without SRG", () => {
         expect(hasSrgMappings("1.6.4")).toBe(false);
         expect(hasSrgMappings("1.5.2")).toBe(false);
+    });
+});
+
+// ── hasRetroMcpMappings ────────────────────────────────────────────────────
+
+describe("hasRetroMcpMappings", () => {
+    it("returns true for known RetroMCP release versions", () => {
+        expect(hasRetroMcpMappings("1.5.2")).toBe(true);
+        expect(hasRetroMcpMappings("1.2.5")).toBe(true);
+        expect(hasRetroMcpMappings("1.1")).toBe(true);
+        expect(hasRetroMcpMappings("1.0")).toBe(true);
+    });
+
+    it("returns true for known RetroMCP beta versions", () => {
+        expect(hasRetroMcpMappings("b1.8.1")).toBe(true);
+        expect(hasRetroMcpMappings("b1.7.3")).toBe(true);
+        expect(hasRetroMcpMappings("b1.6")).toBe(true);
+    });
+
+    it("returns true for known RetroMCP alpha versions", () => {
+        expect(hasRetroMcpMappings("a1.2.6")).toBe(true);
+        expect(hasRetroMcpMappings("a1.0.4")).toBe(true);
+    });
+
+    it("returns false for versions without RetroMCP mappings", () => {
+        expect(hasRetroMcpMappings("1.7.10")).toBe(false);
+        expect(hasRetroMcpMappings("1.6.4")).toBe(false);
+        expect(hasRetroMcpMappings("1.20.1")).toBe(false);
+        expect(hasRetroMcpMappings("26.1.2")).toBe(false);
+    });
+
+    it("does not overlap with SRG versions", () => {
+        // No version should be in both sets
+        const retroVersions = ["1.5.2", "1.2.5", "1.1", "1.0", "b1.8.1", "a1.2.6"];
+        for (const v of retroVersions) {
+            expect(hasSrgMappings(v)).toBe(false);
+        }
     });
 });
