@@ -18,6 +18,8 @@ import {
 } from "./tools/mod-data.js";
 import { traceRecipeChain } from "./tools/mod-data.js";
 import { getModSource, searchSource, decompileModClass } from "./tools/source.js";
+import { buildModGraph, graphBuildStatus, queryModGraph, getGraphReport, enrichNextChunk, submitEnrichment, downloadGraph } from "./tools/graphify.js";
+import { exportModEmbeddings, importModEmbeddings, downloadEmbeddings, downloadPackEmbeddings, getEmbedStatus } from "./tools/embed-registry.js";
 import {
     searchModClass, getModClassMembers, getModClassBytecode,
     findModReferences, getModInheritance, diffModVersions, findImplementors,
@@ -154,13 +156,16 @@ function safe<A extends unknown[]>(fn: (...args: A) => Promise<ReturnType<typeof
 
 server.tool(
     "mod",
-    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_fts|search_indexed|index_semantic|search_semantic|get_paths|delete. index_fts/search_indexed: BM25-ranked FTS over source code (vanilla, fabric, neoforge, forge, quilt). No Ollama required. index_semantic/search_semantic: vector search (requires Ollama). get_paths returns jarPath/decompPath for native grep. Omit dbId on search_source to grep all decompiled mods. batch_ingest replace=true removes old modId row first. batch_decompile decompiles all not-yet-decompiled mods with concurrency control. delete removes a mod and all related data (classes, tags, source files, diffs, decompiled dir).",
+    "Mod database, decompile, and source browser. action=ingest|list|get|search|stats|dependencies|dep_graph|version_conflicts|source_urls|decompile|decompile_status|decompile_class|source|search_source|reindex|batch_ingest|batch_decompile|index_fts|search_indexed|index_semantic|search_semantic|get_paths|delete|graph_build|graph_status|graph_query|graph_report|graph_enrich_next|graph_enrich_submit|graph_download|embed_export|embed_download|embed_download_all|embed_status. index_fts/search_indexed: BM25-ranked FTS over source code. index_semantic/search_semantic: vector search (requires Ollama). graph_enrich_next: get next un-enriched chunk for chat enrichment. graph_enrich_submit: submit enriched nodes/edges (chunkIndex, nodes, edges). graph_download: download pre-built graph from registry. embed_export: export mod embeddings to portable bundle (outputDir). embed_download: download pre-computed embeddings (modId, modVersion). embed_download_all: download embeddings for all mods. embed_status: embedding coverage.",
     {
         action: z.enum([
             "ingest","list","get","search","stats","dependencies","dep_graph",
             "version_conflicts","source_urls","decompile","decompile_status",
             "decompile_class","source","search_source","reindex","batch_ingest",
             "batch_decompile","index_fts","search_indexed","index_semantic","search_semantic","get_paths","delete",
+            "graph_build","graph_status","graph_query","graph_report",
+            "graph_enrich_next","graph_enrich_submit","graph_download",
+            "embed_export","embed_download","embed_download_all","embed_status",
         ]),
         jarPath:      z.string().optional(),
         modId:        z.union([z.string(), z.number()]).optional().describe("mod ID or DB id"),
@@ -180,8 +185,15 @@ server.tool(
         directory:    z.string().optional().describe("Directory of JARs (batch_ingest)"),
         indexClasses: z.boolean().optional(),
         replace:      z.boolean().optional().describe("Replace existing mod with same modId (batch_ingest, ingest)"),
+        budget:       z.number().optional().describe("Token budget for graph_query (default 2000)"),
+        backend:      z.string().optional().describe("Graph backend override: ollama|gemini|deepseek|openai|claude|kimi|custom|ast-only"),
+        chunkIndex:   z.number().optional().describe("Chunk index for graph_enrich_submit"),
+        nodes:        z.array(z.record(z.unknown())).optional().describe("Enriched nodes for graph_enrich_submit"),
+        edges:        z.array(z.record(z.unknown())).optional().describe("Enriched edges for graph_enrich_submit"),
+        outputDir:    z.string().optional().describe("Output directory for embed_export"),
+        modVersion:   z.string().optional().describe("Mod version for embed_download"),
     },
-    safe(async ({ action, jarPath, modId, dbId: rawDbId, query, path, className, loader, mcVersion, hasMixins, decompiled, recursive, skipSource, isRegex, force, limit, directory, indexClasses, replace }) => {
+    safe(async ({ action, jarPath, modId, dbId: rawDbId, query, path, className, loader, mcVersion, hasMixins, decompiled, recursive, skipSource, isRegex, force, limit, directory, indexClasses, replace, budget, backend, chunkIndex, nodes, edges, outputDir, modVersion }) => {
         const dbId = await resolveDbIdAsync(rawDbId, modId);
         let result: unknown;
         switch (action) {
@@ -215,11 +227,23 @@ server.tool(
                     version: mod.version,
                     jarPath: mod.jarPath,
                     decompPath: mod.decompPath ?? null,
+                    graphPath: mod.graphPath ?? null,
                     cacheRoot: CACHE_ROOT,
                 };
                 break;
             }
             case "delete":           result = await deleteModFull(dbId!); break;
+            case "graph_build":     result = await buildModGraph(dbId!, force ?? false, backend); break;
+            case "graph_status":    result = await graphBuildStatus(dbId!); break;
+            case "graph_query":     result = await queryModGraph(dbId!, query!, budget); break;
+            case "graph_report":    result = await getGraphReport(dbId!); break;
+            case "graph_enrich_next":   result = await enrichNextChunk(dbId!); break;
+            case "graph_enrich_submit":  result = await submitEnrichment(dbId!, chunkIndex!, nodes as any, edges as any); break;
+            case "graph_download":       result = await downloadGraph(dbId!); break;
+            case "embed_export":    result = await exportModEmbeddings(dbId!, outputDir!); break;
+            case "embed_download":  result = await downloadEmbeddings(modId as string, modVersion!); break;
+            case "embed_download_all": result = await downloadPackEmbeddings(); break;
+            case "embed_status":    result = await getEmbedStatus(dbId!); break;
         }
         return out(result);
     })

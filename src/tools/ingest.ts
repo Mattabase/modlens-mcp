@@ -10,6 +10,7 @@ import { rm } from "fs/promises";
 import { normalizeJarPath } from "../security.js";
 import { isOllamaAvailable } from "../embeddings.js";
 import { enqueueModEmbed } from "../embed-queue.js";
+import { buildModGraph, ensureGraphify } from "./graphify.js";
 import {
     findModByJarPath, findModByDupKey, findModBySha512,
     createMod, updateMod, findModById, listAllMods,
@@ -285,6 +286,10 @@ export async function decompileModStatus(dbId: number): Promise<{ status: string
             isOllamaAvailable().then(available => {
                 if (available) enqueueModEmbed(dbId);
             }).catch(() => {});
+            // Fire-and-forget: auto-build knowledge graph if graphify is available
+            ensureGraphify().then(() => {
+                buildModGraph(dbId).catch(() => {});
+            }).catch(() => {});
         }
         return { status: "done", outDir, message: "Decompile complete. Use get_mod_source to browse." };
     }
@@ -310,6 +315,16 @@ export async function deleteModFull(dbId: number): Promise<{ deleted: boolean; m
         try {
             await rm(mod.decompPath, { recursive: true, force: true });
             cleaned.push(`decompiled: ${mod.decompPath}`);
+        } catch { /* already gone */ }
+    }
+
+    // Remove graph directory
+    if (mod.graphPath) {
+        try {
+            // graphPath points to graphify-out/, remove the parent (graphs/{modId}/{version}/)
+            const graphParent = join(mod.graphPath, "..");
+            await rm(graphParent, { recursive: true, force: true });
+            cleaned.push(`graph: ${mod.graphPath}`);
         } catch { /* already gone */ }
     }
 

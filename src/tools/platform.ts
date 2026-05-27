@@ -5,6 +5,7 @@ import { pipeline } from "stream/promises";
 import { ensureDir } from "../cache.js";
 import { findModById, updateMod, listModsForSync, getModMetadata } from "../repositories/mod.js";
 import { fileSha512, verifyFileHash, HashMismatchError } from "../security.js";
+import { buildModGraph, ensureGraphify } from "./graphify.js";
 
 export async function syncModrinth(dbId: number) {
     const mod = await findModById(dbId);
@@ -148,6 +149,12 @@ export async function downloadSource(dbId: number): Promise<string> {
     }
 
     await updateMod(dbId, { sourcePath: outDir });
+
+    // Fire-and-forget: auto-build knowledge graph from downloaded source
+    ensureGraphify().then(() => {
+        buildModGraph(dbId).catch(() => {});
+    }).catch(() => {});
+
     return outDir;
 }
 

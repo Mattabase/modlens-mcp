@@ -173,8 +173,8 @@ const existingEnv = readEnv();
 const isReconfigure = existsSync(ENV_PATH);
 
 // ── Section selection ─────────────────────────────────────────────────────────
-type Section = "containers" | "semantic" | "schema" | "pgvector" | "seed" | "backfill" | "mcp";
-const ALL_SECTIONS: Section[] = ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"];
+type Section = "containers" | "semantic" | "schema" | "pgvector" | "seed" | "backfill" | "graphs" | "mcp";
+const ALL_SECTIONS: Section[] = ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "graphs", "mcp"];
 
 // ── Profile types ─────────────────────────────────────────────────────────────
 type ProfileName = "full" | "zero-friction" | "lightweight" | "standard" | "existing" | "custom";
@@ -194,7 +194,7 @@ const PROFILES: Record<ProfileName, Profile> = {
         label: "Full power  — Docker Postgres + optional semantic search",
         hint: "recommended",
         backend: "postgres",
-        sections: ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "mcp"],
+        sections: ["containers", "semantic", "schema", "pgvector", "seed", "backfill", "graphs", "mcp"],
         requiresDocker: true,
     },
     "zero-friction": {
@@ -202,7 +202,7 @@ const PROFILES: Record<ProfileName, Profile> = {
         label: "Zero-friction  — PGlite (embedded Postgres, no Docker required)",
         hint: "great for solo use or CI",
         backend: "pglite",
-        sections: ["schema", "pgvector", "seed", "backfill", "mcp"],
+        sections: ["schema", "pgvector", "seed", "backfill", "graphs", "mcp"],
         requiresDocker: false,
     },
     "lightweight": {
@@ -226,7 +226,7 @@ const PROFILES: Record<ProfileName, Profile> = {
         label: "Existing Postgres server  — connect to a running Postgres instance",
         hint: "bring your own database",
         backend: "postgres",
-        sections: ["schema", "pgvector", "seed", "backfill", "mcp"],
+        sections: ["schema", "pgvector", "seed", "backfill", "graphs", "mcp"],
         requiresDocker: false,
     },
     "custom": {
@@ -454,6 +454,7 @@ if (!isReconfigure) {
                 { value: "seed",       label: "Re-seed default docs and primers" },
                 { value: "backfill",   label: "Re-generate embeddings (docs + primers)",
                   hint: hasSemantic ? "" : "requires Ollama" },
+                { value: "graphs",     label: "Graph extraction config (Graphify)" },
                 { value: "mcp",        label: "Update MCP client config" },
             ],
             initialValues: hasSemantic ? [] : (["semantic", "pgvector", "backfill"] as Section[]),
@@ -767,6 +768,119 @@ if (sections.has("backfill")) {
             } catch {
                 s.stop("Backfill had errors — run `node dist/cli.js backfill-embeddings` to retry");
             }
+        }
+    }
+}
+
+// ── Graph extraction (Graphify) ───────────────────────────────────────────────
+if (sections.has("graphs")) {
+    const wantGraphs = await p.confirm({
+        message: "Set up graph extraction for mod analysis? (Graphify converts source to knowledge graphs)",
+        initialValue: true,
+    });
+    checkCancel(wantGraphs);
+
+    if (wantGraphs) {
+        // Check if graphify CLI is installed
+        const graphifyCheck = run("graphify --version", { silent: true });
+        if (!graphifyCheck.ok) {
+            const installGraphify = await p.confirm({
+                message: "graphify CLI not found. Install it? (requires Python + uv/pip)",
+                initialValue: true,
+            });
+            checkCancel(installGraphify);
+
+            if (installGraphify) {
+                const s = p.spinner();
+                s.start("Installing graphify CLI (uv tool install graphifyy)");
+                const uvResult = run("uv tool install graphifyy", { silent: true });
+                if (!uvResult.ok) {
+                    const pipResult = run("pip install graphifyy", { silent: true });
+                    if (!pipResult.ok) {
+                        s.stop("Could not install graphify — install manually: uv tool install graphifyy");
+                    } else {
+                        s.stop("graphify installed via pip");
+                    }
+                } else {
+                    s.stop("graphify installed via uv");
+                }
+            }
+        } else {
+            p.log.success(`graphify CLI found: ${graphifyCheck.out.trim()}`);
+        }
+
+        // Backend selection
+        const backendChoice = await p.select({
+            message: "Graph extraction backend:",
+            options: [
+                { value: "auto",     label: "Auto-detect  — picks best available (Ollama → cloud → AST-only)" },
+                { value: "ollama",   label: "Ollama  — local, free, private" },
+                { value: "gemini",   label: "Gemini  — Google AI, fast, cheap" },
+                { value: "deepseek", label: "DeepSeek  — affordable cloud" },
+                { value: "openai",   label: "OpenAI  — GPT models" },
+                { value: "claude",   label: "Claude  — Anthropic" },
+                { value: "kimi",     label: "Kimi  — Moonshot AI" },
+                { value: "custom",   label: "Custom  — any OpenAI-compatible endpoint" },
+                { value: "ast-only", label: "AST-only  — no LLM, structural analysis only (free)" },
+            ],
+            initialValue: "auto",
+        });
+        checkCancel(backendChoice);
+
+        const graphEnv: Record<string, string> = {};
+        const back = backendChoice as string;
+
+        if (back !== "auto") {
+            graphEnv.GRAPHIFY_BACKEND = back;
+        }
+
+        // Prompt for API keys based on backend choice
+        if (back === "gemini" || back === "auto") {
+            const existing = existingEnv.GEMINI_API_KEY;
+            if (!existing) {
+                const key = await p.text({ message: "Gemini API key (leave blank to skip):", initialValue: "" });
+                checkCancel(key);
+                if (key) graphEnv.GEMINI_API_KEY = key as string;
+            }
+        }
+        if (back === "deepseek") {
+            const key = await p.text({ message: "DeepSeek API key:", initialValue: existingEnv.DEEPSEEK_API_KEY ?? "" });
+            checkCancel(key);
+            if (key) graphEnv.DEEPSEEK_API_KEY = key as string;
+        }
+        if (back === "openai") {
+            const key = await p.text({ message: "OpenAI API key:", initialValue: existingEnv.OPENAI_API_KEY ?? "" });
+            checkCancel(key);
+            if (key) graphEnv.OPENAI_API_KEY = key as string;
+        }
+        if (back === "claude") {
+            const key = await p.text({ message: "Anthropic API key:", initialValue: existingEnv.ANTHROPIC_API_KEY ?? "" });
+            checkCancel(key);
+            if (key) graphEnv.ANTHROPIC_API_KEY = key as string;
+        }
+        if (back === "kimi") {
+            const key = await p.text({ message: "Kimi/Moonshot API key:", initialValue: existingEnv.KIMI_API_KEY ?? "" });
+            checkCancel(key);
+            if (key) graphEnv.KIMI_API_KEY = key as string;
+        }
+        if (back === "custom") {
+            const baseUrl = await p.text({ message: "Custom endpoint base URL:", initialValue: existingEnv.GRAPHIFY_CUSTOM_BASE_URL ?? "" });
+            checkCancel(baseUrl);
+            if (baseUrl) graphEnv.GRAPHIFY_CUSTOM_BASE_URL = baseUrl as string;
+
+            const apiKey = await p.text({ message: "Custom endpoint API key:", initialValue: existingEnv.GRAPHIFY_CUSTOM_API_KEY ?? "" });
+            checkCancel(apiKey);
+            if (apiKey) graphEnv.GRAPHIFY_CUSTOM_API_KEY = apiKey as string;
+
+            const model = await p.text({ message: "Custom endpoint model name:", initialValue: existingEnv.GRAPHIFY_CUSTOM_MODEL ?? "" });
+            checkCancel(model);
+            if (model) graphEnv.GRAPHIFY_CUSTOM_MODEL = model as string;
+        }
+
+        // Save graph-related env vars
+        if (Object.keys(graphEnv).length > 0) {
+            writeEnv({ ...readEnv(), ...graphEnv });
+            p.log.success("Graph extraction config saved");
         }
     }
 }

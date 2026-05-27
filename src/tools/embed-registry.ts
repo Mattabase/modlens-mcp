@@ -1,0 +1,427 @@
+/**
+ * Distributable embedding bundles — export, import, and download pre-computed
+ * embeddings so users don't need Ollama to get semantic search.
+ */
+import { createHash } from "crypto";
+import { createGzip, createGunzip } from "zlib";
+import { pipeline } from "stream/promises";
+import { createReadStream, createWriteStream } from "fs";
+import { readFile, writeFile, mkdir, readdir, stat } from "fs/promises";
+import { join } from "path";
+import { Readable } from "stream";
+import { paths, exists, CACHE_ROOT } from "../cache.js";
+import { getDb } from "../db.js";
+import { findModById } from "../repositories/mod.js";
+import { upsertModSourceEmbedding, findModSourceIdsByClassNames } from "../repositories/embeddings.js";
+import { validateDbId } from "../validate.js";
+import { validateEmbeddingBundle } from "../security.js";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface EmbeddingEntry {
+    className: string;
+    embedding: number[];
+}
+
+interface EmbeddingBundle {
+    version: 1;
+    model: string;
+    dimensions: number;
+    chunkSize: number;
+    modId: string;
+    modVersion: string;
+    generatedAt: string;
+    entries: EmbeddingEntry[];
+}
+
+interface EmbedRegistryEntry {
+    modId: string;
+    modVersion: string;
+    model: string;
+    dimensions: number;
+    entryCount: number;
+    sizeBytes: number;
+    sha256: string;
+    url: string;
+}
+
+interface EmbedRegistry {
+    version: 1;
+    models: string[];
+    bundles: EmbedRegistryEntry[];
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Export a mod's embeddings to a portable bundle file.
+ */
+export async function exportModEmbeddings(
+    dbId: number,
+    outputDir: string,
+): Promise<{ path: string; entryCount: number; sizeBytes: number; sha256: string }> {
+    validateDbId(dbId);
+    const mod = await findModById(dbId);
+    if (!mod) throw new Error(`Mod #${dbId} not found`);
+
+    const model = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+    const dims = parseInt(process.env.OLLAMA_EMBED_DIM ?? "768", 10);
+    const chunkSize = parseInt(process.env.OLLAMA_EMBED_CHUNK ?? "1500", 10);
+
+    // Query all embedded source files
+    const db = await getDb();
+    const rows = await db.$queryRawUnsafe<Array<{ class_name: string; embedding: string }>>(
+        `SELECT class_name, embedding::text AS embedding FROM mod_source_files
+         WHERE mod_id = $1 AND embedding IS NOT NULL`,
+        dbId,
+    );
+
+    if (rows.length === 0) {
+        throw new Error(`No embeddings found for mod #${dbId} (${mod.modId}). Run index_semantic first.`);
+    }
+
+    const entries: EmbeddingEntry[] = rows.map(r => ({
+        className: r.class_name,
+        embedding: JSON.parse(r.embedding) as number[],
+    }));
+
+    const bundle: EmbeddingBundle = {
+        version: 1,
+        model,
+        dimensions: dims,
+        chunkSize,
+        modId: mod.modId,
+        modVersion: mod.version,
+        generatedAt: new Date().toISOString(),
+        entries,
+    };
+
+    // Write gzipped bundle
+    const modelDir = join(outputDir, model);
+    await mkdir(modelDir, { recursive: true });
+    const filename = `${mod.modId}-${mod.version}.emb.json.gz`;
+    const outPath = join(modelDir, filename);
+
+    const json = JSON.stringify(bundle);
+    const gzip = createGzip();
+    const ws = createWriteStream(outPath);
+    await pipeline(Readable.from(json), gzip, ws);
+
+    // Compute SHA-256 of the gzipped file
+    const fileData = await readFile(outPath);
+    const sha256 = createHash("sha256").update(fileData).digest("hex");
+    const sizeBytes = fileData.length;
+
+    return { path: outPath, entryCount: entries.length, sizeBytes, sha256 };
+}
+
+/**
+ * Export all mods with embeddings and generate an index.json manifest.
+ */
+export async function exportAllEmbeddings(
+    outputDir: string,
+): Promise<{ exported: number; skipped: number; indexPath: string }> {
+    const db = await getDb();
+    const model = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+
+    // Find all mods with at least one embedded source file
+    const mods = await db.$queryRawUnsafe<Array<{ mod_id: number; count: string }>>(
+        `SELECT mod_id, COUNT(*)::text AS count FROM mod_source_files
+         WHERE embedding IS NOT NULL GROUP BY mod_id`,
+    );
+
+    let exported = 0;
+    let skipped = 0;
+    const entries: EmbedRegistryEntry[] = [];
+
+    for (const row of mods) {
+        try {
+            const result = await exportModEmbeddings(row.mod_id, outputDir);
+            const mod = await findModById(row.mod_id);
+            if (!mod) continue;
+
+            entries.push({
+                modId: mod.modId,
+                modVersion: mod.version,
+                model,
+                dimensions: parseInt(process.env.OLLAMA_EMBED_DIM ?? "768", 10),
+                entryCount: result.entryCount,
+                sizeBytes: result.sizeBytes,
+                sha256: result.sha256,
+                url: `${model}/${mod.modId}-${mod.version}.emb.json.gz`,
+            });
+            exported++;
+        } catch {
+            skipped++;
+        }
+    }
+
+    // Write index.json
+    const registry: EmbedRegistry = {
+        version: 1,
+        models: [model],
+        bundles: entries,
+    };
+    const indexPath = join(outputDir, "index.json");
+    await writeFile(indexPath, JSON.stringify(registry, null, 2));
+
+    return { exported, skipped, indexPath };
+}
+
+// ── Import ────────────────────────────────────────────────────────────────────
+
+/**
+ * Import embeddings from a local bundle file into the database.
+ */
+export async function importModEmbeddings(
+    bundlePath: string,
+): Promise<{ status: string; imported: number; skipped: number; total: number; bundleModel?: string; localModel?: string }> {
+    // Read and decompress
+    const compressed = await readFile(bundlePath);
+
+    // Decompression bomb protection: reject >200MB compressed
+    if (compressed.length > 200_000_000) {
+        throw new Error("Compressed bundle too large (>200MB)");
+    }
+
+    // Decompress with size limit
+    const chunks: Buffer[] = [];
+    let totalSize = 0;
+    const MAX_DECOMPRESSED = 500_000_000; // 500MB
+
+    const gunzip = createGunzip();
+    const input = Readable.from(compressed);
+    for await (const chunk of input.pipe(gunzip)) {
+        totalSize += (chunk as Buffer).length;
+        if (totalSize > MAX_DECOMPRESSED) {
+            throw new Error("Decompressed bundle exceeds 500MB — possible decompression bomb");
+        }
+        chunks.push(chunk as Buffer);
+    }
+
+    const json = Buffer.concat(chunks).toString("utf8");
+    const bundle = JSON.parse(json) as EmbeddingBundle;
+
+    // Security validation
+    const validation = validateEmbeddingBundle(bundle);
+    if (!validation.valid) {
+        throw new Error(`Bundle validation failed: ${validation.reason}`);
+    }
+
+    // Model mismatch check
+    const localModel = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+    const localDims = parseInt(process.env.OLLAMA_EMBED_DIM ?? "768", 10);
+
+    if (bundle.model !== localModel || bundle.dimensions !== localDims) {
+        return {
+            status: "model_mismatch",
+            imported: 0,
+            skipped: bundle.entries.length,
+            total: bundle.entries.length,
+            bundleModel: `${bundle.model} (${bundle.dimensions}d)`,
+            localModel: `${localModel} (${localDims}d)`,
+        };
+    }
+
+    // Resolve classNames to source file IDs
+    const db = await getDb();
+    const mod = await db.$queryRawUnsafe<Array<{ id: number }>>(
+        `SELECT id FROM mods WHERE mod_id = $1 AND version = $2 LIMIT 1`,
+        bundle.modId, bundle.modVersion,
+    );
+
+    if (!mod.length) {
+        return { status: "mod_not_found", imported: 0, skipped: bundle.entries.length, total: bundle.entries.length };
+    }
+
+    const modDbId = mod[0].id;
+    const classNames = bundle.entries.map(e => e.className);
+    const idMap = await findModSourceIdsByClassNames(classNames, modDbId);
+
+    let imported = 0;
+    let skipped = 0;
+
+    for (const entry of bundle.entries) {
+        const sourceFileId = idMap.get(entry.className);
+        if (!sourceFileId) {
+            skipped++;
+            continue;
+        }
+        await upsertModSourceEmbedding(sourceFileId, entry.embedding);
+        imported++;
+    }
+
+    return { status: "ok", imported, skipped, total: bundle.entries.length };
+}
+
+// ── Download from registry ────────────────────────────────────────────────────
+
+const EMBED_REGISTRY_URL = process.env.MODLENS_EMBED_REGISTRY_URL ?? "";
+
+let cachedEmbedRegistry: { data: EmbedRegistry; fetchedAt: number } | null = null;
+const REGISTRY_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function fetchEmbedRegistry(): Promise<EmbedRegistry> {
+    if (!EMBED_REGISTRY_URL) throw new Error("No embedding registry URL configured (MODLENS_EMBED_REGISTRY_URL)");
+
+    if (cachedEmbedRegistry && Date.now() - cachedEmbedRegistry.fetchedAt < REGISTRY_CACHE_TTL) {
+        return cachedEmbedRegistry.data;
+    }
+
+    const res = await fetch(EMBED_REGISTRY_URL, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) throw new Error(`Failed to fetch embedding registry: ${res.status}`);
+
+    const data = await res.json() as EmbedRegistry;
+    if (!data.version || !Array.isArray(data.bundles)) {
+        throw new Error("Invalid embedding registry format");
+    }
+
+    cachedEmbedRegistry = { data, fetchedAt: Date.now() };
+    return data;
+}
+
+/**
+ * Download and import pre-computed embeddings for a specific mod.
+ */
+export async function downloadEmbeddings(
+    modId: string,
+    modVersion: string,
+): Promise<{ status: string; imported?: number; skipped?: number; availableModels?: string[] }> {
+    const localModel = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+
+    let registry: EmbedRegistry;
+    try {
+        registry = await fetchEmbedRegistry();
+    } catch (e) {
+        return { status: "registry_unavailable" };
+    }
+
+    // Find matching bundle for user's model
+    const entry = registry.bundles.find(b =>
+        b.modId === modId && b.modVersion === modVersion && b.model === localModel
+    );
+
+    if (!entry) {
+        // Check if there are bundles for other models
+        const otherModels = [...new Set(
+            registry.bundles
+                .filter(b => b.modId === modId && b.modVersion === modVersion)
+                .map(b => b.model)
+        )];
+        return {
+            status: "not_found",
+            availableModels: otherModels.length ? otherModels : undefined,
+        };
+    }
+
+    // Resolve URL
+    let bundleUrl = entry.url;
+    if (!bundleUrl.startsWith("http")) {
+        const base = EMBED_REGISTRY_URL.substring(0, EMBED_REGISTRY_URL.lastIndexOf("/") + 1);
+        bundleUrl = base + bundleUrl;
+    }
+
+    if (!bundleUrl.startsWith("https://")) {
+        throw new Error("Bundle URL must use HTTPS");
+    }
+
+    // Download
+    const res = await fetch(bundleUrl, { signal: AbortSignal.timeout(60_000) });
+    if (!res.ok) throw new Error(`Failed to download bundle: ${res.status}`);
+
+    const contentLength = parseInt(res.headers.get("content-length") ?? "0");
+    if (contentLength > 200_000_000) throw new Error("Bundle too large (>200MB)");
+
+    const data = Buffer.from(await res.arrayBuffer());
+
+    // Verify SHA-256
+    const hash = createHash("sha256").update(data).digest("hex");
+    if (hash !== entry.sha256) {
+        throw new Error(`SHA-256 mismatch: expected ${entry.sha256}, got ${hash}`);
+    }
+
+    // Save to cache and import
+    const bundleDir = paths.embedBundles;
+    await mkdir(bundleDir, { recursive: true });
+    const localPath = join(bundleDir, `${modId}-${modVersion}.emb.json.gz`);
+    await writeFile(localPath, data);
+
+    const result = await importModEmbeddings(localPath);
+    return {
+        status: result.status,
+        imported: result.imported,
+        skipped: result.skipped,
+    };
+}
+
+/**
+ * Download embeddings for all ingested mods that don't have them yet.
+ */
+export async function downloadPackEmbeddings(): Promise<{
+    downloaded: number;
+    alreadyEmbedded: number;
+    notAvailable: number;
+}> {
+    const db = await getDb();
+
+    // Get all mods
+    const allMods = await db.$queryRawUnsafe<Array<{ id: number; mod_id: string; version: string }>>(
+        `SELECT id, mod_id, version FROM mods ORDER BY mod_id`,
+    );
+
+    // Check which have embeddings
+    const embedded = await db.$queryRawUnsafe<Array<{ mod_id: number }>>(
+        `SELECT DISTINCT mod_id FROM mod_source_files WHERE embedding IS NOT NULL`,
+    );
+    const embeddedSet = new Set(embedded.map(r => r.mod_id));
+
+    let downloaded = 0;
+    let alreadyEmbedded = 0;
+    let notAvailable = 0;
+
+    for (const mod of allMods) {
+        if (embeddedSet.has(mod.id)) {
+            alreadyEmbedded++;
+            continue;
+        }
+
+        try {
+            const result = await downloadEmbeddings(mod.mod_id, mod.version);
+            if (result.status === "ok" && (result.imported ?? 0) > 0) {
+                downloaded++;
+            } else {
+                notAvailable++;
+            }
+        } catch {
+            notAvailable++;
+        }
+    }
+
+    return { downloaded, alreadyEmbedded, notAvailable };
+}
+
+/**
+ * Get embedding status for a mod.
+ */
+export async function getEmbedStatus(
+    dbId: number,
+): Promise<{ totalFiles: number; embeddedCount: number; model: string; coverage: string }> {
+    validateDbId(dbId);
+    const mod = await findModById(dbId);
+    if (!mod) throw new Error(`Mod #${dbId} not found`);
+
+    const db = await getDb();
+    const stats = await db.$queryRawUnsafe<[{ total: string; embedded: string }]>(
+        `SELECT COUNT(*)::text AS total,
+                COUNT(CASE WHEN embedding IS NOT NULL THEN 1 END)::text AS embedded
+         FROM mod_source_files WHERE mod_id = $1`,
+        dbId,
+    );
+
+    const total = parseInt(stats[0].total, 10);
+    const embedded = parseInt(stats[0].embedded, 10);
+    const model = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+    const coverage = total > 0 ? `${Math.round((embedded / total) * 100)}%` : "0%";
+
+    return { totalFiles: total, embeddedCount: embedded, model, coverage };
+}

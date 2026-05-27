@@ -22,6 +22,7 @@ model Mod {
   sourcePath    String?  @map("source_path")
   decompPath    String?  @map("decomp_path")
   decompiled    Boolean  @default(false)
+  graphPath     String?  @map("graph_path")
   modrinthId    String?  @map("modrinth_id")
   curseforgeId  Int?     @map("curseforge_id")
   hasMixins     Boolean  @default(false) @map("has_mixins")

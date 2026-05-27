@@ -13,3 +13,4 @@ replay_pid*.log
 # Agent skill configuration and local planning docs (local only)
 docs/
 .scratch/
+graphify-out/
