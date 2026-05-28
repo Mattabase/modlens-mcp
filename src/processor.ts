@@ -5,6 +5,16 @@ import { parse as parseToml } from "smol-toml";
 
 export type MetadataSource = "fabric.mod.json" | "quilt.mod.json" | "mods.toml" | "mcmod.info" | "@Mod annotation" | "filename";
 
+/** Higher = better quality metadata. Used to decide whether re-parse upgrades an existing record. */
+export const METADATA_QUALITY: Record<MetadataSource, number> = {
+    "filename":         0,
+    "@Mod annotation":  1,
+    "mcmod.info":       2,
+    "mods.toml":        3,
+    "quilt.mod.json":   3,
+    "fabric.mod.json":  3,
+};
+
 export interface ParsedManifest {
     modId: string;
     displayName: string;

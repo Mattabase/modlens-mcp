@@ -1,4 +1,5 @@
-import { parseJar, computeHashes } from "../processor.js";
+import { parseJar, computeHashes, METADATA_QUALITY } from "../processor.js";
+import type { MetadataSource } from "../processor.js";
 import { modrinthPlatformAdapter } from "../modrinth.js";
 import { curseforgePlatformAdapter } from "../curseforge.js";
 import type { PlatformHit } from "../platform-adapter.js";
@@ -23,6 +24,7 @@ import { validateDbId } from "../validate.js";
 
 export type IngestResult =
     | { status: "already_ingested";  mod: Awaited<ReturnType<typeof findModById>> }
+    | { status: "metadata_refreshed"; mod: Awaited<ReturnType<typeof findModById>>; previousSource: string }
     | { status: "duplicate_version"; message: string; existingJarPath: string; existingDbId: number }
     | { status: "duplicate_hash";    message: string; existingJarPath: string; existingDbId: number }
     | { status: "ingested";          mod: Awaited<ReturnType<typeof findModById>> }
@@ -54,7 +56,38 @@ async function lookupPlatforms(
 export async function ingestMod(jarPath: string, skipSource = false, replace = false): Promise<IngestResult> {
     jarPath = normalizeJarPath(jarPath);
     const existing = await findModByJarPath(jarPath);
-    if (existing) return { status: "already_ingested", mod: existing };
+    if (existing) {
+        // Re-parse to check if the JAR now has higher-quality metadata
+        const oldSource = (existing.metadataSource ?? "filename") as MetadataSource;
+        const oldQuality = METADATA_QUALITY[oldSource] ?? 0;
+        if (oldQuality < 3) { // already at max quality? skip re-parse
+            try {
+                const manifest = await parseJar(jarPath);
+                const newQuality = METADATA_QUALITY[manifest.metadataSource] ?? 0;
+                if (newQuality > oldQuality) {
+                    const updated = await updateMod(existing.id, {
+                        modId:        manifest.modId,
+                        displayName:  manifest.displayName,
+                        version:      manifest.version,
+                        mcVersion:    manifest.mcVersion,
+                        loader:       manifest.loader,
+                        hasMixins:    manifest.hasMixins,
+                        hasAt:        manifest.hasAt,
+                        hasAw:        manifest.hasAw,
+                        mixinConfigs: manifest.mixinConfigs,
+                        mixinTargets: manifest.mixinTargets,
+                        atEntries:    manifest.atEntries,
+                        awEntries:    manifest.awEntries,
+                        dependencies: manifest.dependencies,
+                        metadata:     { description: manifest.description, sourceUrl: manifest.sourceUrl },
+                        metadataSource: manifest.metadataSource,
+                    });
+                    return { status: "metadata_refreshed", mod: updated, previousSource: oldSource };
+                }
+            } catch { /* re-parse failed, keep existing */ }
+        }
+        return { status: "already_ingested", mod: existing };
+    }
 
     const manifest = await parseJar(jarPath);
     const hashes = await computeHashes(jarPath);

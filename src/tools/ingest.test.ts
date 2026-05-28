@@ -16,6 +16,14 @@ vi.mock("../repositories/mod.js", () => ({
 vi.mock("../processor.js", () => ({
     parseJar:      vi.fn(),
     computeHashes: vi.fn(),
+    METADATA_QUALITY: {
+        "filename":         0,
+        "@Mod annotation":  1,
+        "mcmod.info":       2,
+        "mods.toml":        3,
+        "quilt.mod.json":   3,
+        "fabric.mod.json":  3,
+    },
 }));
 
 vi.mock("../modrinth.js", () => ({
@@ -61,6 +69,7 @@ const FAKE_MANIFEST = {
     sourceUrl: null, dependencies: [], mixinConfigs: [],
     hasMixins: false, hasAt: false, hasAw: false,
     atEntries: [], awEntries: [], mixinTargets: [],
+    metadataSource: "fabric.mod.json" as const,
 };
 
 const FAKE_HASHES = { sha256: "aaa", sha512: "bbb", murmur2: "12345" };
@@ -73,6 +82,7 @@ const FAKE_DB_MOD = {
     hasMixins: false, hasAt: false, hasAw: false,
     mixinConfigs: [], mixinTargets: [], atEntries: [], awEntries: [],
     dependencies: [], createdAt: new Date(),
+    metadataSource: "fabric.mod.json",
 };
 
 // ── Default mock setup (happy path) ───────────────────────────────────────
@@ -110,6 +120,31 @@ describe("ingestMod — already_ingested", () => {
         expect(result.status).toBe("already_ingested");
         expect(proc.parseJar).not.toHaveBeenCalled();
         expect(repo.createMod).not.toHaveBeenCalled();
+    });
+
+    it("refreshes metadata when re-parse yields higher quality source", async () => {
+        const degradedMod = { ...FAKE_DB_MOD, metadataSource: "filename" };
+        vi.mocked(repo.findModByJarPath).mockResolvedValue(degradedMod as any);
+        vi.mocked(proc.parseJar).mockResolvedValue({ ...FAKE_MANIFEST, metadataSource: "fabric.mod.json" } as any);
+        const updatedMod = { ...FAKE_DB_MOD, metadataSource: "fabric.mod.json" };
+        vi.mocked(repo.updateMod).mockResolvedValue(updatedMod as any);
+
+        const result = await ingestMod("/mods/testmod.jar");
+
+        expect(result.status).toBe("metadata_refreshed");
+        expect((result as any).previousSource).toBe("filename");
+        expect(repo.updateMod).toHaveBeenCalledWith(1, expect.objectContaining({ metadataSource: "fabric.mod.json" }));
+    });
+
+    it("keeps already_ingested when re-parse yields same or lower quality", async () => {
+        const annotationMod = { ...FAKE_DB_MOD, metadataSource: "@Mod annotation" };
+        vi.mocked(repo.findModByJarPath).mockResolvedValue(annotationMod as any);
+        vi.mocked(proc.parseJar).mockResolvedValue({ ...FAKE_MANIFEST, metadataSource: "filename" } as any);
+
+        const result = await ingestMod("/mods/testmod.jar");
+
+        expect(result.status).toBe("already_ingested");
+        expect(repo.updateMod).not.toHaveBeenCalled();
     });
 });
 
