@@ -157,7 +157,7 @@ export function validateGraphBundle(graph: unknown): ValidationResult {
     for (const node of nodes) {
         if (!node || typeof node !== "object") return { valid: false, reason: "node must be an object" };
         const n = node as Record<string, unknown>;
-        if ("__proto__" in n) return { valid: false, reason: "proto_pollution in node" };
+        if (Object.prototype.hasOwnProperty.call(n, "__proto__")) return { valid: false, reason: "proto_pollution in node" };
 
         const idErr = checkStringField(n.id, 500, "node.id");
         if (idErr) return { valid: false, reason: idErr };
@@ -185,7 +185,7 @@ export function validateGraphBundle(graph: unknown): ValidationResult {
     for (const edge of edges) {
         if (!edge || typeof edge !== "object") return { valid: false, reason: "edge must be an object" };
         const e = edge as Record<string, unknown>;
-        if ("__proto__" in e) return { valid: false, reason: "proto_pollution in edge" };
+        if (Object.prototype.hasOwnProperty.call(e, "__proto__")) return { valid: false, reason: "proto_pollution in edge" };
 
         const srcErr = checkStringField(e.source, 500, "edge.source");
         if (srcErr) return { valid: false, reason: srcErr };
@@ -293,7 +293,7 @@ export function validateEmbeddingBundle(bundle: unknown): ValidationResult {
     for (const entry of entries) {
         if (!entry || typeof entry !== "object") return { valid: false, reason: "entry must be an object" };
         const e = entry as Record<string, unknown>;
-        if ("__proto__" in e) return { valid: false, reason: "proto_pollution in entry" };
+        if (Object.prototype.hasOwnProperty.call(e, "__proto__")) return { valid: false, reason: "proto_pollution in entry" };
 
         // className validation
         if (typeof e.className !== "string") return { valid: false, reason: "entry missing className" };
