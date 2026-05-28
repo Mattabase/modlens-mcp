@@ -126,23 +126,43 @@ export async function downloadSource(dbId: number, opts?: AutoBehaviorOpts): Pro
     validatePath(outDir, cacheRoot);
     await ensureDir(tmpZip);
 
-    // ── Download to temp file ──────────────────────────────────────────────
-    // Convert GitHub repo URL to ZIP download
-    const zipUrl = sourceUrl.replace("github.com", "codeload.github.com")
-        .replace(/\/?$/, "/zip/refs/heads/main");
+    // ── Build archive URL per host ─────────────────────────────────────────
+    const repoPath = parsed.pathname.replace(/\/?$/, ""); // e.g. /owner/repo
+    const repoName = repoPath.split("/").pop()!;
+
+    function archiveUrls(branch: string): string[] {
+        const host = parsed.hostname;
+        if (host === "github.com") {
+            return [`https://codeload.github.com${repoPath}/zip/refs/heads/${branch}`];
+        }
+        if (host === "gitlab.com" || host.endsWith(".gitlab.com")) {
+            return [`https://${host}${repoPath}/-/archive/${branch}/${repoName}-${branch}.zip`];
+        }
+        if (host === "codeberg.org") {
+            return [`https://codeberg.org${repoPath}/archive/${branch}.zip`];
+        }
+        if (host === "bitbucket.org") {
+            return [`https://bitbucket.org${repoPath}/get/${branch}.zip`];
+        }
+        return [];
+    }
+
+    // Try main then master for each host
+    const candidates = [...archiveUrls("main"), ...archiveUrls("master")];
+    if (candidates.length === 0) throw new Error(`No archive URL strategy for host: ${parsed.hostname}`);
 
     try {
-        const res = await fetch(zipUrl);
-        if (!res.ok) {
-            // Try master branch
-            const res2 = await fetch(zipUrl.replace("/main", "/master"));
-            if (!res2.ok) throw new Error(`Failed to download source from ${sourceUrl}`);
-            const writer = createWriteStream(tmpZip);
-            await pipeline(res2.body as unknown as NodeJS.ReadableStream, writer);
-        } else {
-            const writer = createWriteStream(tmpZip);
-            await pipeline(res.body as unknown as NodeJS.ReadableStream, writer);
+        let downloaded = false;
+        for (const url of candidates) {
+            const res = await fetch(url);
+            if (res.ok) {
+                const writer = createWriteStream(tmpZip);
+                await pipeline(res.body as unknown as NodeJS.ReadableStream, writer);
+                downloaded = true;
+                break;
+            }
         }
+        if (!downloaded) throw new Error(`Failed to download source from ${sourceUrl} (tried main + master branches)`);
     } catch (e) {
         // Clean up partial temp file on any download failure
         await import("fs/promises").then(f => f.unlink(tmpZip).catch(() => {}));
