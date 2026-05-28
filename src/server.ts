@@ -29,7 +29,7 @@ import {
 } from "./tools/bytecode.js";
 import { getMixinTargets, getMixinConflicts, getAtEntries, getAwEntries, resolveMixinTargets, getMixinsTargetingPackage, findAtAwConflicts } from "./tools/mixin-scan.js";
 import { syncModrinth, syncCurseforge, checkUpdates, downloadSource, batchSyncSources } from "./tools/platform.js";
-import { listMcVersions, listNeoForgeVersions, listFabricApiVersions, downloadNeoForge, downloadFabricApi } from "./platform.js";
+import { listMcVersions, listNeoForgeVersions, listFabricApiVersions, listForgeVersions, downloadNeoForge, downloadFabricApi, downloadForge } from "./platform.js";
 import {
     searchMinecraftClass, getMinecraftSource, getMcClassBytecode, getMcClassMembers,
     findMcReferences, getMcInheritance, diffMcVersions,
@@ -475,9 +475,9 @@ server.tool(
 
 server.tool(
     "mc_versions",
-    "Minecraft and mod loader version management. action=list_mc|list_neoforge|list_fabric|ingest_neoforge|ingest_fabric.",
+    "Minecraft and mod loader version management. action=list_mc|list_neoforge|list_forge|list_fabric|ingest_neoforge|ingest_forge|ingest_fabric.",
     {
-        action:    z.enum(["list_mc","list_neoforge","list_fabric","ingest_neoforge","ingest_fabric"]),
+        action:    z.enum(["list_mc","list_neoforge","list_forge","list_fabric","ingest_neoforge","ingest_forge","ingest_fabric"]),
         type:      z.enum(["release","snapshot","all"]).optional(),
         mcVersion: z.string().optional(),
         version:   z.string().optional(),
@@ -489,6 +489,7 @@ server.tool(
         switch (action) {
             case "list_mc":      result = await listMcVersions(type ?? "release"); break;
             case "list_neoforge":result = await listNeoForgeVersions(mcVersion, limit ?? 20); break;
+            case "list_forge":  result = await listForgeVersions(mcVersion, limit ?? 20); break;
             case "list_fabric":  result = await listFabricApiVersions(mcVersion, limit ?? 20); break;
             case "ingest_neoforge": {
                 const jarPath = await downloadNeoForge(version!);
@@ -500,6 +501,14 @@ server.tool(
             }
             case "ingest_fabric": {
                 const jarPath = await downloadFabricApi(version!);
+                const r = await ingestMod(jarPath, true) as any;
+                if (r.status === "already_ingested") { result = `Already ingested. DB id: ${r.mod.id}`; break; }
+                if (!skipIndex) await reindexClasses(r.mod.id);
+                result = { ...r, jarPath };
+                break;
+            }
+            case "ingest_forge": {
+                const jarPath = await downloadForge(version!, mcVersion);
                 const r = await ingestMod(jarPath, true) as any;
                 if (r.status === "already_ingested") { result = `Already ingested. DB id: ${r.mod.id}`; break; }
                 if (!skipIndex) await reindexClasses(r.mod.id);
@@ -531,7 +540,7 @@ server.tool(
         packages:   z.array(z.string()).optional().describe("Slash-prefix filter for diff_detailed, e.g. ['net/minecraft/world/entity']"),
         semantic:   z.boolean().optional().describe("Enrich diff_detailed with Ollama cosine similarity (requires Ollama + index_semantic)"),
         cache:      z.boolean().optional().describe("Read/write DB cache for diff_detailed (default true; set false to skip cache)"),
-        modloader:  z.enum(["minecraft","neoforge","fabric","fabric-api"]).optional(),
+        modloader:  z.enum(["minecraft","neoforge","forge","fabric","fabric-api"]).optional(),
         content:    z.string().optional().describe("Full .accesswidener file text (validate_aw)"),
         source:     z.string().optional().describe("Full mixin Java source code (analyze_mixin)"),
         startLine:  z.number().optional().describe("1-based start line"),

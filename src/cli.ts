@@ -19,8 +19,8 @@ import {
 } from "./tools/mixin-scan.js";
 import { syncModrinth, syncCurseforge, checkUpdates, downloadSource, batchSyncSources } from "./tools/platform.js";
 import {
-    listMcVersions, listNeoForgeVersions, listFabricApiVersions,
-    downloadNeoForge, downloadFabricApi,
+    listMcVersions, listNeoForgeVersions, listFabricApiVersions, listForgeVersions,
+    downloadNeoForge, downloadFabricApi, downloadForge,
 } from "./platform.js";
 import {
     searchMinecraftClass, getMinecraftSource, getMcClassBytecode, getMcClassMembers,
@@ -154,6 +154,7 @@ DATABASE & CATALOG
 INGEST
   ingest <jarPath>                   Ingest a mod JAR  [--skip-source] [--skip-index]
   ingest-neoforge <version>          Download + ingest NeoForge (e.g. 21.1.228)  [--skip-index]
+  ingest-forge <version>             Download + ingest Forge (e.g. 1.20.1-47.3.22)  [--skip-index]
   ingest-fabric-api <version>        Download + ingest Fabric API (e.g. 0.116.11+1.21.1)  [--skip-index]
   batch-ingest <dir>                 Ingest all JARs in a directory  [--index]
   reindex                            Index class names for un-indexed mods  [--db-id=N]
@@ -484,6 +485,20 @@ try {
             const version = requireArg(positional[0], "version");
             console.error(`Downloading Fabric API ${version}...`);
             const jarPath = await downloadFabricApi(version);
+            const result = await ingestMod(jarPath, true);
+            out(result);
+            if (result.status === "ingested" && !flags.skipIndex) {
+                const mod = result.mod as { id: number };
+                console.error("Indexing classes...");
+                out(await reindexClasses(mod.id));
+            }
+            break;
+        }
+
+        case "ingest-forge": {
+            const version = requireArg(positional[0], "version");
+            console.error(`Downloading Forge ${version}...`);
+            const jarPath = await downloadForge(version, flags.mcVersion as string | undefined);
             const result = await ingestMod(jarPath, true);
             out(result);
             if (result.status === "ingested" && !flags.skipIndex) {

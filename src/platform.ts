@@ -7,6 +7,8 @@ import { LEGACY_SRG_VERSIONS, LEGACY_RETROMCP_VERSIONS } from "./minecraft.js";
 const PISTON_META = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 const NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge";
 const NEOFORGE_META = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
+const FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge";
+const FORGE_PROMOS = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
 
 export interface MCVersion {
     id: string;
@@ -25,8 +27,20 @@ export interface FabricApiVersion {
     datePublished: string;
 }
 
+export interface ForgeVersion {
+    /** Full artifact version, e.g. "1.20.1-47.3.22" */
+    fullVersion: string;
+    /** Forge build version, e.g. "47.3.22" */
+    version: string;
+    /** Minecraft version, e.g. "1.20.1" */
+    mcVersion: string;
+    /** Whether this is the recommended build */
+    recommended?: boolean;
+}
+
 let mcCache: MCVersion[] | null = null;
 let neoforgeCache: NeoForgeVersion[] | null = null;
+let forgeCache: ForgeVersion[] | null = null;
 
 export async function listMcVersions(type?: "release" | "snapshot" | "all"): Promise<MCVersion[]> {
     if (!mcCache) {
@@ -88,6 +102,59 @@ export async function listFabricApiVersions(mcVersion?: string, limit = 20): Pro
     }));
 }
 
+export async function listForgeVersions(mcVersion?: string, limit = 20): Promise<ForgeVersion[]> {
+    if (!forgeCache) {
+        // Fetch promotions to know which versions are recommended
+        const promoRes = await fetch(FORGE_PROMOS, { headers: { "User-Agent": "modlens-mcp/1.0" } });
+        const recommendedSet = new Set<string>();
+        if (promoRes.ok) {
+            const promoData = await promoRes.json() as { promos: Record<string, string> };
+            for (const [key, ver] of Object.entries(promoData.promos)) {
+                if (key.endsWith("-recommended")) {
+                    const mc = key.replace("-recommended", "");
+                    recommendedSet.add(`${mc}-${ver}`);
+                }
+            }
+        }
+
+        // Fetch Maven metadata for full version list
+        const metaRes = await fetch(`${FORGE_MAVEN}/maven-metadata.xml`, { headers: { "User-Agent": "modlens-mcp/1.0" } });
+        if (!metaRes.ok) throw new Error(`Failed to fetch Forge versions: ${metaRes.status}`);
+        const xml = await metaRes.text();
+
+        // Parse <version> tags from XML
+        const versionRegex = /<version>([^<]+)<\/version>/g;
+        const allVersions: ForgeVersion[] = [];
+        let match: RegExpExecArray | null;
+        while ((match = versionRegex.exec(xml)) !== null) {
+            const fullVersion = match[1];
+            // Format: "mcVersion-forgeVersion" (e.g. "1.20.1-47.3.22")
+            // Some old ones: "1.7.10-10.13.4.1614-1.7.10" (MC version appended twice)
+            const dashIdx = fullVersion.indexOf("-");
+            if (dashIdx === -1) continue;
+            const mc = fullVersion.substring(0, dashIdx);
+            // Strip trailing "-mcVersion" suffix from old Forge versions
+            let forgeVer = fullVersion.substring(dashIdx + 1);
+            if (forgeVer.endsWith(`-${mc}`)) {
+                forgeVer = forgeVer.substring(0, forgeVer.length - mc.length - 1);
+            }
+            allVersions.push({
+                fullVersion,
+                version: forgeVer,
+                mcVersion: mc,
+                recommended: recommendedSet.has(fullVersion),
+            });
+        }
+        forgeCache = allVersions.reverse(); // newest first
+    }
+
+    const filtered = mcVersion
+        ? forgeCache.filter((v) => v.mcVersion === mcVersion || v.mcVersion.startsWith(mcVersion))
+        : forgeCache;
+
+    return filtered.slice(0, limit);
+}
+
 async function downloadJar(url: string, destPath: string): Promise<string> {
     await ensureDir(destPath);
     if (await exists(destPath)) return destPath;
@@ -106,6 +173,23 @@ async function downloadJar(url: string, destPath: string): Promise<string> {
 export async function downloadNeoForge(version: string): Promise<string> {
     const destPath = join(CACHE_ROOT, "loaders", "neoforge", `neoforge-${version}-universal.jar`);
     const url = `${NEOFORGE_MAVEN}/${version}/neoforge-${version}-universal.jar`;
+    return downloadJar(url, destPath);
+}
+
+/**
+ * Download the Forge universal JAR for a given version.
+ * Version format: "1.20.1-47.3.22" (full artifact version) or just "47.3.22" with mcVersion.
+ * Returns the local JAR path.
+ */
+export async function downloadForge(version: string, mcVersion?: string): Promise<string> {
+    let fullVersion = version;
+    // If user only provided the Forge build number (no dash), we need mcVersion to construct the full version
+    if (!version.includes("-")) {
+        if (!mcVersion) throw new Error("Forge download requires either full version (e.g. 1.20.1-47.3.22) or version + mcVersion");
+        fullVersion = `${mcVersion}-${version}`;
+    }
+    const destPath = join(CACHE_ROOT, "loaders", "forge", `forge-${fullVersion}-universal.jar`);
+    const url = `${FORGE_MAVEN}/${fullVersion}/forge-${fullVersion}-universal.jar`;
     return downloadJar(url, destPath);
 }
 
