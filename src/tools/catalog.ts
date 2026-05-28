@@ -1,4 +1,5 @@
 import { extractEntry, listEntries } from "../jar.js";
+import { assertJarPath } from "../security.js";
 import type { Mod } from "@prisma/client";
 import {
     listMods as dbListMods,
@@ -228,6 +229,7 @@ export async function listModRegistryEntries(
     const mod = await resolveModRefSlim(modId);
 
     if (!mod) return { error: `Mod not found: ${modId}` };
+    assertJarPath(mod.jarPath);
 
     // Find lang file inside JAR — try common locations
     const langCandidates = [

@@ -1,4 +1,4 @@
-import { resolve, sep } from "path";
+import { resolve, sep, isAbsolute } from "path";
 import { createHash } from "crypto";
 import { readFile } from "fs/promises";
 import { platform } from "os";
@@ -46,6 +46,19 @@ export function validatePath(untrusted: string, base: string): string {
         throw new Error(`Path traversal attempt rejected: '${untrusted}'`);
     }
     return resolvedTarget;
+}
+
+// ── JAR path guard ────────────────────────────────────────────────────────────
+
+/**
+ * Assert that `p` is an absolute path ending in `.jar`.
+ * Use on paths sourced from the DB or other semi-trusted boundaries
+ * to prevent filesystem access to arbitrary files.
+ */
+export function assertJarPath(p: string): void {
+    if (!isAbsolute(p) || !p.toLowerCase().endsWith(".jar")) {
+        throw new Error(`Invalid JAR path rejected: '${p}'`);
+    }
 }
 
 // ── ReDoS guard ───────────────────────────────────────────────────────────────

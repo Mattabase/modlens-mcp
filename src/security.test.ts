@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validatePath, safeRegex, fileSha512, verifyFileHash, HashMismatchError, normalizeJarPath, validateGraphBundle, validateGraphEntries, validateEmbeddingBundle, decodeTagChars, stripInvisibleUnicode, containsInvisibleUnicode } from "./security.js";
+import { validatePath, safeRegex, fileSha512, verifyFileHash, HashMismatchError, normalizeJarPath, validateGraphBundle, validateGraphEntries, validateEmbeddingBundle, decodeTagChars, stripInvisibleUnicode, containsInvisibleUnicode, assertJarPath } from "./security.js";
 import { tmpdir } from "os";
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
@@ -38,6 +38,28 @@ describe("validatePath", () => {
 
     it("allows '.' (resolves to base)", () => {
         expect(() => validatePath(".", base)).not.toThrow();
+    });
+});
+
+// ── assertJarPath ─────────────────────────────────────────────────────────────
+
+describe("assertJarPath", () => {
+    it("accepts an absolute .jar path", () => {
+        expect(() => assertJarPath("/mods/testmod.jar")).not.toThrow();
+        expect(() => assertJarPath("C:\\mods\\testmod.jar")).not.toThrow();
+    });
+
+    it("rejects a relative path", () => {
+        expect(() => assertJarPath("mods/testmod.jar")).toThrow("Invalid JAR path");
+    });
+
+    it("rejects a non-.jar extension", () => {
+        expect(() => assertJarPath("/etc/passwd")).toThrow("Invalid JAR path");
+        expect(() => assertJarPath("/mods/testmod.zip")).toThrow("Invalid JAR path");
+    });
+
+    it("rejects an empty string", () => {
+        expect(() => assertJarPath("")).toThrow("Invalid JAR path");
     });
 });
 

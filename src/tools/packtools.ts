@@ -13,6 +13,7 @@ import AdmZip from "adm-zip";
 import { resolveModRef, listModsSlim, listMods, findModsByIds } from "../repositories/mod.js";
 import { listEntries } from "../jar.js";
 import { indexJar } from "../java-tools.js";
+import { assertJarPath } from "../security.js";
 
 // ── Asset conflict detection ───────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ export async function findAssetConflicts(
 
     for (const mod of mods) {
         try {
+            assertJarPath(mod.jarPath);
             const entries = listEntries(mod.jarPath, "assets/");
             for (const entry of entries) {
                 if (entry.endsWith("/")) continue;

@@ -9,6 +9,7 @@
 import { listModsForMixinScan, listModsSlim, findModsByIds, findModById, findModByModId, updateMod, listMods } from "../repositories/mod.js";
 import { getDb } from "../db.js";
 import { getBytecode } from "../java-tools.js";
+import { assertJarPath } from "../security.js";
 import AdmZip from "adm-zip";
 
 type MixinMod = {
@@ -298,6 +299,7 @@ export async function resolveMixinTargets(dbId: number): Promise<{
 }> {
     const mod = await findModById(dbId);
     if (!mod) throw new Error(`Mod #${dbId} not found`);
+    assertJarPath(mod.jarPath);
 
     // Always re-read mixin class names from the JAR — never from DB mixinTargets
     // (DB value may already be resolved or stale)

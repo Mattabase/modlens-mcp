@@ -15,8 +15,7 @@ import { parseJar } from "../processor.js";
 import { listEntries, extractEntry } from "../jar.js";
 import { getDb } from "../db.js";
 import { listModsSlim } from "../repositories/mod.js";
-import { isAbsolute } from "path";
-import { normalizeJarPath } from "../security.js";
+import { normalizeJarPath, assertJarPath } from "../security.js";
 
 export type IssueSeverity = "error" | "warn" | "info";
 export type IssueType =
@@ -86,10 +85,7 @@ export async function checkModCompat(
     loader?: string,
 ): Promise<object> {
     jarPath = normalizeJarPath(jarPath);
-    // Validate: must be an absolute path to a .jar file
-    if (!isAbsolute(jarPath) || !jarPath.toLowerCase().endsWith(".jar")) {
-        throw new Error(`jarPath must be an absolute path to a .jar file: '${jarPath}'`);
-    }
+    assertJarPath(jarPath);
 
     const manifest = await parseJar(jarPath);
     const issues: CompatIssue[] = [];
@@ -172,6 +168,7 @@ export async function checkModCompat(
         const pool = await listModsSlim({ mcVersion, loader });
         for (const mod of pool) {
             try {
+                assertJarPath(mod.jarPath);
                 const modEntries = listEntries(mod.jarPath, "assets/");
                 for (const entry of modEntries) {
                     if (entry.endsWith("/")) continue;

@@ -6,10 +6,12 @@ import {
     findModById, resolveModRefSlim, listModsSlim, findModClassesForCrossModSearch,
 } from "../repositories/mod.js";
 import { validateDbId, validateClassName } from "../validate.js";
+import { assertJarPath } from "../security.js";
 
 async function getModJar(dbId: number): Promise<string> {
     const mod = await findModById(dbId);
     if (!mod) throw new Error(`Mod #${dbId} not found`);
+    assertJarPath(mod.jarPath);
     return mod.jarPath;
 }
 

@@ -8,7 +8,7 @@ import { indexJar } from "../java-tools.js";
 import { paths, ensureDir } from "../cache.js";
 import { join } from "path";
 import { rm } from "fs/promises";
-import { normalizeJarPath } from "../security.js";
+import { normalizeJarPath, assertJarPath } from "../security.js";
 import { isOllamaAvailable } from "../embeddings.js";
 import { enqueueModEmbed } from "../embed-queue.js";
 import { buildModGraph, ensureGraphify } from "./graphify.js";
@@ -267,6 +267,7 @@ export async function refreshDegradedMetadata(opts?: { loader?: string; mcVersio
 
     for (const mod of mods) {
         try {
+            assertJarPath(mod.jarPath);
             const oldSource = (mod.metadataSource ?? "filename") as MetadataSource;
             const oldQuality = METADATA_QUALITY[oldSource] ?? 0;
             const manifest = await parseJar(mod.jarPath);
@@ -316,6 +317,7 @@ export async function reindexClasses(dbId?: number): Promise<{ indexed: number; 
         const existing = await countModClasses(mod.id);
         if (existing > 0) { skipped++; continue; }
         try {
+            assertJarPath(mod.jarPath);
             const index = await indexJar(mod.jarPath);
             const classes = Object.values(index.classes);
             if (!classes.length) { skipped++; continue; }
@@ -338,6 +340,7 @@ export async function reindexClasses(dbId?: number): Promise<{ indexed: number; 
 export async function decompileMod(dbId: number): Promise<{ status: string; outDir: string; message: string }> {
     const mod = await findModById(dbId);
     if (!mod) throw new Error(`Mod #${dbId} not found`);
+    assertJarPath(mod.jarPath);
 
     const outDir = join(paths.decompiled(mod.modId, mod.version));
 
@@ -468,6 +471,7 @@ export async function batchDecompileMods(opts?: {
 
     async function processOne(mod: { id: number; modId: string; version: string; jarPath: string | null }) {
         if (!mod.jarPath) { errors++; return; }
+        try { assertJarPath(mod.jarPath); } catch { errors++; return; }
         const outDir = paths.decompiled(mod.modId, mod.version);
         const state = await isDecompileDone(outDir);
         if (state === "done") {
