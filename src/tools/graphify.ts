@@ -161,7 +161,7 @@ export async function detectBackend(): Promise<DetectedBackend | null> {
     if (process.env.ANTHROPIC_API_KEY) {
         return { backend: "claude", model: explicitModel ?? "claude-sonnet-4-6", pricing: BACKEND_PRICING.claude };
     }
-    if (process.env.MOONSHOT_API_KEY) {
+    if (process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY) {
         return { backend: "kimi", model: explicitModel ?? "kimi-k2.6", pricing: BACKEND_PRICING.kimi };
     }
     if (process.env.GRAPHIFY_CUSTOM_BASE_URL && process.env.GRAPHIFY_CUSTOM_API_KEY) {
@@ -346,6 +346,15 @@ export async function buildModGraph(
             args.push("--backend", resolved.backend);
             if (process.env.GRAPHIFY_MODEL) {
                 args.push("--model", process.env.GRAPHIFY_MODEL);
+            }
+            // Bridge Kimi/Moonshot API key naming: setup writes KIMI_API_KEY,
+            // but the graphify CLI may read MOONSHOT_API_KEY (Moonshot SDK convention).
+            if (resolved.backend === "kimi") {
+                const kimiKey = process.env.KIMI_API_KEY ?? process.env.MOONSHOT_API_KEY;
+                if (kimiKey) {
+                    extraEnv.KIMI_API_KEY = kimiKey;
+                    extraEnv.MOONSHOT_API_KEY = kimiKey;
+                }
             }
             // Cloud backends can handle parallel requests
             args.push("--max-concurrency", "4");
