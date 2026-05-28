@@ -95,6 +95,83 @@ export async function verifyFileHash(filePath: string, expectedSha512: string): 
     }
 }
 
+// ── Invisible Unicode detection ───────────────────────────────────────────────
+
+/**
+ * Decode Unicode Tag characters (U+E0000-E007F) back to their ASCII equivalents.
+ * This is the technique used by tools like HideTextTool to embed invisible text
+ * within visible strings.  Returns the hidden ASCII payload (empty if none).
+ */
+export function decodeTagChars(text: string): string {
+    let decoded = "";
+    for (let i = 0; i < text.length; i++) {
+        const ch = text.charCodeAt(i);
+        // Tag chars are in the supplementary plane — encoded as surrogate pairs
+        if (ch >= 0xD800 && ch <= 0xDBFF && i + 1 < text.length) {
+            const lo = text.charCodeAt(i + 1);
+            if (lo >= 0xDC00 && lo <= 0xDFFF) {
+                const cp = (ch - 0xD800) * 0x400 + (lo - 0xDC00) + 0x10000;
+                if (cp >= 0xE0000 && cp <= 0xE007F) {
+                    decoded += String.fromCharCode(cp - 0xE0000);
+                }
+                i++; // skip low surrogate
+            }
+        }
+    }
+    return decoded;
+}
+
+/**
+ * Strip all invisible / zero-width Unicode characters from a string.
+ * Covers: Unicode Tag block (U+E0000-E007F), zero-width chars (U+200B-200D,
+ * U+FEFF, U+2060), bidi overrides (U+200E-200F, U+202A-202E, U+2066-2069),
+ * interlinear annotations (U+FFF9-FFFB), and variation selectors (U+FE00-FE0F).
+ */
+export function stripInvisibleUnicode(text: string): string {
+    let out = "";
+    for (let i = 0; i < text.length; i++) {
+        const ch = text.charCodeAt(i);
+
+        // Supplementary plane — check surrogate pairs
+        if (ch >= 0xD800 && ch <= 0xDBFF && i + 1 < text.length) {
+            const lo = text.charCodeAt(i + 1);
+            if (lo >= 0xDC00 && lo <= 0xDFFF) {
+                const cp = (ch - 0xD800) * 0x400 + (lo - 0xDC00) + 0x10000;
+                // Skip Tag block (U+E0000-E007F)
+                if (cp >= 0xE0000 && cp <= 0xE007F) { i++; continue; }
+                out += text[i] + text[i + 1];
+                i++;
+                continue;
+            }
+        }
+
+        // BMP invisible characters
+        if (
+            (ch >= 0x200B && ch <= 0x200D) || // ZWSP, ZWNJ, ZWJ
+            ch === 0xFEFF ||                  // BOM / ZWNBSP
+            ch === 0x2060 ||                  // Word Joiner
+            (ch >= 0x200E && ch <= 0x200F) || // LRM, RLM
+            (ch >= 0x202A && ch <= 0x202E) || // bidi embedding/override
+            (ch >= 0x2066 && ch <= 0x2069) || // bidi isolate
+            (ch >= 0xFFF9 && ch <= 0xFFFB) || // interlinear annotation
+            (ch >= 0xFE00 && ch <= 0xFE0F)    // variation selectors
+        ) {
+            continue;
+        }
+
+        out += text[i];
+    }
+    return out;
+}
+
+/**
+ * Check whether a string contains any invisible Unicode characters
+ * (Tag block, zero-width, bidi overrides, etc.).
+ */
+export function containsInvisibleUnicode(text: string): boolean {
+    return text !== stripInvisibleUnicode(text);
+}
+
 // ── Graph bundle validation ───────────────────────────────────────────────────
 
 const PROMPT_INJECTION_PATTERNS = [
@@ -116,11 +193,17 @@ function checkStringField(value: unknown, maxLen: number, fieldName: string): st
     if (typeof value !== "string") return `${fieldName} must be a string`;
     if (value.length > maxLen) return `${fieldName} exceeds max length (${maxLen})`;
     if (CONTROL_CHAR_REGEX.test(value)) return `${fieldName} contains control characters`;
+    if (containsInvisibleUnicode(value)) return `${fieldName} contains hidden unicode`;
     return null;
 }
 
 function scanForPromptInjection(text: string): boolean {
-    return PROMPT_INJECTION_PATTERNS.some(p => p.test(text));
+    // Check visible text
+    if (PROMPT_INJECTION_PATTERNS.some(p => p.test(text))) return true;
+    // Decode hidden Tag-character payload and check that too
+    const hidden = decodeTagChars(text);
+    if (hidden && PROMPT_INJECTION_PATTERNS.some(p => p.test(hidden))) return true;
+    return false;
 }
 
 /**
