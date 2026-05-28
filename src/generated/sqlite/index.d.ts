@@ -1795,6 +1795,7 @@ export namespace Prisma {
     sourcePath: string | null
     decompPath: string | null
     decompiled: boolean | null
+    graphPath: string | null
     modrinthId: string | null
     curseforgeId: number | null
     hasMixins: boolean | null
@@ -1806,6 +1807,7 @@ export namespace Prisma {
     awEntries: string | null
     dependencies: string | null
     metadata: string | null
+    metadataSource: string | null
     tags: string | null
     ingestedAt: Date | null
     updatedAt: Date | null
@@ -1825,6 +1827,7 @@ export namespace Prisma {
     sourcePath: string | null
     decompPath: string | null
     decompiled: boolean | null
+    graphPath: string | null
     modrinthId: string | null
     curseforgeId: number | null
     hasMixins: boolean | null
@@ -1836,6 +1839,7 @@ export namespace Prisma {
     awEntries: string | null
     dependencies: string | null
     metadata: string | null
+    metadataSource: string | null
     tags: string | null
     ingestedAt: Date | null
     updatedAt: Date | null
@@ -1855,6 +1859,7 @@ export namespace Prisma {
     sourcePath: number
     decompPath: number
     decompiled: number
+    graphPath: number
     modrinthId: number
     curseforgeId: number
     hasMixins: number
@@ -1866,6 +1871,7 @@ export namespace Prisma {
     awEntries: number
     dependencies: number
     metadata: number
+    metadataSource: number
     tags: number
     ingestedAt: number
     updatedAt: number
@@ -1897,6 +1903,7 @@ export namespace Prisma {
     sourcePath?: true
     decompPath?: true
     decompiled?: true
+    graphPath?: true
     modrinthId?: true
     curseforgeId?: true
     hasMixins?: true
@@ -1908,6 +1915,7 @@ export namespace Prisma {
     awEntries?: true
     dependencies?: true
     metadata?: true
+    metadataSource?: true
     tags?: true
     ingestedAt?: true
     updatedAt?: true
@@ -1927,6 +1935,7 @@ export namespace Prisma {
     sourcePath?: true
     decompPath?: true
     decompiled?: true
+    graphPath?: true
     modrinthId?: true
     curseforgeId?: true
     hasMixins?: true
@@ -1938,6 +1947,7 @@ export namespace Prisma {
     awEntries?: true
     dependencies?: true
     metadata?: true
+    metadataSource?: true
     tags?: true
     ingestedAt?: true
     updatedAt?: true
@@ -1957,6 +1967,7 @@ export namespace Prisma {
     sourcePath?: true
     decompPath?: true
     decompiled?: true
+    graphPath?: true
     modrinthId?: true
     curseforgeId?: true
     hasMixins?: true
@@ -1968,6 +1979,7 @@ export namespace Prisma {
     awEntries?: true
     dependencies?: true
     metadata?: true
+    metadataSource?: true
     tags?: true
     ingestedAt?: true
     updatedAt?: true
@@ -2074,6 +2086,7 @@ export namespace Prisma {
     sourcePath: string | null
     decompPath: string | null
     decompiled: boolean
+    graphPath: string | null
     modrinthId: string | null
     curseforgeId: number | null
     hasMixins: boolean
@@ -2085,6 +2098,7 @@ export namespace Prisma {
     awEntries: string
     dependencies: string
     metadata: string
+    metadataSource: string | null
     tags: string
     ingestedAt: Date
     updatedAt: Date
@@ -2123,6 +2137,7 @@ export namespace Prisma {
     sourcePath?: boolean
     decompPath?: boolean
     decompiled?: boolean
+    graphPath?: boolean
     modrinthId?: boolean
     curseforgeId?: boolean
     hasMixins?: boolean
@@ -2134,6 +2149,7 @@ export namespace Prisma {
     awEntries?: boolean
     dependencies?: boolean
     metadata?: boolean
+    metadataSource?: boolean
     tags?: boolean
     ingestedAt?: boolean
     updatedAt?: boolean
@@ -2157,6 +2173,7 @@ export namespace Prisma {
     sourcePath?: boolean
     decompPath?: boolean
     decompiled?: boolean
+    graphPath?: boolean
     modrinthId?: boolean
     curseforgeId?: boolean
     hasMixins?: boolean
@@ -2168,6 +2185,7 @@ export namespace Prisma {
     awEntries?: boolean
     dependencies?: boolean
     metadata?: boolean
+    metadataSource?: boolean
     tags?: boolean
     ingestedAt?: boolean
     updatedAt?: boolean
@@ -2187,6 +2205,7 @@ export namespace Prisma {
     sourcePath?: boolean
     decompPath?: boolean
     decompiled?: boolean
+    graphPath?: boolean
     modrinthId?: boolean
     curseforgeId?: boolean
     hasMixins?: boolean
@@ -2198,6 +2217,7 @@ export namespace Prisma {
     awEntries?: boolean
     dependencies?: boolean
     metadata?: boolean
+    metadataSource?: boolean
     tags?: boolean
     ingestedAt?: boolean
     updatedAt?: boolean
@@ -2217,6 +2237,7 @@ export namespace Prisma {
     sourcePath?: boolean
     decompPath?: boolean
     decompiled?: boolean
+    graphPath?: boolean
     modrinthId?: boolean
     curseforgeId?: boolean
     hasMixins?: boolean
@@ -2228,12 +2249,13 @@ export namespace Prisma {
     awEntries?: boolean
     dependencies?: boolean
     metadata?: boolean
+    metadataSource?: boolean
     tags?: boolean
     ingestedAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ModOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modId" | "displayName" | "version" | "mcVersion" | "loader" | "jarPath" | "sha256" | "murmur2" | "sha512" | "sourcePath" | "decompPath" | "decompiled" | "modrinthId" | "curseforgeId" | "hasMixins" | "hasAt" | "hasAw" | "mixinConfigs" | "mixinTargets" | "atEntries" | "awEntries" | "dependencies" | "metadata" | "tags" | "ingestedAt" | "updatedAt", ExtArgs["result"]["mod"]>
+  export type ModOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modId" | "displayName" | "version" | "mcVersion" | "loader" | "jarPath" | "sha256" | "murmur2" | "sha512" | "sourcePath" | "decompPath" | "decompiled" | "graphPath" | "modrinthId" | "curseforgeId" | "hasMixins" | "hasAt" | "hasAw" | "mixinConfigs" | "mixinTargets" | "atEntries" | "awEntries" | "dependencies" | "metadata" | "metadataSource" | "tags" | "ingestedAt" | "updatedAt", ExtArgs["result"]["mod"]>
   export type ModInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     classes?: boolean | Mod$classesArgs<ExtArgs>
     modTags?: boolean | Mod$modTagsArgs<ExtArgs>
@@ -2264,6 +2286,7 @@ export namespace Prisma {
       sourcePath: string | null
       decompPath: string | null
       decompiled: boolean
+      graphPath: string | null
       modrinthId: string | null
       curseforgeId: number | null
       hasMixins: boolean
@@ -2275,6 +2298,7 @@ export namespace Prisma {
       awEntries: string
       dependencies: string
       metadata: string
+      metadataSource: string | null
       tags: string
       ingestedAt: Date
       updatedAt: Date
@@ -2717,6 +2741,7 @@ export namespace Prisma {
     readonly sourcePath: FieldRef<"Mod", 'String'>
     readonly decompPath: FieldRef<"Mod", 'String'>
     readonly decompiled: FieldRef<"Mod", 'Boolean'>
+    readonly graphPath: FieldRef<"Mod", 'String'>
     readonly modrinthId: FieldRef<"Mod", 'String'>
     readonly curseforgeId: FieldRef<"Mod", 'Int'>
     readonly hasMixins: FieldRef<"Mod", 'Boolean'>
@@ -2728,6 +2753,7 @@ export namespace Prisma {
     readonly awEntries: FieldRef<"Mod", 'String'>
     readonly dependencies: FieldRef<"Mod", 'String'>
     readonly metadata: FieldRef<"Mod", 'String'>
+    readonly metadataSource: FieldRef<"Mod", 'String'>
     readonly tags: FieldRef<"Mod", 'String'>
     readonly ingestedAt: FieldRef<"Mod", 'DateTime'>
     readonly updatedAt: FieldRef<"Mod", 'DateTime'>
@@ -8708,6 +8734,8 @@ export namespace Prisma {
     className: string | null
     content: string | null
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
   }
 
   export type McSourceFileMaxAggregateOutputType = {
@@ -8716,6 +8744,8 @@ export namespace Prisma {
     className: string | null
     content: string | null
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
   }
 
   export type McSourceFileCountAggregateOutputType = {
@@ -8724,6 +8754,8 @@ export namespace Prisma {
     className: number
     content: number
     embedding: number
+    embedSource: number
+    embedUpdatedAt: number
     _all: number
   }
 
@@ -8744,6 +8776,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
   }
 
   export type McSourceFileMaxAggregateInputType = {
@@ -8752,6 +8786,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
   }
 
   export type McSourceFileCountAggregateInputType = {
@@ -8760,6 +8796,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
     _all?: true
   }
 
@@ -8855,6 +8893,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
     _count: McSourceFileCountAggregateOutputType | null
     _avg: McSourceFileAvgAggregateOutputType | null
     _sum: McSourceFileSumAggregateOutputType | null
@@ -8882,6 +8922,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mcVersion?: boolean | McVersionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["mcSourceFile"]>
 
@@ -8891,6 +8933,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mcVersion?: boolean | McVersionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["mcSourceFile"]>
 
@@ -8900,6 +8944,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mcVersion?: boolean | McVersionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["mcSourceFile"]>
 
@@ -8909,9 +8955,11 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
   }
 
-  export type McSourceFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "mcVersionId" | "className" | "content" | "embedding", ExtArgs["result"]["mcSourceFile"]>
+  export type McSourceFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "mcVersionId" | "className" | "content" | "embedding" | "embedSource" | "embedUpdatedAt", ExtArgs["result"]["mcSourceFile"]>
   export type McSourceFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     mcVersion?: boolean | McVersionDefaultArgs<ExtArgs>
   }
@@ -8933,6 +8981,8 @@ export namespace Prisma {
       className: string
       content: string
       embedding: Prisma.Bytes | null
+      embedSource: string | null
+      embedUpdatedAt: Date | null
     }, ExtArgs["result"]["mcSourceFile"]>
     composites: {}
   }
@@ -9362,6 +9412,8 @@ export namespace Prisma {
     readonly className: FieldRef<"McSourceFile", 'String'>
     readonly content: FieldRef<"McSourceFile", 'String'>
     readonly embedding: FieldRef<"McSourceFile", 'Bytes'>
+    readonly embedSource: FieldRef<"McSourceFile", 'String'>
+    readonly embedUpdatedAt: FieldRef<"McSourceFile", 'DateTime'>
   }
     
 
@@ -9802,6 +9854,8 @@ export namespace Prisma {
     className: string | null
     content: string | null
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
   }
 
   export type ModSourceFileMaxAggregateOutputType = {
@@ -9810,6 +9864,8 @@ export namespace Prisma {
     className: string | null
     content: string | null
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
   }
 
   export type ModSourceFileCountAggregateOutputType = {
@@ -9818,6 +9874,8 @@ export namespace Prisma {
     className: number
     content: number
     embedding: number
+    embedSource: number
+    embedUpdatedAt: number
     _all: number
   }
 
@@ -9838,6 +9896,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
   }
 
   export type ModSourceFileMaxAggregateInputType = {
@@ -9846,6 +9906,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
   }
 
   export type ModSourceFileCountAggregateInputType = {
@@ -9854,6 +9916,8 @@ export namespace Prisma {
     className?: true
     content?: true
     embedding?: true
+    embedSource?: true
+    embedUpdatedAt?: true
     _all?: true
   }
 
@@ -9949,6 +10013,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding: Bytes | null
+    embedSource: string | null
+    embedUpdatedAt: Date | null
     _count: ModSourceFileCountAggregateOutputType | null
     _avg: ModSourceFileAvgAggregateOutputType | null
     _sum: ModSourceFileSumAggregateOutputType | null
@@ -9976,6 +10042,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mod?: boolean | ModDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["modSourceFile"]>
 
@@ -9985,6 +10053,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mod?: boolean | ModDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["modSourceFile"]>
 
@@ -9994,6 +10064,8 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
     mod?: boolean | ModDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["modSourceFile"]>
 
@@ -10003,9 +10075,11 @@ export namespace Prisma {
     className?: boolean
     content?: boolean
     embedding?: boolean
+    embedSource?: boolean
+    embedUpdatedAt?: boolean
   }
 
-  export type ModSourceFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modId" | "className" | "content" | "embedding", ExtArgs["result"]["modSourceFile"]>
+  export type ModSourceFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "modId" | "className" | "content" | "embedding" | "embedSource" | "embedUpdatedAt", ExtArgs["result"]["modSourceFile"]>
   export type ModSourceFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     mod?: boolean | ModDefaultArgs<ExtArgs>
   }
@@ -10027,6 +10101,8 @@ export namespace Prisma {
       className: string
       content: string
       embedding: Prisma.Bytes | null
+      embedSource: string | null
+      embedUpdatedAt: Date | null
     }, ExtArgs["result"]["modSourceFile"]>
     composites: {}
   }
@@ -10456,6 +10532,8 @@ export namespace Prisma {
     readonly className: FieldRef<"ModSourceFile", 'String'>
     readonly content: FieldRef<"ModSourceFile", 'String'>
     readonly embedding: FieldRef<"ModSourceFile", 'Bytes'>
+    readonly embedSource: FieldRef<"ModSourceFile", 'String'>
+    readonly embedUpdatedAt: FieldRef<"ModSourceFile", 'DateTime'>
   }
     
 
@@ -13176,6 +13254,7 @@ export namespace Prisma {
     sourcePath: 'sourcePath',
     decompPath: 'decompPath',
     decompiled: 'decompiled',
+    graphPath: 'graphPath',
     modrinthId: 'modrinthId',
     curseforgeId: 'curseforgeId',
     hasMixins: 'hasMixins',
@@ -13187,6 +13266,7 @@ export namespace Prisma {
     awEntries: 'awEntries',
     dependencies: 'dependencies',
     metadata: 'metadata',
+    metadataSource: 'metadataSource',
     tags: 'tags',
     ingestedAt: 'ingestedAt',
     updatedAt: 'updatedAt'
@@ -13264,7 +13344,9 @@ export namespace Prisma {
     mcVersionId: 'mcVersionId',
     className: 'className',
     content: 'content',
-    embedding: 'embedding'
+    embedding: 'embedding',
+    embedSource: 'embedSource',
+    embedUpdatedAt: 'embedUpdatedAt'
   };
 
   export type McSourceFileScalarFieldEnum = (typeof McSourceFileScalarFieldEnum)[keyof typeof McSourceFileScalarFieldEnum]
@@ -13275,7 +13357,9 @@ export namespace Prisma {
     modId: 'modId',
     className: 'className',
     content: 'content',
-    embedding: 'embedding'
+    embedding: 'embedding',
+    embedSource: 'embedSource',
+    embedUpdatedAt: 'embedUpdatedAt'
   };
 
   export type ModSourceFileScalarFieldEnum = (typeof ModSourceFileScalarFieldEnum)[keyof typeof ModSourceFileScalarFieldEnum]
@@ -13403,6 +13487,7 @@ export namespace Prisma {
     sourcePath?: StringNullableFilter<"Mod"> | string | null
     decompPath?: StringNullableFilter<"Mod"> | string | null
     decompiled?: BoolFilter<"Mod"> | boolean
+    graphPath?: StringNullableFilter<"Mod"> | string | null
     modrinthId?: StringNullableFilter<"Mod"> | string | null
     curseforgeId?: IntNullableFilter<"Mod"> | number | null
     hasMixins?: BoolFilter<"Mod"> | boolean
@@ -13414,6 +13499,7 @@ export namespace Prisma {
     awEntries?: StringFilter<"Mod"> | string
     dependencies?: StringFilter<"Mod"> | string
     metadata?: StringFilter<"Mod"> | string
+    metadataSource?: StringNullableFilter<"Mod"> | string | null
     tags?: StringFilter<"Mod"> | string
     ingestedAt?: DateTimeFilter<"Mod"> | Date | string
     updatedAt?: DateTimeFilter<"Mod"> | Date | string
@@ -13436,6 +13522,7 @@ export namespace Prisma {
     sourcePath?: SortOrderInput | SortOrder
     decompPath?: SortOrderInput | SortOrder
     decompiled?: SortOrder
+    graphPath?: SortOrderInput | SortOrder
     modrinthId?: SortOrderInput | SortOrder
     curseforgeId?: SortOrderInput | SortOrder
     hasMixins?: SortOrder
@@ -13447,6 +13534,7 @@ export namespace Prisma {
     awEntries?: SortOrder
     dependencies?: SortOrder
     metadata?: SortOrder
+    metadataSource?: SortOrderInput | SortOrder
     tags?: SortOrder
     ingestedAt?: SortOrder
     updatedAt?: SortOrder
@@ -13473,6 +13561,7 @@ export namespace Prisma {
     sourcePath?: StringNullableFilter<"Mod"> | string | null
     decompPath?: StringNullableFilter<"Mod"> | string | null
     decompiled?: BoolFilter<"Mod"> | boolean
+    graphPath?: StringNullableFilter<"Mod"> | string | null
     modrinthId?: StringNullableFilter<"Mod"> | string | null
     curseforgeId?: IntNullableFilter<"Mod"> | number | null
     hasMixins?: BoolFilter<"Mod"> | boolean
@@ -13484,6 +13573,7 @@ export namespace Prisma {
     awEntries?: StringFilter<"Mod"> | string
     dependencies?: StringFilter<"Mod"> | string
     metadata?: StringFilter<"Mod"> | string
+    metadataSource?: StringNullableFilter<"Mod"> | string | null
     tags?: StringFilter<"Mod"> | string
     ingestedAt?: DateTimeFilter<"Mod"> | Date | string
     updatedAt?: DateTimeFilter<"Mod"> | Date | string
@@ -13506,6 +13596,7 @@ export namespace Prisma {
     sourcePath?: SortOrderInput | SortOrder
     decompPath?: SortOrderInput | SortOrder
     decompiled?: SortOrder
+    graphPath?: SortOrderInput | SortOrder
     modrinthId?: SortOrderInput | SortOrder
     curseforgeId?: SortOrderInput | SortOrder
     hasMixins?: SortOrder
@@ -13517,6 +13608,7 @@ export namespace Prisma {
     awEntries?: SortOrder
     dependencies?: SortOrder
     metadata?: SortOrder
+    metadataSource?: SortOrderInput | SortOrder
     tags?: SortOrder
     ingestedAt?: SortOrder
     updatedAt?: SortOrder
@@ -13544,6 +13636,7 @@ export namespace Prisma {
     sourcePath?: StringNullableWithAggregatesFilter<"Mod"> | string | null
     decompPath?: StringNullableWithAggregatesFilter<"Mod"> | string | null
     decompiled?: BoolWithAggregatesFilter<"Mod"> | boolean
+    graphPath?: StringNullableWithAggregatesFilter<"Mod"> | string | null
     modrinthId?: StringNullableWithAggregatesFilter<"Mod"> | string | null
     curseforgeId?: IntNullableWithAggregatesFilter<"Mod"> | number | null
     hasMixins?: BoolWithAggregatesFilter<"Mod"> | boolean
@@ -13555,6 +13648,7 @@ export namespace Prisma {
     awEntries?: StringWithAggregatesFilter<"Mod"> | string
     dependencies?: StringWithAggregatesFilter<"Mod"> | string
     metadata?: StringWithAggregatesFilter<"Mod"> | string
+    metadataSource?: StringNullableWithAggregatesFilter<"Mod"> | string | null
     tags?: StringWithAggregatesFilter<"Mod"> | string
     ingestedAt?: DateTimeWithAggregatesFilter<"Mod"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Mod"> | Date | string
@@ -13896,6 +13990,8 @@ export namespace Prisma {
     className?: StringFilter<"McSourceFile"> | string
     content?: StringFilter<"McSourceFile"> | string
     embedding?: BytesNullableFilter<"McSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"McSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"McSourceFile"> | Date | string | null
     mcVersion?: XOR<McVersionScalarRelationFilter, McVersionWhereInput>
   }
 
@@ -13905,6 +14001,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrderInput | SortOrder
+    embedSource?: SortOrderInput | SortOrder
+    embedUpdatedAt?: SortOrderInput | SortOrder
     mcVersion?: McVersionOrderByWithRelationInput
   }
 
@@ -13918,6 +14016,8 @@ export namespace Prisma {
     className?: StringFilter<"McSourceFile"> | string
     content?: StringFilter<"McSourceFile"> | string
     embedding?: BytesNullableFilter<"McSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"McSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"McSourceFile"> | Date | string | null
     mcVersion?: XOR<McVersionScalarRelationFilter, McVersionWhereInput>
   }, "id" | "mcVersionId_className">
 
@@ -13927,6 +14027,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrderInput | SortOrder
+    embedSource?: SortOrderInput | SortOrder
+    embedUpdatedAt?: SortOrderInput | SortOrder
     _count?: McSourceFileCountOrderByAggregateInput
     _avg?: McSourceFileAvgOrderByAggregateInput
     _max?: McSourceFileMaxOrderByAggregateInput
@@ -13943,6 +14045,8 @@ export namespace Prisma {
     className?: StringWithAggregatesFilter<"McSourceFile"> | string
     content?: StringWithAggregatesFilter<"McSourceFile"> | string
     embedding?: BytesNullableWithAggregatesFilter<"McSourceFile"> | Bytes | null
+    embedSource?: StringNullableWithAggregatesFilter<"McSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableWithAggregatesFilter<"McSourceFile"> | Date | string | null
   }
 
   export type ModSourceFileWhereInput = {
@@ -13954,6 +14058,8 @@ export namespace Prisma {
     className?: StringFilter<"ModSourceFile"> | string
     content?: StringFilter<"ModSourceFile"> | string
     embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"ModSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"ModSourceFile"> | Date | string | null
     mod?: XOR<ModScalarRelationFilter, ModWhereInput>
   }
 
@@ -13963,6 +14069,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrderInput | SortOrder
+    embedSource?: SortOrderInput | SortOrder
+    embedUpdatedAt?: SortOrderInput | SortOrder
     mod?: ModOrderByWithRelationInput
   }
 
@@ -13976,6 +14084,8 @@ export namespace Prisma {
     className?: StringFilter<"ModSourceFile"> | string
     content?: StringFilter<"ModSourceFile"> | string
     embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"ModSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"ModSourceFile"> | Date | string | null
     mod?: XOR<ModScalarRelationFilter, ModWhereInput>
   }, "id" | "modId_className">
 
@@ -13985,6 +14095,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrderInput | SortOrder
+    embedSource?: SortOrderInput | SortOrder
+    embedUpdatedAt?: SortOrderInput | SortOrder
     _count?: ModSourceFileCountOrderByAggregateInput
     _avg?: ModSourceFileAvgOrderByAggregateInput
     _max?: ModSourceFileMaxOrderByAggregateInput
@@ -14001,6 +14113,8 @@ export namespace Prisma {
     className?: StringWithAggregatesFilter<"ModSourceFile"> | string
     content?: StringWithAggregatesFilter<"ModSourceFile"> | string
     embedding?: BytesNullableWithAggregatesFilter<"ModSourceFile"> | Bytes | null
+    embedSource?: StringNullableWithAggregatesFilter<"ModSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableWithAggregatesFilter<"ModSourceFile"> | Date | string | null
   }
 
   export type DocEntryWhereInput = {
@@ -14209,6 +14323,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -14220,6 +14335,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -14242,6 +14358,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -14253,6 +14370,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -14274,6 +14392,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -14285,6 +14404,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14307,6 +14427,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -14318,6 +14439,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14340,6 +14462,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -14351,6 +14474,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -14369,6 +14493,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -14380,6 +14505,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14399,6 +14525,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -14410,6 +14537,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14749,6 +14877,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
     mcVersion: McVersionCreateNestedOneWithoutSourceFilesInput
   }
 
@@ -14758,12 +14888,16 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type McSourceFileUpdateInput = {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mcVersion?: McVersionUpdateOneRequiredWithoutSourceFilesNestedInput
   }
 
@@ -14773,6 +14907,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type McSourceFileCreateManyInput = {
@@ -14781,12 +14917,16 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type McSourceFileUpdateManyMutationInput = {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type McSourceFileUncheckedUpdateManyInput = {
@@ -14795,12 +14935,16 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ModSourceFileCreateInput = {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
     mod: ModCreateNestedOneWithoutSourceFilesInput
   }
 
@@ -14810,12 +14954,16 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type ModSourceFileUpdateInput = {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mod?: ModUpdateOneRequiredWithoutSourceFilesNestedInput
   }
 
@@ -14825,6 +14973,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ModSourceFileCreateManyInput = {
@@ -14833,12 +14983,16 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type ModSourceFileUpdateManyMutationInput = {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ModSourceFileUncheckedUpdateManyInput = {
@@ -14847,6 +15001,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type DocEntryCreateInput = {
@@ -15196,6 +15352,7 @@ export namespace Prisma {
     sourcePath?: SortOrder
     decompPath?: SortOrder
     decompiled?: SortOrder
+    graphPath?: SortOrder
     modrinthId?: SortOrder
     curseforgeId?: SortOrder
     hasMixins?: SortOrder
@@ -15207,6 +15364,7 @@ export namespace Prisma {
     awEntries?: SortOrder
     dependencies?: SortOrder
     metadata?: SortOrder
+    metadataSource?: SortOrder
     tags?: SortOrder
     ingestedAt?: SortOrder
     updatedAt?: SortOrder
@@ -15231,6 +15389,7 @@ export namespace Prisma {
     sourcePath?: SortOrder
     decompPath?: SortOrder
     decompiled?: SortOrder
+    graphPath?: SortOrder
     modrinthId?: SortOrder
     curseforgeId?: SortOrder
     hasMixins?: SortOrder
@@ -15242,6 +15401,7 @@ export namespace Prisma {
     awEntries?: SortOrder
     dependencies?: SortOrder
     metadata?: SortOrder
+    metadataSource?: SortOrder
     tags?: SortOrder
     ingestedAt?: SortOrder
     updatedAt?: SortOrder
@@ -15261,6 +15421,7 @@ export namespace Prisma {
     sourcePath?: SortOrder
     decompPath?: SortOrder
     decompiled?: SortOrder
+    graphPath?: SortOrder
     modrinthId?: SortOrder
     curseforgeId?: SortOrder
     hasMixins?: SortOrder
@@ -15272,6 +15433,7 @@ export namespace Prisma {
     awEntries?: SortOrder
     dependencies?: SortOrder
     metadata?: SortOrder
+    metadataSource?: SortOrder
     tags?: SortOrder
     ingestedAt?: SortOrder
     updatedAt?: SortOrder
@@ -15606,6 +15768,17 @@ export namespace Prisma {
     not?: NestedBytesNullableFilter<$PrismaModel> | Bytes | null
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type McVersionScalarRelationFilter = {
     is?: McVersionWhereInput
     isNot?: McVersionWhereInput
@@ -15622,6 +15795,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type McSourceFileAvgOrderByAggregateInput = {
@@ -15635,6 +15810,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type McSourceFileMinOrderByAggregateInput = {
@@ -15643,6 +15820,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type McSourceFileSumOrderByAggregateInput = {
@@ -15660,6 +15839,20 @@ export namespace Prisma {
     _max?: NestedBytesNullableFilter<$PrismaModel>
   }
 
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type ModSourceFileModIdClassNameCompoundUniqueInput = {
     modId: number
     className: string
@@ -15671,6 +15864,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type ModSourceFileAvgOrderByAggregateInput = {
@@ -15684,6 +15879,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type ModSourceFileMinOrderByAggregateInput = {
@@ -15692,6 +15889,8 @@ export namespace Prisma {
     className?: SortOrder
     content?: SortOrder
     embedding?: SortOrder
+    embedSource?: SortOrder
+    embedUpdatedAt?: SortOrder
   }
 
   export type ModSourceFileSumOrderByAggregateInput = {
@@ -16056,6 +16255,10 @@ export namespace Prisma {
     set?: Bytes | null
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type McVersionUpdateOneRequiredWithoutSourceFilesNestedInput = {
     create?: XOR<McVersionCreateWithoutSourceFilesInput, McVersionUncheckedCreateWithoutSourceFilesInput>
     connectOrCreate?: McVersionCreateOrConnectWithoutSourceFilesInput
@@ -16261,6 +16464,17 @@ export namespace Prisma {
     not?: NestedBytesNullableFilter<$PrismaModel> | Bytes | null
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedBytesNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Bytes | BytesFieldRefInput<$PrismaModel> | null
     in?: Bytes[] | null
@@ -16269,6 +16483,20 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBytesNullableFilter<$PrismaModel>
     _max?: NestedBytesNullableFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ModClassCreateWithoutModInput = {
@@ -16325,6 +16553,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type ModSourceFileUncheckedCreateWithoutModInput = {
@@ -16332,6 +16562,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type ModSourceFileCreateOrConnectWithoutModInput = {
@@ -16425,6 +16657,8 @@ export namespace Prisma {
     className?: StringFilter<"ModSourceFile"> | string
     content?: StringFilter<"ModSourceFile"> | string
     embedding?: BytesNullableFilter<"ModSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"ModSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"ModSourceFile"> | Date | string | null
   }
 
   export type ModCreateWithoutClassesInput = {
@@ -16440,6 +16674,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16451,6 +16686,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16472,6 +16708,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16483,6 +16720,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16519,6 +16757,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16530,6 +16769,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16551,6 +16791,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16562,6 +16803,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16573,6 +16815,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type McSourceFileUncheckedCreateWithoutMcVersionInput = {
@@ -16580,6 +16824,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type McSourceFileCreateOrConnectWithoutMcVersionInput = {
@@ -16616,6 +16862,8 @@ export namespace Prisma {
     className?: StringFilter<"McSourceFile"> | string
     content?: StringFilter<"McSourceFile"> | string
     embedding?: BytesNullableFilter<"McSourceFile"> | Bytes | null
+    embedSource?: StringNullableFilter<"McSourceFile"> | string | null
+    embedUpdatedAt?: DateTimeNullableFilter<"McSourceFile"> | Date | string | null
   }
 
   export type ModCreateWithoutModTagsInput = {
@@ -16631,6 +16879,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16642,6 +16891,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16663,6 +16913,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16674,6 +16925,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16710,6 +16962,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16721,6 +16974,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16742,6 +16996,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16753,6 +17008,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16835,6 +17091,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16846,6 +17103,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16867,6 +17125,7 @@ export namespace Prisma {
     sourcePath?: string | null
     decompPath?: string | null
     decompiled?: boolean
+    graphPath?: string | null
     modrinthId?: string | null
     curseforgeId?: number | null
     hasMixins?: boolean
@@ -16878,6 +17137,7 @@ export namespace Prisma {
     awEntries?: string
     dependencies?: string
     metadata?: string
+    metadataSource?: string | null
     tags?: string
     ingestedAt?: Date | string
     updatedAt?: Date | string
@@ -16914,6 +17174,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16925,6 +17186,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16946,6 +17208,7 @@ export namespace Prisma {
     sourcePath?: NullableStringFieldUpdateOperationsInput | string | null
     decompPath?: NullableStringFieldUpdateOperationsInput | string | null
     decompiled?: BoolFieldUpdateOperationsInput | boolean
+    graphPath?: NullableStringFieldUpdateOperationsInput | string | null
     modrinthId?: NullableStringFieldUpdateOperationsInput | string | null
     curseforgeId?: NullableIntFieldUpdateOperationsInput | number | null
     hasMixins?: BoolFieldUpdateOperationsInput | boolean
@@ -16957,6 +17220,7 @@ export namespace Prisma {
     awEntries?: StringFieldUpdateOperationsInput | string
     dependencies?: StringFieldUpdateOperationsInput | string
     metadata?: StringFieldUpdateOperationsInput | string
+    metadataSource?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: StringFieldUpdateOperationsInput | string
     ingestedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16986,6 +17250,8 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type ModClassUpdateWithoutModInput = {
@@ -17041,6 +17307,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ModSourceFileUncheckedUpdateWithoutModInput = {
@@ -17048,6 +17316,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ModSourceFileUncheckedUpdateManyWithoutModInput = {
@@ -17055,6 +17325,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type McSourceFileCreateManyMcVersionInput = {
@@ -17062,12 +17334,16 @@ export namespace Prisma {
     className: string
     content: string
     embedding?: Bytes | null
+    embedSource?: string | null
+    embedUpdatedAt?: Date | string | null
   }
 
   export type McSourceFileUpdateWithoutMcVersionInput = {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type McSourceFileUncheckedUpdateWithoutMcVersionInput = {
@@ -17075,6 +17351,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type McSourceFileUncheckedUpdateManyWithoutMcVersionInput = {
@@ -17082,6 +17360,8 @@ export namespace Prisma {
     className?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     embedding?: NullableBytesFieldUpdateOperationsInput | Bytes | null
+    embedSource?: NullableStringFieldUpdateOperationsInput | string | null
+    embedUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
 

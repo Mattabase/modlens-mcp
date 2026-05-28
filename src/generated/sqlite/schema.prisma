@@ -10,33 +10,35 @@ datasource db {
 }
 
 model Mod {
-  id           Int      @id @default(autoincrement())
-  modId        String   @map("mod_id")
-  displayName  String   @map("display_name")
-  version      String
-  mcVersion    String   @map("mc_version")
-  loader       String
-  jarPath      String   @unique @map("jar_path")
-  sha256       String?
-  murmur2      String?
-  sha512       String?
-  sourcePath   String?  @map("source_path")
-  decompPath   String?  @map("decomp_path")
-  decompiled   Boolean  @default(false)
-  modrinthId   String?  @map("modrinth_id")
-  curseforgeId Int?     @map("curseforge_id")
-  hasMixins    Boolean  @default(false) @map("has_mixins")
-  hasAt        Boolean  @default(false) @map("has_at")
-  hasAw        Boolean  @default(false) @map("has_aw")
-  mixinConfigs String   @default("[]") @map("mixin_configs")
-  mixinTargets String   @default("[]") @map("mixin_targets")
-  atEntries    String   @default("[]") @map("at_entries")
-  awEntries    String   @default("[]") @map("aw_entries")
-  dependencies String   @default("[]")
-  metadata     String   @default("{}")
-  tags         String   @default("[]")
-  ingestedAt   DateTime @default(now()) @map("ingested_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             Int      @id @default(autoincrement())
+  modId          String   @map("mod_id")
+  displayName    String   @map("display_name")
+  version        String
+  mcVersion      String   @map("mc_version")
+  loader         String
+  jarPath        String   @unique @map("jar_path")
+  sha256         String?
+  murmur2        String?
+  sha512         String?
+  sourcePath     String?  @map("source_path")
+  decompPath     String?  @map("decomp_path")
+  decompiled     Boolean  @default(false)
+  graphPath      String?  @map("graph_path")
+  modrinthId     String?  @map("modrinth_id")
+  curseforgeId   Int?     @map("curseforge_id")
+  hasMixins      Boolean  @default(false) @map("has_mixins")
+  hasAt          Boolean  @default(false) @map("has_at")
+  hasAw          Boolean  @default(false) @map("has_aw")
+  mixinConfigs   String   @default("[]") @map("mixin_configs")
+  mixinTargets   String   @default("[]") @map("mixin_targets")
+  atEntries      String   @default("[]") @map("at_entries")
+  awEntries      String   @default("[]") @map("aw_entries")
+  dependencies   String   @default("[]")
+  metadata       String   @default("{}")
+  metadataSource String?  @map("metadata_source")
+  tags           String   @default("[]")
+  ingestedAt     DateTime @default(now()) @map("ingested_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   classes     ModClass[]
   modTags     ModTag[]
@@ -133,11 +135,13 @@ model ModTag {
 }
 
 model McSourceFile {
-  id          Int    @id @default(autoincrement())
-  mcVersionId Int    @map("mc_version_id")
-  className   String @map("class_name")
-  content     String
-  embedding   Bytes?
+  id             Int       @id @default(autoincrement())
+  mcVersionId    Int       @map("mc_version_id")
+  className      String    @map("class_name")
+  content        String
+  embedding      Bytes?
+  embedSource    String?   @map("embed_source")
+  embedUpdatedAt DateTime? @map("embed_updated_at")
 
   mcVersion McVersion @relation(fields: [mcVersionId], references: [id], onDelete: Cascade)
 
@@ -147,11 +151,13 @@ model McSourceFile {
 }
 
 model ModSourceFile {
-  id        Int    @id @default(autoincrement())
-  modId     Int    @map("mod_id")
-  className String @map("class_name")
-  content   String
-  embedding Bytes?
+  id             Int       @id @default(autoincrement())
+  modId          Int       @map("mod_id")
+  className      String    @map("class_name")
+  content        String
+  embedding      Bytes?
+  embedSource    String?   @map("embed_source")
+  embedUpdatedAt DateTime? @map("embed_updated_at")
 
   mod Mod @relation(fields: [modId], references: [id], onDelete: Cascade)
 

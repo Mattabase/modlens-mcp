@@ -132,6 +132,7 @@ exports.Prisma.ModScalarFieldEnum = {
   sourcePath: 'sourcePath',
   decompPath: 'decompPath',
   decompiled: 'decompiled',
+  graphPath: 'graphPath',
   modrinthId: 'modrinthId',
   curseforgeId: 'curseforgeId',
   hasMixins: 'hasMixins',
@@ -143,6 +144,7 @@ exports.Prisma.ModScalarFieldEnum = {
   awEntries: 'awEntries',
   dependencies: 'dependencies',
   metadata: 'metadata',
+  metadataSource: 'metadataSource',
   tags: 'tags',
   ingestedAt: 'ingestedAt',
   updatedAt: 'updatedAt'
@@ -202,7 +204,9 @@ exports.Prisma.McSourceFileScalarFieldEnum = {
   mcVersionId: 'mcVersionId',
   className: 'className',
   content: 'content',
-  embedding: 'embedding'
+  embedding: 'embedding',
+  embedSource: 'embedSource',
+  embedUpdatedAt: 'embedUpdatedAt'
 };
 
 exports.Prisma.ModSourceFileScalarFieldEnum = {
@@ -210,7 +214,9 @@ exports.Prisma.ModSourceFileScalarFieldEnum = {
   modId: 'modId',
   className: 'className',
   content: 'content',
-  embedding: 'embedding'
+  embedding: 'embedding',
+  embedSource: 'embedSource',
+  embedUpdatedAt: 'embedUpdatedAt'
 };
 
 exports.Prisma.DocEntryScalarFieldEnum = {
