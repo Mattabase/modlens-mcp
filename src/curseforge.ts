@@ -1,4 +1,4 @@
-import { fetchWithRetry } from "./fetch-utils.js";
+import { fetchWithRetry, safeJson } from "./fetch-utils.js";
 import type { PlatformAdapter } from "./platform-adapter.js";
 
 const CF_BASE = "https://api.curseforge.com/v1";
@@ -37,7 +37,7 @@ export async function lookupByFingerprint(murmur2: number): Promise<CFProject | 
         body: JSON.stringify({ fingerprints: [murmur2] }),
     });
     if (!res.ok) return null;
-    const data = await res.json() as { data: { exactMatches: Array<{ file: CFFile; id: number; }>; }; };
+    const data = await safeJson<{ data: { exactMatches: Array<{ file: CFFile; id: number; }>; }; }>(res, "CurseForge fingerprint");
     const match = data.data.exactMatches[0];
     if (!match) return null;
     return getProject(match.id);
@@ -46,7 +46,7 @@ export async function lookupByFingerprint(murmur2: number): Promise<CFProject | 
 export async function getProject(modId: number): Promise<CFProject | null> {
     const res = await fetchWithRetry(`${CF_BASE}/mods/${modId}`, { headers });
     if (!res.ok) return null;
-    const data = await res.json() as { data: CFProject; };
+    const data = await safeJson<{ data: CFProject; }>(res, "CurseForge project");
     return data.data;
 }
 
@@ -89,7 +89,7 @@ export async function searchMods(
     if (opts.loader)    params.set("modLoaderType", modloaderToEnum(opts.loader));
     const res = await fetchWithRetry(`${CF_BASE}/mods/search?${params}`, { headers });
     if (!res.ok) return null;
-    const data = await res.json() as { data: CFSearchHit[] };
+    const data = await safeJson<{ data: CFSearchHit[] }>(res, "CurseForge search");
     return data.data;
 }
 
@@ -113,7 +113,7 @@ export async function getProjectFiles(
     if (opts.mcVersion) params.set("gameVersion", opts.mcVersion);
     const res = await fetchWithRetry(`${CF_BASE}/mods/${modId}/files?${params}`, { headers });
     if (!res.ok) return [];
-    const data = await res.json() as { data: CFFile[] };
+    const data = await safeJson<{ data: CFFile[] }>(res, "CurseForge files");
     return data.data;
 }
 

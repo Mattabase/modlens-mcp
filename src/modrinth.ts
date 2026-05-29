@@ -1,4 +1,4 @@
-import { fetchWithRetry } from "./fetch-utils.js";
+import { fetchWithRetry, safeJson } from "./fetch-utils.js";
 import type { PlatformAdapter } from "./platform-adapter.js";
 
 const MODRINTH_BASE = "https://api.modrinth.com/v2";
@@ -34,14 +34,14 @@ export async function lookupBySha512(sha512: string): Promise<ModrinthVersion | 
     const res = await fetchWithRetry(`${MODRINTH_BASE}/version_file/${sha512}?algorithm=sha512`, { headers });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Modrinth lookup failed: ${res.status}`);
-    return res.json() as Promise<ModrinthVersion>;
+    return safeJson<ModrinthVersion>(res, "Modrinth version lookup");
 }
 
 export async function getProject(projectId: string): Promise<ModrinthProject | null> {
     const res = await fetchWithRetry(`${MODRINTH_BASE}/project/${projectId}`, { headers });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Modrinth project fetch failed: ${res.status}`);
-    return res.json() as Promise<ModrinthProject>;
+    return safeJson<ModrinthProject>(res, "Modrinth project");
 }
 
 export async function getLatestVersion(projectId: string, mcVersion?: string): Promise<ModrinthVersion | null> {
@@ -49,7 +49,7 @@ export async function getLatestVersion(projectId: string, mcVersion?: string): P
     if (mcVersion) params.set("game_versions", JSON.stringify([mcVersion]));
     const res = await fetchWithRetry(`${MODRINTH_BASE}/project/${projectId}/version?${params}`, { headers });
     if (!res.ok) return null;
-    const versions = await res.json() as ModrinthVersion[];
+    const versions = await safeJson<ModrinthVersion[]>(res, "Modrinth versions");
     return versions[0] ?? null;
 }
 
@@ -95,7 +95,7 @@ export async function searchProjects(
     });
     const res = await fetchWithRetry(`${MODRINTH_BASE}/search?${params}`, { headers });
     if (!res.ok) return null;
-    return res.json() as Promise<ModrinthSearchResult>;
+    return safeJson<ModrinthSearchResult>(res, "Modrinth search");
 }
 
 /**
@@ -110,7 +110,7 @@ export async function getProjectVersions(
     if (opts.mcVersion) params.set("game_versions", JSON.stringify([opts.mcVersion]));
     const res = await fetchWithRetry(`${MODRINTH_BASE}/project/${projectId}/version?${params}`, { headers });
     if (!res.ok) return [];
-    return res.json() as Promise<ModrinthVersion[]>;
+    return safeJson<ModrinthVersion[]>(res, "Modrinth project versions");
 }
 
 export const modrinthPlatformAdapter: PlatformAdapter = {
