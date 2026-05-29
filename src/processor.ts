@@ -2,6 +2,7 @@ import AdmZip from "adm-zip";
 import { createHash } from "crypto";
 import { readFile } from "fs/promises";
 import { parse as parseToml } from "smol-toml";
+import { assertJarPath } from "./security.js";
 
 export type MetadataSource = "fabric.mod.json" | "quilt.mod.json" | "mods.toml" | "mcmod.info" | "@Mod annotation" | "filename";
 
@@ -35,6 +36,7 @@ export interface ParsedManifest {
 }
 
 export async function parseJar(jarPath: string): Promise<ParsedManifest> {
+    assertJarPath(jarPath);
     const zip = new AdmZip(jarPath);
     const entries = zip.getEntries().map((e) => e.entryName);
 
