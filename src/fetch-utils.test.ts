@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchWithRetry, DOWNLOAD_OPTS } from "./fetch-utils.js";
+import { fetchWithRetry, DOWNLOAD_OPTS, safeJson } from "./fetch-utils.js";
 
 function mockFetch(...responses: Array<{ status: number; ok: boolean; body?: string }>) {
     let call = 0;
@@ -157,5 +157,27 @@ describe("fetchWithRetry — options", () => {
     it("DOWNLOAD_OPTS has increased timeout and fewer retries", () => {
         expect(DOWNLOAD_OPTS.timeoutMs).toBeGreaterThan(10_000);
         expect(DOWNLOAD_OPTS.retries).toBeLessThan(4);
+    });
+});
+
+// ── safeJson ──────────────────────────────────────────────────────────────────
+
+describe("safeJson", () => {
+    it("parses valid JSON from a Response", async () => {
+        const res = new Response(JSON.stringify({ foo: 42 }));
+        const data = await safeJson<{ foo: number }>(res, "test");
+        expect(data).toEqual({ foo: 42 });
+    });
+
+    it("throws with a clear message on HTML response", async () => {
+        const res = new Response("<html><body>Error</body></html>");
+        await expect(safeJson(res, "test API")).rejects.toThrow(
+            /test API: expected JSON but got: <html>/
+        );
+    });
+
+    it("throws with a clear message on empty response", async () => {
+        const res = new Response("");
+        await expect(safeJson(res, "test")).rejects.toThrow(/expected JSON but got:/);
     });
 });
