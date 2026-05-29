@@ -42,6 +42,7 @@ export async function isOllamaAvailable(): Promise<boolean> {
  * @param overlap   Character overlap between consecutive chunks (default 200)
  */
 export function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
+    if (maxChars <= overlap) throw new Error(`chunkText: maxChars (${maxChars}) must be greater than overlap (${overlap})`);
     if (text.length <= maxChars) return [text];
     const chunks: string[] = [];
     let start = 0;
