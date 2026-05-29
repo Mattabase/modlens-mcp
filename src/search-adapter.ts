@@ -50,19 +50,22 @@ export async function ftsSearchSource(
         const path = url.replace(/^file:\/\//, "").replace(/^file:/, "");
         const Database = (await import("better-sqlite3")).default;
         const db = new Database(path, { readonly: true });
-        type Row = { id: number; content: string; class_name: string };
-        const rows = db.prepare(
-            `SELECT s.id, s.class_name, s.content FROM fts_mc_source f
-             JOIN mc_source_files s ON s.id = f.rowid
-             WHERE f.fts_mc_source MATCH ? AND s.mc_version_id = ?
-             ORDER BY rank
-             LIMIT ?`,
-        ).all(query, mcVersionId, limit) as Row[];
-        db.close();
-        return rows.map(r => ({
-            className: r.class_name,
-            snippet: r.content.slice(0, 300),
-        }));
+        try {
+            type Row = { id: number; content: string; class_name: string };
+            const rows = db.prepare(
+                `SELECT s.id, s.class_name, s.content FROM fts_mc_source f
+                 JOIN mc_source_files s ON s.id = f.rowid
+                 WHERE f.fts_mc_source MATCH ? AND s.mc_version_id = ?
+                 ORDER BY rank
+                 LIMIT ?`,
+            ).all(query, mcVersionId, limit) as Row[];
+            return rows.map(r => ({
+                className: r.class_name,
+                snippet: r.content.slice(0, 300),
+            }));
+        } finally {
+            db.close();
+        }
     }
 
     // Postgres / PGlite — existing tsvector query
@@ -104,19 +107,22 @@ export async function ftsSearchModSource(
         const path = url.replace(/^file:\/\//, "").replace(/^file:/, "");
         const Database = (await import("better-sqlite3")).default;
         const db = new Database(path, { readonly: true });
-        type Row = { id: number; content: string; class_name: string };
-        const rows = db.prepare(
-            `SELECT s.id, s.class_name, s.content FROM fts_mod_source f
-             JOIN mod_source_files s ON s.id = f.rowid
-             WHERE f.fts_mod_source MATCH ? AND s.mod_id = ?
-             ORDER BY rank
-             LIMIT ?`,
-        ).all(query, modId, limit) as Row[];
-        db.close();
-        return rows.map(r => ({
-            className: r.class_name,
-            snippet: r.content.slice(0, 300),
-        }));
+        try {
+            type Row = { id: number; content: string; class_name: string };
+            const rows = db.prepare(
+                `SELECT s.id, s.class_name, s.content FROM fts_mod_source f
+                 JOIN mod_source_files s ON s.id = f.rowid
+                 WHERE f.fts_mod_source MATCH ? AND s.mod_id = ?
+                 ORDER BY rank
+                 LIMIT ?`,
+            ).all(query, modId, limit) as Row[];
+            return rows.map(r => ({
+                className: r.class_name,
+                snippet: r.content.slice(0, 300),
+            }));
+        } finally {
+            db.close();
+        }
     }
 
     // PostgreSQL — GIN index on to_tsvector('simple', content)
@@ -151,20 +157,23 @@ export async function ftsSearchDocs(
         const path = url.replace(/^file:\/\//, "").replace(/^file:/, "");
         const Database = (await import("better-sqlite3")).default;
         const db = new Database(path, { readonly: true });
-        type Row = {
-            id: number; class_name: string | null; title: string; summary: string | null;
-            url: string; category: string; namespace: string; tags: string;
-        };
-        const rows = db.prepare(
-            `SELECT d.id, d.class_name, d.title, d.summary, d.url, d.category, d.namespace, d.tags
-             FROM fts_doc_entries f
-             JOIN doc_entries d ON d.id = f.rowid
-             WHERE f.fts_doc_entries MATCH ?
-             ORDER BY rank
-             LIMIT ?`,
-        ).all(query, limit) as Row[];
-        db.close();
-        return rows.map(r => ({ ...r, tags: JSON.parse(r.tags ?? "[]") as string[] }));
+        try {
+            type Row = {
+                id: number; class_name: string | null; title: string; summary: string | null;
+                url: string; category: string; namespace: string; tags: string;
+            };
+            const rows = db.prepare(
+                `SELECT d.id, d.class_name, d.title, d.summary, d.url, d.category, d.namespace, d.tags
+                 FROM fts_doc_entries f
+                 JOIN doc_entries d ON d.id = f.rowid
+                 WHERE f.fts_doc_entries MATCH ?
+                 ORDER BY rank
+                 LIMIT ?`,
+            ).all(query, limit) as Row[];
+            return rows.map(r => ({ ...r, tags: JSON.parse(r.tags ?? "[]") as string[] }));
+        } finally {
+            db.close();
+        }
     }
 
     // Postgres / PGlite — raw LIKE (case-insensitive via lower())
@@ -200,25 +209,28 @@ export async function ftsSearchPrimers(
         const path = url.replace(/^file:\/\//, "").replace(/^file:/, "");
         const Database = (await import("better-sqlite3")).default;
         const db = new Database(path, { readonly: true });
-        type Row = {
-            id: number; title: string; summary: string | null;
-            from_version: string; to_version: string; modloader: string | null; url: string;
-        };
-        const rows = db.prepare(
-            `SELECT p.id, p.title, p.summary, p.from_version, p.to_version, p.modloader, p.url
-             FROM fts_primers f
-             JOIN primers p ON p.id = f.rowid
-             WHERE f.fts_primers MATCH ?
-             ${modloader ? "AND p.modloader = ?" : ""}
-             ORDER BY rank
-             LIMIT ?`,
-        ).all(...[query, ...(modloader ? [modloader] : []), limit]) as Row[];
-        db.close();
-        return rows.map(r => ({
-            id: r.id, title: r.title, summary: r.summary,
-            from_version: r.from_version, to_version: r.to_version,
-            modloader: r.modloader ?? null, url: r.url,
-        }));
+        try {
+            type Row = {
+                id: number; title: string; summary: string | null;
+                from_version: string; to_version: string; modloader: string | null; url: string;
+            };
+            const rows = db.prepare(
+                `SELECT p.id, p.title, p.summary, p.from_version, p.to_version, p.modloader, p.url
+                 FROM fts_primers f
+                 JOIN primers p ON p.id = f.rowid
+                 WHERE f.fts_primers MATCH ?
+                 ${modloader ? "AND p.modloader = ?" : ""}
+                 ORDER BY rank
+                 LIMIT ?`,
+            ).all(...[query, ...(modloader ? [modloader] : []), limit]) as Row[];
+            return rows.map(r => ({
+                id: r.id, title: r.title, summary: r.summary,
+                from_version: r.from_version, to_version: r.to_version,
+                modloader: r.modloader ?? null, url: r.url,
+            }));
+        } finally {
+            db.close();
+        }
     }
 
     // Postgres / PGlite — Prisma case-insensitive contains
