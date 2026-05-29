@@ -147,7 +147,10 @@ function safe<A extends unknown[]>(fn: (...args: A) => Promise<ReturnType<typeof
             return await fn(...args);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            return { content: [{ type: "text" as const, text: msg }], isError: true } as ReturnType<typeof out>;
+            const stack = err instanceof Error && err.stack
+                ? "\n" + err.stack.split("\n").slice(1, 4).join("\n")
+                : "";
+            return { content: [{ type: "text" as const, text: msg + stack }], isError: true } as ReturnType<typeof out>;
         }
     };
 }
